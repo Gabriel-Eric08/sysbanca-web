@@ -4,6 +4,7 @@ from routes.users import users_route
 from routes.modalidade import modalidade_route
 from routes.regiao import regiao_route
 from routes.area import area_route
+from routes.auth import auth_route
 from routes.extracao import extracao_route
 from db_config import init_db
 
@@ -14,7 +15,9 @@ init_db(app)
 def health():
     return "OK"
 
-app.register_blueprint(home_route)
+
+app.register_blueprint(auth_route)
+app.register_blueprint(home_route, url_prefix='/home')
 app.register_blueprint(modalidade_route, url_prefix='/modalidade')
 app.register_blueprint(regiao_route, url_prefix='/regiao')
 app.register_blueprint(area_route, url_prefix='/area')

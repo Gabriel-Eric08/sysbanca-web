@@ -14,10 +14,6 @@ def extracao_page():
 def salvar_extracao():
     extracoes_form = []
 
-    # Extrair as linhas recebidas
-    # O Flask não cria listas automaticamente para campos nomeados assim,
-    # então vamos buscar por todas as keys e agrupar manualmente.
-
     for key in request.form:
         # key exemplo: extracoes[0][extracao]
         if key.startswith('extracoes'):
