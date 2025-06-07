@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8">
+
+
+  <title>Cadastro Extrações por Área</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 20px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 20px;
+    }
+
+    th, td {
+      border: 1px solid #ddd;
+      padding: 10px;
+      text-align: left;
+    }
+
+    th {
+      background-color: #007BFF;
+      color: white;
+    }
+
+    tbody > tr:nth-child(odd) {
+      background-color: #cfd8dd;
+    }
+
+    input, select, button {
+      padding: 6px;
+      margin: 5px 0;
+      font-size: 16px;
+    }
+
+    .botao-adicionar {
+      background-color: #072749;
+    }
+
+    .botao-atualizar {
+      background-color: #1fa53c;
+    }
+
+    .botao-excluir {
+      background-color: #be0d0d;
+    }
+
+    .botao-salvar {
+      background-color: #ff9900;
+    }
+
+    .botao-voltar {
+      background-color: #6c757d;
+    }
+
+    .botao-adicionar, .botao-atualizar, .botao-excluir, .botao-salvar, .botao-voltar {
+      padding: 5px 20px;
+      font-size: 18px;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+      transition: all 0.3s ease;
+      position: relative;
+      overflow: hidden;
+      margin-right: 10px;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .form-section {
+      margin-bottom: 20px;
+    }
+
+    .botoes {
+      margin-bottom: 20px;
+    }
+
+    .busca-section {
+      margin-bottom: 20px;
+    }
+
+    input[readonly] {
+      background-color: #f1f1f1;
+    }
+  </style>
+</head>
+<body>
+
+  <form action="SalvarExtracao.php" method="POST"></form>
+
+  <h2>Cadastro das Extrações por Área</h2>
+
+  <!-- Formulário para entrada de dados -->
+   
+   
+  <label>Área</label>
+  <select id="area" name="area">
+    <option value=""></option>
+    <option value="Área 1">Área 1</option>
+    <option value="Área 2">Área 2</option>
+  </select>
+  
+  <label>Extração</label>
+  <select id="extracao" name="extracao">
+    <option value=""></option>
+    <option value="Extração 1">Extração 1</option>
+    <option value="Extração 2">Extração 2</option>
+  </select>
+
+  <label>Ativar</label>
+  <select id="AtivarAreaExtracao" name="AtivarAreaExtracao">
+    <option value=""></option>
+    <option value="sim">Sim</option>
+    <option value="nao">Não</option>
+  </select>&emsp;<br>
+
+
+  <div class="busca-section">
+    <label>Buscar por Nome: <input type="text" id="buscaNome"></label>
+    <button onclick="buscarLinha()">Buscar</button>
+  </div>
+
+  <div class="botoes">
+    <button class="botao-adicionar" onclick="adicionarLinha()">➕ Adicionar</button>
+    <button class="botao-atualizar" onclick="atualizarLinha()">♻ Atualizar</button>
+    <button class="botao-excluir" onclick="excluirLinha()">🗑 Excluir</button>
+    <button class="botao-salvar" onclick="salvartabela()">💾 Salvar</button>
+    <a href="principal.html"><button class="botao-voltar" onclick="history.back()">↩ Voltar</button></a>
+  </div>
+ 
+
+<script>
+  function buscarEPreencher() {
+    const termo = document.getElementById("busca").value.toLowerCase();
+    const linhas = document.querySelectorAll("#tabela tbody tr");
+
+    let encontrado = false;
+
+    linhas.forEach(linha => {
+      const area = linha.cells[0].textContent.toLowerCase();
+      const extracao = linha.cells[1].textContent;
+      const AtivarAreaExtracao = linha.cells[2].textContent;
+     
+
+      if (extracao.includes(termo)) {
+        document.getElementById("area").value = linha.cells[0].textContent;
+        document.getElementById("extracao").value = extracao;
+        document.getElementById("AtivarAreaExtracao").value = AtivarAreaExtracao;
+        
+        
+        
+        encontrado = true;
+      }
+    });
+
+    if (!encontrado) {
+      alert("Extração não encontrada na tabela.");
+    }
+  }
+</script>
+
+  <!-- Tabela onde os dados serão inseridos -->
+  <table id="tabela">
+    <thead>
+      <tr>
+        <th>Área</th>
+        <th>Extração</th>
+        <th>Ativar Extração</th>
+      </tr>
+    </thead>
+    <tbody>
+      <!-- Linhas serão adicionadas aqui -->
+    </tbody>
+  </table>
+
+  <script>
+    function adicionarLinha() {
+      const area = document.getElementById('area').value;
+      const extracao = document.getElementById('extracao').value;
+      const AtivarAreaExtracao = document.getElementById('AtivarAreaExtracao').value;
+     
+
+      if ( area === '' || extracao === '' || AtivarAreaExtracao === '') {
+        alert('Preencha todos os campos!');
+        return;
+      }
+
+      const tabela = document.getElementById('tabela').getElementsByTagName('tbody')[0];
+      const novaLinha = tabela.insertRow();
+
+      const celulaarea = novaLinha.insertCell(0);
+      const celulaextracao = novaLinha.insertCell(1);
+      const celulaAtivarAreaExtracao = novaLinha.insertCell(2);
+       
+      celulaarea.innerText = area;
+      celulaextracao.innerText = extracao;
+      celulaAtivarAreaExtracao.innerText = AtivarAreaExtracao;
+      
+
+      // Limpa os campos após adicionar
+      
+      document.getElementById('area').value = '';
+      document.getElementById('extracao').value = '';
+      document.getElementById('AtivarAreaExtracao').value = '';
+      
+      
+    }
+  </script>
+
+</body>
+</html>

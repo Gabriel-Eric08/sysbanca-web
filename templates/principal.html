@@ -121,12 +121,11 @@
               <li><a class="dropdown-item" href="{{ url_for('Regiao.regiao_page') }}">Região</a></li>
               <li><a class="dropdown-item" href="{{ url_for('Area.area_page') }}">Área</a></li>
               <li><a class="dropdown-item" href="{{ url_for('Extracao.extracao_page') }}">Extração</a></li>
-              <li><a class="dropdown-item" href="#">Área Extração</a></li>
-              <li><a class="dropdown-item" href="#">Área Cotação</a></li>
-              <li><a class="dropdown-item" href="#">Área Cotação Prêmio</a></li>
-              <li><a class="dropdown-item" href="#">Área Comissão Modalidade</a></li>
-              <li><a class="dropdown-item" href="#">Coletor/Recolhe</a></li>
-              <li><a class="dropdown-item" href="#">Vendedor/Operador</a></li>
+              <li><a class="dropdown-item" href="{{ url_for('AreaExtracao.area_extracao_page') }}">Área Extração</a></li>
+              <li><a class="dropdown-item" href="{{ url_for('AreaCotacao.area_cotacao_page') }}">Área Cotação</a></li>
+              <li><a class="dropdown-item" href="{{ url_for('AreaComissaoModalidade.area_comissao_page') }}">Área Comissão Modalidade</a></li>
+              <li><a class="dropdown-item" href="{{ url_for('Coletor.coletor_page') }}">Coletor/Recolhe</a></li>
+              <li><a class="dropdown-item" href="{{ url_for('Operadores.operadores_page') }}">Vendedor/Operador</a></li>
             </ul>
           </li>
 
@@ -163,7 +162,7 @@
               Administração
             </a>
             <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="administracaoDropdown">
-              <li><a class="dropdown-item" href="#">Resultado</a></li>
+              <li><a class="dropdown-item" href="{{ url_for('Resultado.resultado_page') }}">Resultado</a></li>
               <li><a class="dropdown-item" href="#">Programação de Extração</a></li>
               <li><a class="dropdown-item" href="#">Números Cotados</a></li>
             </ul>

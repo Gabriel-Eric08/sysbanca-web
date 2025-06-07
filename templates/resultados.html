@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <title>Resultados</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <!-- Bootstrap 5 -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <style>
+    .animal-nome {
+      color: red;
+      font-weight: bold;
+    }
+  </style>
+</head>
+
+<body class="container py-4">
+
+  <h2 class="mb-4">Resultados</h2>
+
+  <div class="mb-3">
+    <label class="form-label">Extração</label>
+    <select id="area" name="area" class="form-select w-auto d-inline-block me-3">
+      <option value=""></option>
+      <option value="Extração 1">Extração 1</option>
+      <option value="Extração 2">Extração 2</option>
+    </select>
+
+    <input type="date" id="DataExtracao" class="form-control d-inline-block w-auto me-3">
+    <button class="btn btn-primary" onclick="buscarEPreencher()">Consultar</button>
+  </div>
+
+  <div class="mb-4">
+    <!-- Entradas manuais -->
+    <div class="mb-2">
+      <label>1º Prêmio:</label>
+      <input type="text" id="input1" maxlength="4" class="form-control d-inline-block w-auto" oninput="gerarAutomaticos()"> 
+      Grupo: <input type="text" id="grupo1" maxlength="2" class="form-control d-inline-block w-auto" readonly> 
+      Bicho: <span id="animal1" class="animal-nome"></span>
+    </div>
+    <div class="mb-2">
+      <label>2º Prêmio:</label>
+      <input type="text" id="input2" maxlength="4" class="form-control d-inline-block w-auto" oninput="gerarAutomaticos()"> 
+      Grupo: <input type="text" id="grupo2" maxlength="2" class="form-control d-inline-block w-auto" readonly> 
+      Bicho: <span id="animal2" class="animal-nome"></span>
+    </div>
+    <div class="mb-2">
+      <label>3º Prêmio:</label>
+      <input type="text" id="input3" maxlength="4" class="form-control d-inline-block w-auto" oninput="gerarAutomaticos()"> 
+      Grupo: <input type="text" id="grupo3" maxlength="2" class="form-control d-inline-block w-auto" readonly> 
+      Bicho: <span id="animal3" class="animal-nome"></span>
+    </div>
+    <div class="mb-2">
+      <label>4º Prêmio:</label>
+      <input type="text" id="input4" maxlength="4" class="form-control d-inline-block w-auto" oninput="gerarAutomaticos()"> 
+      Grupo: <input type="text" id="grupo4" maxlength="2" class="form-control d-inline-block w-auto" readonly> 
+      Bicho: <span id="animal4" class="animal-nome"></span>
+    </div>
+    <div class="mb-2">
+      <label>5º Prêmio:</label>
+      <input type="text" id="input5" maxlength="4" class="form-control d-inline-block w-auto" oninput="gerarAutomaticos()"> 
+      Grupo: <input type="text" id="grupo5" maxlength="2" class="form-control d-inline-block w-auto" readonly> 
+      Bicho: <span id="animal5" class="animal-nome"></span>
+    </div>
+
+    <!-- Automáticos -->
+    <div class="mb-2">
+      <label>6º Prêmio:</label>
+      <input type="text" id="auto1" class="form-control d-inline-block w-auto" readonly> 
+      Grupo: <input type="text" id="grupo6" maxlength="2" class="form-control d-inline-block w-auto" readonly> 
+      Bicho: <span id="animal6" class="animal-nome"></span>
+    </div>
+    <div class="mb-2">
+      <label>7º Prêmio:</label>
+      <input type="text" id="auto2" class="form-control d-inline-block w-auto" readonly> 
+      Grupo: <input type="text" id="grupo7" maxlength="2" class="form-control d-inline-block w-auto" readonly> 
+      Bicho: <span id="animal7" class="animal-nome"></span>
+    </div>
+    <div class="mb-2">
+      <label>8º Prêmio:</label>
+      <input type="text" id="auto3" class="form-control d-inline-block w-auto" readonly> 
+      Grupo: <input type="text" id="grupo8" maxlength="2" class="form-control d-inline-block w-auto" readonly> 
+      Bicho: <span id="animal8" class="animal-nome"></span>
+    </div>
+    <div class="mb-2">
+      <label>9º Prêmio:</label>
+      <input type="text" id="auto4" class="form-control d-inline-block w-auto" readonly> 
+      Grupo: <input type="text" id="grupo9" maxlength="2" class="form-control d-inline-block w-auto" readonly> 
+      Bicho: <span id="animal9" class="animal-nome"></span>
+    </div>
+    <div class="mb-2">
+      <label>10º Prêmio:</label>
+      <input type="text" id="auto5" class="form-control d-inline-block w-auto" readonly> 
+      Grupo: <input type="text" id="grupo10" maxlength="2" class="form-control d-inline-block w-auto" readonly> 
+      Bicho: <span id="animal10" class="animal-nome"></span>
+    </div>
+  </div>
+
+  <div class="mb-4">
+    <button class="btn btn-secondary me-2" onclick="gerarNumeros()">Gerar Números</button>
+    <button class="btn btn-primary me-2" onclick="consultatabela()">Consultar</button>
+    <button class="btn btn-danger me-2" onclick="salvatabela()">Salvar</button>
+    <a href="principal.html" class="btn btn-success">Voltar</a>
+  </div>
+
+  <script>
+    const animais = [
+      'AVESTRUZ', 'ÁGUIA', 'BURRO', 'BORBOLETA', 'CACHORRO', 'CABRA',
+      'CARNEIRO', 'CAMELO', 'COBRA', 'COELHO', 'CAVALO', 'ELEFANTE',
+      'GALO', 'GATO', 'JACARÉ', 'LEÃO', 'MACACO', 'PORCO', 'PAVÃO',
+      'PERU', 'TOURO', 'TIGRE', 'URSO', 'VEADO', 'VACA'
+    ];
+
+    function gerarGrupo(valor, grupoId, animalId) {
+      if (/^\d{4}$/.test(valor)) {
+        let ultimosDois = valor.slice(2);
+        let numero = parseInt(ultimosDois, 10);
+        if (numero === 0) numero = 100;
+        const grupo = Math.ceil(numero / 4);
+        document.getElementById(grupoId).value = String(grupo).padStart(2, '0');
+        document.getElementById(animalId).innerText = animais[grupo - 1] || '';
+      } else {
+        document.getElementById(grupoId).value = '';
+        document.getElementById(animalId).innerText = '';
+      }
+    }
+
+    function gerarAutomaticos() {
+      const i = [
+        document.getElementById("input1").value.trim(),
+        document.getElementById("input2").value.trim(),
+        document.getElementById("input3").value.trim(),
+        document.getElementById("input4").value.trim()
+      ];
+      const i5 = document.getElementById("input5").value.trim();
+
+      const auto1 = i.map(v => v.length > 0 ? v[0] : '').join('');
+      const auto2 = i.map(v => v.length > 1 ? v[1] : '').join('');
+      const auto3 = i.map(v => v.length > 2 ? v[2] : '').join('');
+      const auto4 = i.map(v => v.length > 3 ? v[3] : '').join('');
+
+      document.getElementById("auto1").value = auto1;
+      document.getElementById("auto2").value = auto2;
+      document.getElementById("auto3").value = auto3;
+      document.getElementById("auto4").value = auto4;
+
+      const totalSoma = i.concat(i5, auto1, auto2, auto3, auto4)
+        .reduce((soma, val) => soma + (parseFloat(val) || 0), 0);
+
+      const somaFormatada = String(Math.floor(totalSoma) % 10000).padStart(4, '0');
+      document.getElementById("auto5").value = somaFormatada;
+
+      for (let idx = 1; idx <= 10; idx++) {
+        const val = document.getElementById(idx <= 5 ? `input${idx}` : `auto${idx - 5}`).value;
+        gerarGrupo(val, `grupo${idx}`, `animal${idx}`);
+      }
+    }
+
+    function gerarNumeros() {
+      for (let idx = 1; idx <= 5; idx++) {
+        const numero = String(Math.floor(1000 + Math.random() * 9000));
+        document.getElementById(`input${idx}`).value = numero;
+      }
+      gerarAutomaticos();
+    }
+
+    function salvatabela() {
+      const extracao = document.getElementById("area").value;
+      const data = document.getElementById("DataExtracao").value;
+
+      const premios = [];
+      for (let i = 1; i <= 5; i++) {
+        premios.push(document.getElementById(`input${i}`).value.trim());
+      }
+      for (let i = 1; i <= 5; i++) {
+        premios.push(document.getElementById(`auto${i}`).value.trim());
+      }
+
+      fetch("/resultado/salvar", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          extracao: extracao,
+          data: data,
+          premios: premios
+        })
+      })
+      .then(res => res.json())
+      .then(json => {
+        alert(json.message);
+      })
+      .catch(err => {
+        console.error("Erro ao salvar:", err);
+        alert("Erro ao salvar os dados.");
+      });
+    }
+
+    function consultatabela() {
+      alert("Função de consulta ainda não implementada.");
+    }
+
+    function buscarEPreencher() {
+      alert("Função de busca ainda não implementada.");
+    }
+  </script>
+
+</body>
+</html>

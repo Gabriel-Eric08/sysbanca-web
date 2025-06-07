@@ -1,47 +1,52 @@
 <!DOCTYPE html>
 <html lang="pt-br">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="UTF-8" name="viewport" content="width=device-width, initial-scale=1"/>
   <title>Cadastro Cotações das Modalidades</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
 
   <style>
-    .botao-estiloso, .botao-voltar, .botao-salvar {
-      font-size: 18px;
-      color: white;
-      border-radius: 8px;
-      box-shadow: 0 5px 15px rgba(0,0,0,0.2);
-      transition: all 0.3s ease;
-      position: relative;
-      overflow: hidden;
-      border: none;
-      padding: 6px 20px;
-      cursor: pointer;
-    }
+  .botao-estiloso, .botao-voltar, .botao-salvar {
+    font-size: 18px;
+    color: white;
+    border-radius: 8px;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+    border: none;
+    padding: 6px 20px;
+    cursor: pointer;
 
-    .botao-estiloso { background-color: #072749; }
-    .botao-estiloso:hover { background-color: #0056b3; }
-    .botao-voltar { background-color: #1fa53c; }
-    .botao-voltar:hover { background-color: #128d2e; }
-    .botao-salvar { background-color: #be0d0d; }
-    .botao-salvar:hover { background-color: #ec5050; }
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    vertical-align: middle;
+  }
 
-    .botao-estiloso::after, .botao-voltar::after, .botao-salvar::after {
-      content: "";
-      position: absolute;
-      top: 0; left: -100%;
-      width: 100%; height: 100%;
-      background: rgba(255, 255, 255, 0.2);
-      transform: skewX(-20deg);
-      transition: left 0.5s ease;
-    }
+  .botao-estiloso { background-color: #072749; }
+  .botao-estiloso:hover { background-color: #0056b3; }
+  .botao-voltar { background-color: #1fa53c; }
+  .botao-voltar:hover { background-color: #128d2e; }
+  .botao-salvar { background-color: #be0d0d; }
+  .botao-salvar:hover { background-color: #ec5050; }
 
-    .botao-estiloso:hover::after,
-    .botao-voltar:hover::after,
-    .botao-salvar:hover::after {
-      left: 100%;
-    }
-  </style>
+  .botao-estiloso::after, .botao-voltar::after, .botao-salvar::after {
+    content: "";
+    position: absolute;
+    top: 0; left: -100%;
+    width: 100%; height: 100%;
+    background: rgba(255, 255, 255, 0.2);
+    transform: skewX(-20deg);
+    transition: left 0.5s ease;
+  }
+
+  .botao-estiloso:hover::after,
+  .botao-voltar:hover::after,
+  .botao-salvar:hover::after {
+    left: 100%;
+  }
+</style>
 </head>
 <body class="bg-light p-4">
     {% if mensagem %}
@@ -90,50 +95,52 @@
 
         <div class="col-md-6">
           <label for="busca" class="form-label">Buscar Modalidade</label>
-          <input type="text" class="form-control" id="busca" placeholder="Digite a Modalidade">
+          <input type="text" class="form-control" id="busca" placeholder="🔍Digite a Modalidade">
         </div>
 
-        <div class="col-md-4 d-flex align-items-end gap-2">
-          <button type="button" class="botao-estiloso" onclick="adicionarLinha()">Adicionar</button>
-          <button type="button" class="botao-estiloso" onclick="buscarEPreencher()">Buscar</button>
-          <button type="submit" class="botao-voltar">Salvar</button>
-          <a href="principal.html" class="btn botao-salvar">Sair</a>
+        <div class="col-md-4 d-flex align-items-end gap-2 flex-wrap">
+          <button type="button" class="botao-estiloso" onclick="adicionarLinha()">➕ Adicionar</button>
+          <button type="submit" class="botao-voltar">💾 Salvar</button>
+          <a href="{{ url_for('Home.home') }}" class="btn botao-salvar d-inline-flex align-items-center">❌ Sair</a>
         </div>
       </div>
 
-      <!-- INPUTS OCULTOS DINÂMICOS AQUI -->
       <div id="hiddenFields"></div>
     </form>
 
     <table class="table table-bordered table-hover bg-white" id="tabela">
-      <thead class="table-success">
+  <thead class="table-success">
+    <tr>
+      <th>Modalidade</th>
+      <th>Cotação</th>
+      <th>Unidade</th>
+      <th>Limite Por Aposta</th>
+      <th>Limite Por Jogo</th>
+      <th>Ativar Área</th>
+      <th>Ações</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% if modalidades %}
+        {% for m in modalidades %}
         <tr>
-          <th>Modalidade</th>
-          <th>Cotação</th>
-          <th>Unidade</th>
-          <th>Limite Por Aposta</th>
-          <th>Limite Por Jogo</th>
-          <th>Ativar Área</th>
+            <td>{{ m.modalidade }}</td>
+            <td>{{ m.cotacao }}</td>
+            <td>{{ m.unidade }}</td>
+            <td>{{ m.limite_por_aposta }}</td>
+            <td>{{ m.limite_por_jogo }}</td>
+            <td>{{ m.ativar_area }}</td>
+            <td>
+              <button type="button" class="botao-estiloso">✏️ Editar</button>
+              <button type="button" class="botao-salvar" onclick="excluirModalidade(this, '{{ m.modalidade }}')">🗑️ Excluir</button>
+            </td>
         </tr>
-      </thead>
-
-      <tbody>
-        {% if modalidades %}
-            {% for m in modalidades %}
-            <tr>
-                <td>{{ m.modalidade }}</td>
-                <td>{{ m.cotacao }}</td>
-                <td>{{ m.unidade }}</td>
-                <td>{{ m.limite_por_aposta }}</td>
-                <td>{{ m.limite_por_jogo }}</td>
-                <td>{{ m.ativar_area }}</td>
-            </tr>
-            {% endfor %}
-        {% else %}
-            <div class="alert alert-success">Nenhuma modalidade cadastrada.</div>
-        {% endif %}
-    </tbody>
-    </table>
+        {% endfor %}
+  </tbody>
+</table>
+    {% else %}
+        <div class="alert alert-success">Nenhuma modalidade cadastrada.</div>
+    {% endif %}
   </div>
 
   <script>
@@ -159,7 +166,6 @@
       novaLinha.insertCell(4).innerText = LimitePorJogo;
       novaLinha.insertCell(5).innerText = AtivarAreaCotacao;
 
-      // Limpa os campos
       document.getElementById('modalidade').value = '';
       document.getElementById('cotacao').value = '';
       document.getElementById('unidade').value = '';
@@ -207,6 +213,54 @@
         });
       });
     }
+
+    function editarLinha(botao) {
+  const linha = botao.closest("tr");
+  document.getElementById("modalidade").value = linha.cells[0].textContent;
+  document.getElementById("cotacao").value = linha.cells[1].textContent;
+  document.getElementById("unidade").value = linha.cells[2].textContent;
+  document.getElementById("LimitePorAposta").value = linha.cells[3].textContent;
+  document.getElementById("LimitePorJogo").value = linha.cells[4].textContent;
+  document.getElementById("AtivarAreaCotacao").value = linha.cells[5].textContent;
+
+  linha.remove(); // remove a linha após carregar os dados para edição
+}
+
+function excluirLinha(botao) {
+  if (confirm("Tem certeza que deseja excluir esta linha?")) {
+    const linha = botao.closest("tr");
+    linha.remove();
+  }
+}
+
+  function excluirModalidade(botao, modalidade) {
+    if (!confirm(`Tem certeza que deseja excluir a modalidade: ${modalidade}?`)) {
+      return;
+    }
+
+    fetch('/modalidade/', {
+      method: 'DELETE',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ "Modalidade": modalidade })
+    })
+    .then(response => {
+      if (!response.ok) {
+        throw new Error('Erro ao excluir modalidade');
+      }
+      return response.json();
+    })
+    .then(data => {
+      alert(data.message);
+      const linha = botao.closest("tr");
+      linha.remove();
+    })
+    .catch(error => {
+      console.error('Erro:', error);
+      alert('Erro ao excluir modalidade');
+    });
+  }
   </script>
 
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>

@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8">
+
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+
+  <title>Cadastro do Coletor</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 20px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 20px;
+    }
+
+    th, td {
+      border: 1px solid #ddd;
+      padding: 10px;
+      text-align: left;
+    }
+
+    th {
+      background-color: #007BFF;
+      color: white;
+    }
+
+    tbody > tr:nth-child(odd) {
+      background-color: #cfd8dd;
+    }
+
+    input, select, button {
+      padding: 6px;
+      margin: 5px 0;
+      font-size: 16px;
+    }
+
+    .botao-adicionar {
+      background-color: #072749;
+    }
+
+    .botao-atualizar {
+      background-color: #1fa53c;
+    }
+
+    .botao-excluir {
+      background-color: #be0d0d;
+    }
+
+    .botao-salvar {
+      background-color: #ff9900;
+    }
+
+    .botao-voltar {
+      background-color: #6c757d;
+    }
+
+    .botao-adicionar, .botao-atualizar, .botao-excluir, .botao-salvar, .botao-voltar {
+      padding: 5px 20px;
+      font-size: 18px;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+      transition: all 0.3s ease;
+      position: relative;
+      overflow: hidden;
+      margin-right: 10px;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .form-section {
+      margin-bottom: 20px;
+    }
+
+    .botoes {
+      margin-bottom: 20px;
+    }
+
+    .busca-section {
+      margin-bottom: 20px;
+    }
+
+    input[readonly] {
+      background-color: #f1f1f1;
+    }
+  </style>
+</head>
+<body>
+
+ 
+  <h2>Cadastro do Coletor</h2>
+
+  <!-- Formulário para entrada de dados -->
+   
+  <label>Nome</label>
+  <input type="varchar" id="nome" size="20">
+  
+  <label>Área</label>
+  <select id="area" name="area">
+    <option value=""></option>
+    <option value="Area 1">Área 1</option>
+    <option value="Area 2">Área 2</option>
+  </select>&emsp;
+
+  <label>Login</label>
+  <input type="varchar" id="login" size="10">
+
+  <label>Senha</label>
+  <input type="varchar" id="senha" size="10">
+
+  <label>Ativar</label>
+  <select id="AtivarColetor" name="AtivarColetor">
+    <option value=""></option>
+    <option value="sim">Sim</option>
+    <option value="nao">Não</option>
+  </select>&emsp;<br>
+
+  <div class="busca-section">
+    <label>Buscar por Nome: <input type="text" id="buscaNome"></label>
+    <button onclick="buscarLinha()">Buscar</button>
+  </div>
+
+  <div class="botoes">
+    <button class="botao-adicionar" onclick="adicionarLinha()">➕ Adicionar</button>
+    <button class="botao-atualizar" onclick="atualizarLinha()">♻ Atualizar</button>
+    <button class="botao-excluir" onclick="excluirLinha()">🗑 Excluir</button>
+    <button class="botao-salvar" onclick="salvartabela()">💾 Salvar</button>
+    <a href="principal.html"><button class="botao-voltar" onclick="history.back()">↩ Voltar</button></a>
+  </div>
+
+<script>
+  function buscarEPreencher() {
+    const termo = document.getElementById("busca").value.toLowerCase();
+    const linhas = document.querySelectorAll("#tabela tbody tr");
+
+    let encontrado = false;
+
+    linhas.forEach(linha => {
+      const nome = linha.cells[0].textContent.toLowerCase();
+      const area = linha.cells[1].textContent;
+      const login = linha.cells[2].textContent;
+      const senha = linha.cells[3].textContent;
+      const AtivarColetor = linha.cells[4].textContent;
+     
+
+      if (nome.includes(termo)) {
+        document.getElementById("nome").value = linha.cells[0].textContent;
+        document.getElementById("area").value = area;
+        document.getElementById("login").value = login;
+        document.getElementById("senha").value = senha;
+        document.getElementById("AtivarColetor").value = AtivarColetor;
+        
+        
+        
+        encontrado = true;
+      }
+    });
+
+    if (!encontrado) {
+      alert("Coletor não encontrado na tabela.");
+    }
+  }
+</script>
+
+  <!-- Tabela onde os dados serão inseridos -->
+  <table id="tabela">
+    <thead>
+      <tr>
+        <th>Coletor</th>
+        <th>Área</th>
+        <th>Login</th>
+        <th>Senha</th>
+        <th>Ativar Coletor</th>
+      </tr>
+    </thead>
+    <tbody>
+      <!-- Linhas serão adicionadas aqui -->
+    </tbody>
+  </table>
+
+  <script>
+    function adicionarLinha() {
+      const nome = document.getElementById('nome').value;
+      const area = document.getElementById('area').value;
+      const login = document.getElementById('login').value;
+      const senha = document.getElementById('senha').value;
+      const AtivarColetor = document.getElementById('AtivarColetor').value;
+     
+
+      if (nome === '' || area === '' ||login === '' ||senha === '' || AtivarColetor === '') {
+        alert('Preencha todos os campos!');
+        return;
+      }
+
+      const tabela = document.getElementById('tabela').getElementsByTagName('tbody')[0];
+      const novaLinha = tabela.insertRow();
+
+      const celulanome = novaLinha.insertCell(0);
+      const celulaarea = novaLinha.insertCell(1);
+      const celulalogin = novaLinha.insertCell(2);
+      const celulasenha = novaLinha.insertCell(3);
+      const celulaAtivarColetor = novaLinha.insertCell(4);
+      
+
+      celulanome.innerText = nome;
+      celulaarea.innerText = area;
+      celulalogin.innerText = login;
+      celulasenha.innerText = senha;
+      celulaAtivarColetor.innerText = AtivarColetor;
+      
+
+      // Limpa os campos após adicionar
+      document.getElementById('nome').value = '';
+      document.getElementById('area').value = '';
+      document.getElementById('login').value = '';
+      document.getElementById('senha').value = '';
+      document.getElementById('AtivarColetor').value = '';
+      
+      
+    }
+  </script>
+
+</body>
+</html>

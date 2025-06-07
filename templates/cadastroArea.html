@@ -1,12 +1,9 @@
 <!DOCTYPE html>
 <html lang="pt-br">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Cadastro Área</title>
-
-  <!-- Bootstrap 5 CSS -->
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <meta charset="UTF-8" name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>Cadastro das Extrações</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" />
 
   <style>
     .botao-estiloso, .botao-voltar, .botao-salvar {
@@ -21,14 +18,12 @@
       padding: 6px 20px;
       cursor: pointer;
     }
-
     .botao-estiloso { background-color: #072749; }
     .botao-estiloso:hover { background-color: #0056b3; }
     .botao-voltar { background-color: #1fa53c; }
     .botao-voltar:hover { background-color: #128d2e; }
     .botao-salvar { background-color: #be0d0d; }
     .botao-salvar:hover { background-color: #ec5050; }
-
     .botao-estiloso::after, .botao-voltar::after, .botao-salvar::after {
       content: "";
       position: absolute;
@@ -38,7 +33,6 @@
       transform: skewX(-20deg);
       transition: left 0.5s ease;
     }
-
     .botao-estiloso:hover::after,
     .botao-voltar:hover::after,
     .botao-salvar:hover::after {
@@ -52,25 +46,44 @@
 <body class="p-4">
 
   <div class="container">
-    <h2 class="mb-4">Cadastro das Áreas</h2>
-    {% if msg %}
-        <div class="alert alert-info">{{ msg }}</div>
-    {% endif %}
-    <!-- Formulário -->
-    <form action="{{ url_for('Area.salvar_area') }}" method="POST" onsubmit="prepararEnvio()">
-      <div class="row mb-3">
+    <h2 class="mb-4">Cadastro de Extrações</h2>
+
+    <form method="POST" action="{{ url_for('Extracao.salvar_extracao') }}">
+      <div class="row g-3 mb-3">
         <div class="col-md-4">
-          <label for="RegiaoArea" class="form-label">Área</label>
-          <input type="text" id="RegiaoArea" class="form-control" name="RegiaoArea">
+          <label class="form-label" for="extracao">Extração:</label>
+          <input type="text" class="form-control" id="extracao" />
         </div>
+
         <div class="col-md-4">
-          <label for="DescArea" class="form-label">Complemento</label>
-          <input type="text" id="DescArea" class="form-control" name="DescArea">
+          <label class="form-label" for="fechamento">Fechamento:</label>
+          <input type="time" class="form-control" id="fechamento" />
         </div>
+
         <div class="col-md-4">
-          <label for="AtivarArea" class="form-label">Ativar</label>
-          <select id="AtivarArea" name="AtivarArea" class="form-select">
-            <option value=""></option>
+          <label class="form-label" for="premiacao">Premiação:</label>
+          <select id="premiacao" class="form-select">
+            <option value="">--Selecione--</option>
+            <option value="10">10</option>
+            <option value="7">7</option>
+            <option value="5">5</option>
+          </select>
+        </div>
+
+        <div class="col-md-6">
+          <label class="form-label" for="DiasExtracao">Dias da Semana:</label>
+          <select id="DiasExtracao" class="form-select">
+            <option value="">--Selecione--</option>
+            <option value="Segunda, Terça, Quarta, Quinta, Sexta, Sábado, Domingo">Segunda, Terça, Quarta, Quinta, Sexta, Sábado, Domingo</option>
+            <option value="Segunda, Terça, Quarta, Quinta, Sexta, Sabado">Segunda, Terça, Quarta, Quinta, Sexta, Sabado</option>
+            <option value="Quarta, Sábado">Quarta, Sábado</option>
+            <option value="Domingo">Domingo</option>
+          </select>
+        </div>
+
+        <div class="col-md-6">
+          <label class="form-label" for="ativo">Ativo:</label>
+          <select id="ativo" class="form-select">
             <option value="sim">Sim</option>
             <option value="nao">Não</option>
           </select>
@@ -78,139 +91,176 @@
       </div>
 
       <!-- Botões -->
-      <div class="mb-3">
-        <button type="button" class="botao-estiloso" onclick="adicionarLinha()">Adicionar</button>
+      <div class="d-flex flex-wrap gap-2 mb-3">
+        <button type="button" class="botao-estiloso" onclick="adicionarItem()">Adicionar</button>
 
-        <input type="text" id="busca" placeholder="Digite a Área" class="form-control d-inline-block w-auto me-2">
+        <input type="text" id="busca" placeholder="Digite a Extração" class="form-control w-auto" />
+
         <button type="button" class="botao-estiloso" onclick="buscarEPreencher()">Buscar</button>
 
-        <button type="submit" class="botao-voltar">Salvar</button>
+        <button type="submit" class="botao-voltar" onclick="prepararEnvio(event)">Salvar</button>
 
         <a href="principal.html" class="btn botao-salvar">Sair</a>
       </div>
     </form>
 
-    <!-- Tabela -->
-    <table class="table table-bordered table-hover" id="tabela">
+    <table class="table table-bordered table-striped">
       <thead class="table-success">
         <tr>
-          <th>Área</th>
-          <th>Complemento</th>
-          <th>Ativar Área</th>
+          <th>Extração</th>
+          <th>Fechamento</th>
+          <th>Premiação</th>
+          <th>Dias da Semana</th>
+          <th>Ativo</th>
+          <th>Ações</th>
         </tr>
       </thead>
-      <tbody>
-        {% if areas %}
-            {% for a in areas %}
+      <tbody id="tabela-corpo">
+        {% if extracoes %}
+          {% for e in extracoes %}
             <tr>
-                <td>{{ a.area }}</td>
-                <td>{{ a.complemento }}</td>
-                <td>{{ a.ativar_area }}</td>
+              <td>{{ e.extracao }}</td>
+              <td>{{ e.fechamento.strftime("%H:%M") if e.fechamento else '' }}</td>
+              <td>{{ e.premiacao }}</td>
+              <td>{{ e.dias_extracao }}</td>
+              <td>{% if e.ativo in [1, '1', 'sim', 'Sim', 'SIM', True] %}Sim{% else %}Não{% endif %}</td>
+              <td>
+                <button type="button" class="botao-estiloso" onclick="editarLinha(this)">✏️ Editar</button>
+                <button type="button" class="botao-salvar" onclick="excluirExtracao('{{ e.extracao }}', this)">🗑️ Excluir</button>
+              </td>
             </tr>
-            {% endfor %}
-    </tbody>
+          {% endfor %}
         {% else %}
-            <div class="alert alert-success">Nenhuma área cadastrada.</div>
+          <tr>
+            <td colspan="6" class="text-center">Nenhuma extração cadastrada.</td>
+          </tr>
         {% endif %}
+      </tbody>
     </table>
   </div>
 
-  <!-- Scripts -->
   <script>
-    function adicionarLinha() {
-      const RegiaoArea = document.getElementById('RegiaoArea').value;
-      const DescArea = document.getElementById('DescArea').value;
-      const AtivarArea = document.getElementById('AtivarArea').value;
+    function adicionarItem() {
+      const extracao = document.getElementById('extracao').value.trim();
+      const fechamento = document.getElementById('fechamento').value.trim();
+      const premiacao = document.getElementById('premiacao').value.trim();
+      const DiasExtracao = document.getElementById('DiasExtracao').value.trim();
+      const ativo = document.getElementById('ativo').value.trim();
 
-      if (RegiaoArea === '' || DescArea === '' || AtivarArea === '') {
-        alert('Preencha todos os campos!');
+      if (!extracao || !fechamento || !premiacao || !DiasExtracao || !ativo) {
+        alert("Preencha todos os campos!");
         return;
       }
 
-      const tabela = document.getElementById('tabela').getElementsByTagName('tbody')[0];
+      const tabela = document.getElementById('tabela-corpo');
       const novaLinha = tabela.insertRow();
 
-      const celulaRegiaoArea = novaLinha.insertCell(0);
-      const celulaDescArea = novaLinha.insertCell(1);
-      const celulaAtivarArea = novaLinha.insertCell(2);
+      novaLinha.insertCell(0).textContent = extracao;
+      novaLinha.insertCell(1).textContent = fechamento;
+      novaLinha.insertCell(2).textContent = premiacao;
+      novaLinha.insertCell(3).textContent = DiasExtracao;
+      novaLinha.insertCell(4).textContent = ativo;
 
-      celulaRegiaoArea.innerText = RegiaoArea;
-      celulaDescArea.innerText = DescArea;
-      celulaAtivarArea.innerText = AtivarArea;
+      // Coluna ações
+      const celulaAcoes = novaLinha.insertCell(5);
+      celulaAcoes.innerHTML = `
+        <button type="button" class="botao-estiloso" onclick="editarLinha(this)">✏️ Editar</button>
+        <button type="button" class="botao-salvar" onclick="excluirExtracao('${extracao}', this)">🗑️ Excluir</button>
+      `;
 
-      document.getElementById('RegiaoArea').value = '';
-      document.getElementById('DescArea').value = '';
-      document.getElementById('AtivarArea').value = '';
+      // Limpa os campos para nova entrada
+      document.getElementById('extracao').value = "";
+      document.getElementById('fechamento').value = "";
+      document.getElementById('premiacao').value = "";
+      document.getElementById('DiasExtracao').value = "";
+      document.getElementById('ativo').value = "sim";
     }
 
     function buscarEPreencher() {
       const termo = document.getElementById("busca").value.toLowerCase();
-      const linhas = document.querySelectorAll("#tabela tbody tr");
+      const linhas = document.querySelectorAll("#tabela-corpo tr");
 
       let encontrado = false;
 
       linhas.forEach(linha => {
-        const RegiaoArea = linha.cells[0].textContent.toLowerCase();
-        const DescArea = linha.cells[1].textContent;
-        const AtivarArea = linha.cells[2].textContent;
+        const extracao = linha.cells[0].textContent.toLowerCase();
 
-        if (RegiaoArea.includes(termo)) {
-          document.getElementById("RegiaoArea").value = linha.cells[0].textContent;
-          document.getElementById("DescArea").value = DescArea;
-          document.getElementById("AtivarArea").value = AtivarArea;
+        if (extracao.includes(termo)) {
+          document.getElementById("extracao").value = linha.cells[0].textContent;
+          document.getElementById("fechamento").value = linha.cells[1].textContent;
+          document.getElementById("premiacao").value = linha.cells[2].textContent;
+          document.getElementById("DiasExtracao").value = linha.cells[3].textContent;
+          document.getElementById("ativo").value = linha.cells[4].textContent.toLowerCase() === "sim" ? "sim" : "nao";
+
           encontrado = true;
         }
       });
 
       if (!encontrado) {
-        alert("Área não encontrada na tabela.");
+        alert("Extração não encontrada na tabela.");
       }
     }
 
-    function salvartabela() {
-      alert("Salvar implementado separadamente.");
+    function prepararEnvio(event) {
+      event.preventDefault(); // impede o envio para preparar inputs
+
+      const tabela = document.getElementById('tabela-corpo');
+      const form = document.querySelector('form');
+
+      // Remove inputs ocultos antigos para evitar duplicação
+      const inputsExistentes = form.querySelectorAll('input[name^="extracoes"]');
+      inputsExistentes.forEach(input => input.remove());
+
+      for (let i = 0; i < tabela.rows.length; i++) {
+        const cells = tabela.rows[i].cells;
+        const campos = ['extracao', 'fechamento', 'premiacao', 'dias_semana', 'ativo'];
+
+        campos.forEach((campo, idx) => {
+          const input = document.createElement('input');
+          input.type = 'hidden';
+          input.name = `extracoes[${i}][${campo}]`;
+          input.value = cells[idx].textContent.trim();
+          form.appendChild(input);
+        });
+      }
+
+      form.submit(); // envia o formulário após adicionar inputs ocultos
     }
-    
-    function prepararEnvio() {
-  // Limpar inputs escondidos já existentes (se for o caso)
-  const form = document.querySelector('form');
-  const inputsExistentes = document.querySelectorAll('input[name^="areas"]');
-  inputsExistentes.forEach(input => input.remove());
 
-  // Pegar todas as linhas da tabela (exceto header)
-  const linhas = document.querySelectorAll("#tabela tbody tr");
+    function excluirExtracao(extracaoNome, botao) {
+      if (!confirm(`Tem certeza que deseja excluir a extração "${extracaoNome}"?`)) return;
 
-  linhas.forEach((linha, index) => {
-    const area = linha.cells[0].textContent;
-    const complemento = linha.cells[1].textContent;
-    const ativar = linha.cells[2].textContent;
+      fetch('/extracao/', {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ extracao: extracaoNome })
+      })
+      .then(res => res.json())
+      .then(data => {
+        alert(data.message);
+        if (data.message.includes('sucesso')) {
+          // Remove linha da tabela
+          const linha = botao.closest('tr');
+          linha.remove();
+        }
+      })
+      .catch(err => alert('Erro ao excluir: ' + err));
+    }
 
-    // Criar inputs escondidos para enviar os dados
-    const inputArea = document.createElement('input');
-    inputArea.type = 'hidden';
-    inputArea.name = `areas[${index}][area]`;
-    inputArea.value = area;
+    function editarLinha(botao) {
+      const linha = botao.closest('tr');
+      document.getElementById('extracao').value = linha.cells[0].textContent;
+      document.getElementById('fechamento').value = linha.cells[1].textContent;
+      document.getElementById('premiacao').value = linha.cells[2].textContent;
+      document.getElementById('DiasExtracao').value = linha.cells[3].textContent;
+      document.getElementById('ativo').value = linha.cells[4].textContent.toLowerCase() === 'sim' ? 'sim' : 'nao';
 
-    const inputComplemento = document.createElement('input');
-    inputComplemento.type = 'hidden';
-    inputComplemento.name = `areas[${index}][complemento]`;
-    inputComplemento.value = complemento;
-
-    const inputAtivar = document.createElement('input');
-    inputAtivar.type = 'hidden';
-    inputAtivar.name = `areas[${index}][ativar_area]`;
-    inputAtivar.value = ativar;
-
-    form.appendChild(inputArea);
-    form.appendChild(inputComplemento);
-    form.appendChild(inputAtivar);
-  });
-}
-
+      // Remove a linha antiga para evitar duplicação
+      linha.remove();
+    }
   </script>
 
-  
-
-  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>

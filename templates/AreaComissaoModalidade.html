@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8">
+  <title>Cadastro Comissão por Área</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 20px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 20px;
+    }
+
+    th, td {
+      border: 1px solid #ddd;
+      padding: 10px;
+      text-align: left;
+    }
+
+    th {
+      background-color: #007BFF;
+      color: white;
+    }
+
+    tbody > tr:nth-child(odd) {
+      background-color: #cfd8dd;
+    }
+
+    input, select, button {
+      padding: 6px;
+      margin: 5px 0;
+      font-size: 16px;
+    }
+
+    .botao-adicionar {
+      background-color: #072749;
+    }
+
+    .botao-atualizar {
+      background-color: #1fa53c;
+    }
+
+    .botao-excluir {
+      background-color: #be0d0d;
+    }
+
+    .botao-salvar {
+      background-color: #ff9900;
+    }
+
+    .botao-voltar {
+      background-color: #6c757d;
+    }
+
+    .botao-adicionar, .botao-atualizar, .botao-excluir, .botao-salvar, .botao-voltar {
+      padding: 5px 20px;
+      font-size: 18px;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+      transition: all 0.3s ease;
+      position: relative;
+      overflow: hidden;
+      margin-right: 10px;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .form-section {
+      margin-bottom: 20px;
+    }
+
+    .botoes {
+      margin-bottom: 20px;
+    }
+
+    .busca-section {
+      margin-bottom: 20px;
+    }
+
+    input[readonly] {
+      background-color: #f1f1f1;
+    }
+  </style>
+</head>
+<body>
+
+  <h2>Cadastro das Comissões por Área</h2>
+
+  <label>Número</label>
+  <input type="text" id="idAreaComissao" size="4" readonly>
+
+  <label>Área</label>
+  <select id="area">
+    <option value=""></option>
+    <option value="Área 1">Área 1</option>
+    <option value="Área 2">Área 2</option>
+  </select>
+
+  <label>Modalidade</label>
+  <select id="modalidade">
+    <option value=""></option>
+    <option value="Modalidade 1">Modalidade 1</option>
+    <option value="Modalidade 2">Modalidade 2</option>
+  </select>
+
+  <label>Comissão</label>
+  <input type="number" id="comissao" size="4">
+
+  <label>Ativar</label>
+  <select id="AtivarAreaComissao">
+    <option value=""></option>
+    <option value="sim">Sim</option>
+    <option value="nao">Não</option>
+  </select><br>
+
+  <div class="busca-section">
+    <label>Buscar por Nome: <input type="text" id="buscaNome"></label>
+    <button onclick="buscarLinha()">Buscar</button>
+  </div>
+
+  <div class="botoes">
+    <button class="botao-adicionar" onclick="adicionarLinha()">➕ Adicionar</button>
+    <button class="botao-atualizar" onclick="atualizarLinha()">♻ Atualizar</button>
+    <button class="botao-excluir" onclick="excluirLinha()">🗑 Excluir</button>
+    <button class="botao-salvar" onclick="salvartabela()">💾 Salvar</button>
+    <a href="principal.html"><button class="botao-voltar">↩ Voltar</button></a>
+  </div>
+
+  <table id="tabela">
+    <thead>
+      <tr>
+        <th>Número</th>
+        <th>Área</th>
+        <th>Modalidade</th>
+        <th>Comissão</th>
+        <th>Ativar Área Comissão</th>
+      </tr>
+    </thead>
+    <tbody>
+    </tbody>
+  </table>
+
+  <script>
+    let contador = 1;
+
+    function adicionarLinha() {
+      const area = document.getElementById('area').value;
+      const modalidade = document.getElementById('modalidade').value;
+      const comissao = document.getElementById('comissao').value;
+      const AtivarAreaComissao = document.getElementById('AtivarAreaComissao').value;
+
+      if (area === '' || modalidade === '' || comissao === '' || AtivarAreaComissao === '') {
+        alert('Preencha todos os campos!');
+        return;
+      }
+
+      const tabela = document.getElementById('tabela').getElementsByTagName('tbody')[0];
+      const novaLinha = tabela.insertRow();
+
+      const celulaId = novaLinha.insertCell(0);
+      const celulaArea = novaLinha.insertCell(1);
+      const celulaModalidade = novaLinha.insertCell(2);
+      const celulaComissao = novaLinha.insertCell(3);
+      const celulaAtivar = novaLinha.insertCell(4);
+
+      celulaId.innerText = contador;
+      celulaArea.innerText = area;
+      celulaModalidade.innerText = modalidade;
+      celulaComissao.innerText = comissao;
+      celulaAtivar.innerText = AtivarAreaComissao;
+
+      contador++;
+
+      document.getElementById('idAreaComissao').value = '';
+      document.getElementById('area').value = '';
+      document.getElementById('modalidade').value = '';
+      document.getElementById('comissao').value = '';
+      document.getElementById('AtivarAreaComissao').value = '';
+      document.getElementById('buscaNome').value = '';
+    }
+
+    function buscarLinha() {
+      const termo = document.getElementById("buscaNome").value.toLowerCase();
+      const linhas = document.querySelectorAll("#tabela tbody tr");
+
+      let encontrado = false;
+
+      linhas.forEach(linha => {
+        const numero = linha.cells[0].textContent;
+        const area = linha.cells[1].textContent;
+        const modalidade = linha.cells[2].textContent;
+        const comissao = linha.cells[3].textContent;
+        const ativar = linha.cells[4].textContent;
+
+        if (area.toLowerCase().includes(termo)) {
+          document.getElementById("idAreaComissao").value = numero;
+          document.getElementById("area").value = area;
+          document.getElementById("modalidade").value = modalidade;
+          document.getElementById("comissao").value = comissao;
+          document.getElementById("AtivarAreaComissao").value = ativar;
+          encontrado = true;
+        }
+      });
+
+      if (!encontrado) {
+        alert("Área não encontrada na tabela.");
+      }
+    }
+
+    function atualizarLinha() {
+      const id = document.getElementById('idAreaComissao').value;
+      const linhas = document.querySelectorAll("#tabela tbody tr");
+
+      linhas.forEach(linha => {
+        if (linha.cells[0].textContent === id) {
+          linha.cells[1].textContent = document.getElementById('area').value;
+          linha.cells[2].textContent = document.getElementById('modalidade').value;
+          linha.cells[3].textContent = document.getElementById('comissao').value;
+          linha.cells[4].textContent = document.getElementById('AtivarAreaComissao').value;
+        }
+      });
+
+      document.getElementById('idAreaComissao').value = '';
+      document.getElementById('area').value = '';
+      document.getElementById('modalidade').value = '';
+      document.getElementById('comissao').value = '';
+      document.getElementById('AtivarAreaComissao').value = '';
+    }
+
+    function excluirLinha() {
+      const id = document.getElementById('idAreaComissao').value;
+      const linhas = document.querySelectorAll("#tabela tbody tr");
+
+      linhas.forEach((linha, index) => {
+        if (linha.cells[0].textContent === id) {
+          linha.remove();
+        }
+      });
+
+      document.getElementById('idAreaComissao').value = '';
+      document.getElementById('area').value = '';
+      document.getElementById('modalidade').value = '';
+      document.getElementById('comissao').value = '';
+      document.getElementById('AtivarAreaComissao').value = '';
+    }
+
+    function salvartabela() {
+      alert("Função de salvar ainda não implementada.");
+    }
+  </script>
+
+</body>
+</html>
