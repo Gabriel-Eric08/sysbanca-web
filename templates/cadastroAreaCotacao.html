@@ -6,21 +6,13 @@
 
   <!-- Bootstrap 5 CSS -->
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" />
-
-  <!-- Choices.js CSS -->
-  <link
-    rel="stylesheet"
-    href="https://cdn.jsdelivr.net/npm/choices.js/public/assets/styles/choices.min.css"
-  />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/choices.js/public/assets/styles/choices.min.css" />
 
   <style>
     tbody > tr:nth-child(odd) {
       background-color: #cfd8dd;
     }
-
-    .botao-estiloso,
-    .botao-voltar,
-    .botao-salvar {
+    .botao-estiloso, .botao-voltar, .botao-salvar {
       padding: 5px 20px;
       font-size: 18px;
       color: white;
@@ -32,30 +24,12 @@
       position: relative;
       overflow: hidden;
     }
-
-    .botao-estiloso {
-      background-color: #072749;
-    }
-    .botao-estiloso:hover {
-      background-color: #0056b3;
-      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
-    }
-
-    .botao-voltar {
-      background-color: #1fa53c;
-    }
-    .botao-voltar:hover {
-      background-color: #14802a;
-      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
-    }
-
-    .botao-salvar {
-      background-color: #be0d0d;
-    }
-    .botao-salvar:hover {
-      background-color: #ec5050;
-      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
-    }
+    .botao-estiloso { background-color: #072749; }
+    .botao-estiloso:hover { background-color: #0056b3; box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3); }
+    .botao-voltar { background-color: #1fa53c; }
+    .botao-voltar:hover { background-color: #14802a; box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3); }
+    .botao-salvar { background-color: #be0d0d; }
+    .botao-salvar:hover { background-color: #ec5050; box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3); }
   </style>
 </head>
 <body class="container py-4">
@@ -70,18 +44,20 @@
 
       <div class="col-md-4">
         <label class="form-label">Área</label>
-          <select id="area" name="area[]" multiple>
-            <option value="Área 1">Área 1</option>
-            <option value="Área 2">Área 2</option>
-           </select>
+        <select id="area" name="area[]" multiple>
+          {% for area in areas %}
+            <option value="{{ area.regiao_area }}">{{ area.regiao_area }}</option>
+          {% endfor %}
+        </select>
       </div>
 
       <div class="col-md-3">
         <label class="form-label" for="extracao">Extração</label>
         <select id="extracao" name="extracao" class="form-select">
           <option value=""></option>
-          <option value="Extração 1">Extração 1</option>
-          <option value="Extração 2">Extração 2</option>
+          {% for extracao in extracoes %}
+            <option value="{{ extracao.extracao }}">{{ extracao.extracao }}</option>
+          {% endfor %}
         </select>
       </div>
 
@@ -89,8 +65,9 @@
         <label class="form-label" for="modalidade">Modalidade</label>
         <select id="modalidade" name="modalidade" class="form-select">
           <option value=""></option>
-          <option value="Modalidade 1">Modalidade 1</option>
-          <option value="Modalidade 2">Modalidade 2</option>
+          {% for modalidade in modalidades %}
+            <option value="{{ modalidade.modalidade }}">{{ modalidade.modalidade }}</option>
+          {% endfor %}
         </select>
       </div>
 
@@ -111,16 +88,11 @@
 
     <div class="mt-4">
       <button type="button" class="botao-estiloso" onclick="adicionarLinha()">Adicionar</button>
-      <input
-        type="text"
-        id="busca"
-        placeholder="Digite a Área"
-        class="form-control d-inline w-auto ms-2"
-      />
+      <input type="text" id="busca" placeholder="Digite a Área" class="form-control d-inline w-auto ms-2" />
       <button type="button" class="botao-estiloso ms-2" onclick="buscarEPreencher()">Buscar</button>
       <input type="hidden" name="linhas" id="linhasInput" />
       <button type="submit" class="botao-voltar ms-2">Salvar</button>
-      <a href="principal.html"><button type="button" class="botao-salvar ms-2">Sair</button></a>
+      <a href="{{ url_for('Home.home') }}"><button type="button" class="botao-salvar ms-2">Sair</button></a>
     </div>
   </form>
 
@@ -136,31 +108,28 @@
       </tr>
     </thead>
     <tbody>
-  {% for area in areasCotacao %}
-  <tr>
-    <td>{{ area.idCotArea if area.idCotArea else loop.index }}</td>
-    <td>{{ area.area }}</td>
-    <td>{{ area.extracao }}</td>
-    <td>{{ area.modalidade }}</td>
-    <td>{{ area.cotacao }}</td>
-    <td>{{ area.ativar_area_cotacao }}</td>
-  </tr>
-  {% else %}
-  <tr>
-    <td colspan="6">
-      <div class="alert alert-success">Nenhuma areaCotacao cadastrada.</div>
-    </td>
-  </tr>
-  {% endfor %}
-</tbody>
+      {% for area in areasCotacao %}
+      <tr>
+        <td>{{ area.idCotArea if area.idCotArea else loop.index }}</td>
+        <td>{{ area.area }}</td>
+        <td>{{ area.extracao }}</td>
+        <td>{{ area.modalidade }}</td>
+        <td>{{ area.cotacao }}</td>
+        <td>{{ area.ativar_area_cotacao }}</td>
+        <td>
+          <button class="btn btn-sm btn-warning me-2" disabled>Editar</button>
+          <button class="btn btn-sm btn-danger" onclick="excluirLinhaServidor('{{ area.id }}', this)">Excluir</button>
+        </td>
+      </tr>
+    </tbody>
+    {% else %}
+    <div colspan="6"><div class="alert alert-success"> Nenhuma areaCotacao cadastrada.</div>
+      {% endfor %}
   </table>
 
-  <!-- Bootstrap JS -->
+  <!-- Scripts -->
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-
-  <!-- Choices.js JS -->
   <script src="https://cdn.jsdelivr.net/npm/choices.js/public/assets/scripts/choices.min.js"></script>
-
   <script>
     const areaSelect = document.getElementById("area");
     const choices = new Choices(areaSelect, {
@@ -168,12 +137,6 @@
       placeholder: true,
       placeholderValue: "Selecione uma ou mais áreas",
       searchPlaceholderValue: "Buscar...",
-    });
-
-    const areas = ["Área 1", "Área 2"];
-    areas.forEach((area) => {
-      const option = new Option(area, area);
-      areaSelect.add(option);
     });
 
     function adicionarLinha() {
@@ -184,21 +147,13 @@
       const cotacao = document.getElementById("cotacao").value;
       const ativar_area_cotacao = document.getElementById("ativar_area_cotacao").value;
 
-      if (
-        !idCotArea ||
-        !areaSelecionadas ||
-        !extracao ||
-        !modalidade ||
-        !cotacao ||
-        !ativar_area_cotacao
-      ) {
+      if (!idCotArea || !areaSelecionadas || !extracao || !modalidade || !cotacao || !ativar_area_cotacao) {
         alert("Preencha todos os campos!");
         return;
       }
 
       const tabela = document.querySelector("#tabela tbody");
       const novaLinha = tabela.insertRow();
-
       novaLinha.insertCell(0).innerText = idCotArea;
       novaLinha.insertCell(1).innerText = areaSelecionadas;
       novaLinha.insertCell(2).innerText = extracao;
@@ -206,7 +161,6 @@
       novaLinha.insertCell(4).innerText = cotacao;
       novaLinha.insertCell(5).innerText = ativar_area_cotacao;
 
-      // Limpa os campos
       document.getElementById("idCotArea").value = "";
       choices.removeActiveItems();
       document.getElementById("extracao").value = "";
@@ -220,7 +174,6 @@
       const termo = document.getElementById("busca").value.toLowerCase();
       const linhas = document.querySelectorAll("#tabela tbody tr");
       let encontrado = false;
-
       linhas.forEach((linha) => {
         const area = linha.cells[1].textContent.toLowerCase();
         if (area.includes(termo)) {
@@ -234,16 +187,12 @@
           encontrado = true;
         }
       });
-
-      if (!encontrado) {
-        alert("Área não encontrada na tabela.");
-      }
+      if (!encontrado) alert("Área não encontrada na tabela.");
     }
 
     document.getElementById("formCotacao").addEventListener("submit", function (e) {
       const linhas = [];
       const tabela = document.querySelectorAll("#tabela tbody tr");
-
       tabela.forEach((linha) => {
         const dados = {
           idCotArea: linha.cells[0].innerText,
@@ -255,9 +204,21 @@
         };
         linhas.push(dados);
       });
-
       document.getElementById("linhasInput").value = JSON.stringify(linhas);
     });
+
+    function excluirLinhaServidor(id, botao) {
+      if (!confirm("Tem certeza que deseja excluir esta cotação?")) return;
+      fetch(`/areacotacao/deletar/${id}`, { method: "DELETE" })
+        .then((res) => {
+          if (res.ok) botao.closest("tr").remove();
+          else alert("Erro ao excluir. Tente novamente.");
+        })
+        .catch((err) => {
+          console.error(err);
+          alert("Erro na requisição.");
+        });
+    }
   </script>
 </body>
 </html>

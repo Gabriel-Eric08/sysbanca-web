@@ -1,90 +1,137 @@
-from flask import Blueprint, render_template, request, redirect, url_for, jsonify
-from models.models import Area
-from util.checkCreds import checkCreds
+from flask import Blueprint, render_template, request, jsonify
 from db_config import db
+from models.models import Area, Relatorio
+from datetime import datetime
 
 area_route = Blueprint('Area', __name__)
 
-@area_route.route('/')
+# GET - Página de cadastro
+@area_route.route('/', methods=['GET'])
 def area_page():
+    areas = Area.query.order_by(Area.regiao_area).all()
+    return render_template('CadastroArea.html', areas=areas)
 
-    check_creds = checkCreds()
-    if check_creds['success'] == True:
-        areas = Area.query.all()
-        msg = request.args.get('msg')
-        return render_template('cadastroArea.html', areas=areas, msg=msg)
-    else:
-        return check_creds['message']
-
+# POST - Salvar várias áreas
 @area_route.route('/', methods=['POST'])
 def salvar_area():
-    areas = []
-    i = 0
+    dados = request.get_json()
+    if not dados:
+        return jsonify({'message': 'Nenhum dado recebido.', 'success': False}), 400
 
-    while True:
-        regiao_area = request.form.get(f'areas[{i}][area]')
-        desc_area = request.form.get(f'areas[{i}][complemento]')
-        ativar_area = request.form.get(f'areas[{i}][ativar]')  # corrigido aqui
+    usuario = request.cookies.get('username', 'Desconhecido')
+    areas_adicionadas = 0
 
-        if regiao_area is None:
-            break
+    for area in dados:
+        regiao_area = area.get('regiao_area', '').strip()
+        desc_area = area.get('desc_area', '').strip()
+        ativar_area = area.get('ativar_area', False)
 
-        areas.append({
-            'regiao_area': regiao_area.strip().lower(),
-            'desc_area': desc_area.strip() if desc_area else '',
-            'ativar_area': ativar_area.strip().lower() if ativar_area else ''
-        })
-        i += 1
+        # Verifica se a área já existe com base no nome (regiao_area)
+        area_existente = Area.query.filter_by(regiao_area=regiao_area).first()
+        if area_existente:
+            continue  # Pula se já existe
 
-    if not areas:
-        return redirect(url_for('Area.area_page', msg='Nenhuma área para salvar'))
-
-    salvas = 0
-    for item in areas:
-        if not item['regiao_area'] or not item['desc_area'] or item['ativar_area'] not in ['sim', 'nao']:
-            continue
-
-        # Verifica se já existe essa região (usando func.lower para comparação case insensitive)
-        existe = Area.query.filter(
-            db.func.lower(Area.regiao_area) == item['regiao_area']
-        ).first()
-
-        if existe:
-            continue
-
-        nova = Area(
-            regiao_area=item['regiao_area'],
-            desc_area=item['desc_area'],
-            ativar_area=item['ativar_area']
+        nova_area = Area(
+            regiao_area=regiao_area,
+            desc_area=desc_area,
+            ativar_area=ativar_area
         )
-        db.session.add(nova)
-        salvas += 1
+        db.session.add(nova_area)
+        db.session.flush()
 
-    if salvas > 0:
-        db.session.commit()
-        return redirect(url_for('Area.area_page', msg=f'{salvas} área(s) cadastrada(s) com sucesso'))
-    else:
-        return redirect(url_for('Area.area_page', msg='Nenhuma nova área foi cadastrada (todas já existiam)'))
+        relatorio = Relatorio(
+            usuario=usuario,
+            tabela="tb_Area",
+            acao="Inserção",
+            id_linha=nova_area.id,
+            linha=f'{{"regiao_area":"{regiao_area}", "desc_area":"{desc_area}", "ativar_area":"{ativar_area}"}}',
+            data=datetime.now().date(),
+            horario=datetime.now().time()
+        )
+        db.session.add(relatorio)
+        areas_adicionadas += 1
+
+    if areas_adicionadas == 0:
+        return jsonify({'message': 'Nenhuma nova área foi adicionada. Todas já existem.', 'success': False}), 200
+
+    db.session.commit()
+    return jsonify({'message': f'{areas_adicionadas} área(s) salvas com sucesso!', 'success': True}), 201
 
 
+# DELETE - Excluir área por ID
 @area_route.route('/', methods=['DELETE'])
 def excluir_area():
-    data = request.get_json()
-    area_nome = data.get('Area')
+    dados = request.get_json()
+    area_id = dados.get('id')
 
-    if not area_nome:
-        return jsonify({'message': 'Campo "Area" é obrigatório.'}), 400
+    if not area_id:
+        return jsonify({'message': 'ID não fornecido.', 'success': False}), 400
 
-    try:
-        # Corrigido para 'regiao_area' em vez de 'area'
-        area = Area.query.filter_by(regiao_area=area_nome).first()
-        if not area:
-            return jsonify({'message': 'Área não encontrada.'}), 404
+    area = Area.query.get(area_id)
+    if not area:
+        return jsonify({'message': 'Área não encontrada.', 'success': False}), 404
 
-        db.session.delete(area)
-        db.session.commit()
+    usuario = request.cookies.get('username', 'Desconhecido')
 
-        return jsonify({'message': f'Área "{area_nome}" excluída com sucesso!'})
-    except Exception as e:
-        db.session.rollback()
-        return jsonify({'message': f'Erro ao excluir: {str(e)}'}), 500
+    relatorio = Relatorio(
+        usuario=usuario,
+        tabela="tb_Area",
+        acao="Exclusão",
+        id_linha=area.id,
+        linha=f'{{"regiao_area":"{area.regiao_area}", "desc_area":"{area.desc_area}", "ativar_area":"{area.ativar_area}"}}',
+        data=datetime.now().date(),
+        horario=datetime.now().time()
+    )
+    db.session.add(relatorio)
+
+    db.session.delete(area)
+    db.session.commit()
+    return jsonify({'message': 'Área excluída com sucesso!', 'success': True}), 200
+
+# GET - Listar todas áreas como JSON
+@area_route.route('/json', methods=['GET'])
+def listar_areas_json():
+    areas = Area.query.all()
+    lista = [{
+        'id': a.id,
+        'regiao_area': a.regiao_area,
+        'desc_area': a.desc_area,
+        'ativar_area': a.ativar_area
+    } for a in areas]
+
+    return jsonify(lista), 200
+
+@area_route.route('/editar', methods=['PUT'])
+def editar_area():
+    dados = request.get_json()
+    area_id = dados.get('id')
+    regiao_area = dados.get('regiao_area', '').strip()
+    desc_area = dados.get('desc_area', '').strip()
+    ativar_area = dados.get('ativar_area', '').strip().lower() in ['sim', '1', 'true']
+
+    if not area_id:
+        return jsonify({'message': 'ID não fornecido.', 'success': False}), 400
+
+    area = Area.query.get(area_id)
+    if not area:
+        return jsonify({'message': 'Área não encontrada.', 'success': False}), 404
+
+    area.regiao_area = regiao_area
+    area.desc_area = desc_area
+    area.ativar_area = ativar_area
+
+    usuario = request.cookies.get('username', 'Desconhecido')
+
+    relatorio = Relatorio(
+        usuario=usuario,
+        tabela="tb_Area",
+        acao="Edição",
+        id_linha=area.id,
+        linha=f'{{"regiao_area":"{regiao_area}", "desc_area":"{desc_area}", "ativar_area":"{ativar_area}"}}',
+        data=datetime.now().date(),
+        horario=datetime.now().time()
+    )
+    db.session.add(relatorio)
+    db.session.commit()
+
+    return jsonify({'message': 'Área atualizada com sucesso!', 'success': True}), 200

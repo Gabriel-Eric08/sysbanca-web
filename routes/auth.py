@@ -1,5 +1,5 @@
 from flask import  Flask, Blueprint, render_template, request, redirect, url_for, flash, make_response
-from models.models import User
+from models.models import Vendedor, User
 from db_config import db
 
 auth_route = Blueprint('Auth', __name__)
@@ -23,11 +23,11 @@ def create_account():
         return {"message": "Todos os campos são obrigatórios!"}, 400
 
     # Verificar se usuário já existe
-    existing_user = User.query.filter_by(username=username).first()
+    existing_user = Vendedor.query.filter_by(username=username).first()
     if existing_user:
         return {"message": "Nome de usuário já está em uso."}, 409
 
-    nova_conta = User(
+    nova_conta = Vendedor(
         nome=nome,
         username=username,
         senha=senha,
@@ -54,6 +54,7 @@ def login():
     if not user or user.senha != senha:
         return {"message": "Credenciais inválidas!"}, 401
 
+    # Credenciais válidas — define os cookies e redireciona
     response = make_response(redirect(url_for('Home.home')))
     response.set_cookie('username', username)
     response.set_cookie('senha', senha)
@@ -80,7 +81,7 @@ def validate_credentials():
             "message": "Usuário e senha são obrigatórios!"
         }, 400
 
-    user = User.query.filter_by(username=username).first()
+    user = Vendedor.query.filter_by(username=username).first()
 
     if not user:
         return {

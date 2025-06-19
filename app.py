@@ -1,7 +1,6 @@
 import logging
 from flask import Flask, request, redirect
 from routes.home import home_route
-from routes.users import users_route
 from routes.modalidade import modalidade_route
 from routes.regiao import regiao_route
 from routes.area import area_route
@@ -14,6 +13,9 @@ from routes.resultado import resultado_route
 from routes.coletor import coletor_route
 from routes.areaextracao import area_extracao_route
 from routes.areacomissaomodalidade import area_comissao_route
+from routes.apostas import aposta_route
+from routes.relatorio import relatorio_route
+from routes.admin import admin_route
 
 app = Flask(__name__)
 init_db(app)
@@ -37,6 +39,9 @@ def health():
     return "OK"
     
 app.register_blueprint(auth_route)
+app.register_blueprint(admin_route, url_prefix='/admin')
+app.register_blueprint(relatorio_route, url_prefix='/relatorio')
+app.register_blueprint(aposta_route, url_prefix='/aposta')
 app.register_blueprint(area_comissao_route, url_prefix='/areacomissaomodalidade')
 app.register_blueprint(area_extracao_route, url_prefix='/areaextracao')
 app.register_blueprint(coletor_route, url_prefix='/coletor')
@@ -47,7 +52,6 @@ app.register_blueprint(home_route, url_prefix='/home')
 app.register_blueprint(modalidade_route, url_prefix='/modalidade')
 app.register_blueprint(regiao_route, url_prefix='/regiao')
 app.register_blueprint(area_route, url_prefix='/area')
-app.register_blueprint(users_route, url_prefix='/users')
 app.register_blueprint(extracao_route, url_prefix='/extracao')
 
 if __name__ == "__main__":

@@ -48,12 +48,10 @@
         <label for="regiao" class="form-label">Região</label>
         <input type="text" class="form-control" id="regiao" />
       </div>
-
       <div class="col-md-3">
         <label for="desc_regiao" class="form-label">Descrição</label>
         <input type="text" class="form-control" id="desc_regiao" />
       </div>
-
       <div class="col-md-2">
         <label for="ativo" class="form-label">Ativar</label>
         <select class="form-select" id="ativo">
@@ -62,7 +60,6 @@
           <option value="nao">Não</option>
         </select>
       </div>
-
       <div class="col-md-4">
         <label for="busca" class="form-label">Buscar Região</label>
         <input type="text" class="form-control" id="busca" placeholder="🔍 Digite a Região" />
@@ -72,7 +69,7 @@
     <div class="d-flex gap-3 mb-4">
       <button type="button" class="botao-estiloso" onclick="adicionarLinha()">➕ Adicionar</button>
       <button type="button" class="botao-voltar" onclick="salvartabela()">💾 Salvar</button>
-      <a href="principal.html" class="btn botao-salvar">🚪 Sair</a>
+      <a href="{{ url_for('Home.home') }}" class="btn botao-salvar">🚪 Sair</a>
     </div>
 
     <table class="table table-bordered table-hover bg-white" id="tabela">
@@ -86,23 +83,23 @@
       </thead>
       <tbody>
         {% if regioes %}
-          {% for r in regioes %}
-          <tr>
-            <td>{{ r.regiao }}</td>
-            <td>{{ r.desc_regiao }}</td>
-            <td>{{ 'Sim' if r.ativo else 'Não' }}</td>
-            <td>
-              <button type="button" class="botao-estiloso">✏️ Editar</button>
-                <button type="button" class="botao-salvar ms-2" onclick="excluirLinhaServidor('{{ r.regiao }}', this)">🗑️ Excluir</button>
-            </td>
-          </tr>
-          {% endfor %}
+        {% for r in regioes %}
+        <tr>
+          <td>{{ r.regiao }}</td>
+          <td>{{ r.desc_regiao }}</td>
+          <td>{{ 'Sim' if r.ativo else 'Não' }}</td>
+          <td>
+            <button type="button" class="botao-estiloso" onclick="editarLinhaInline(this)">✏️ Editar</button>
+            <button type="button" class="botao-salvar ms-2" onclick="excluirLinhaServidor('{{ r.regiao }}', this)">🗑️ Excluir</button>
+          </td>
+        </tr>
+        {% endfor %}
         {% endif %}
       </tbody>
     </table>
 
     {% if not regioes %}
-      <div class="alert alert-success">Nenhuma região cadastrada.</div>
+    <div class="alert alert-success">Nenhuma região cadastrada.</div>
     {% endif %}
   </div>
 
@@ -120,55 +117,93 @@
       const tabela = document.getElementById('tabela').querySelector('tbody');
       const novaLinha = tabela.insertRow();
 
-      novaLinha.insertCell(0).textContent = regiao;
-      novaLinha.insertCell(1).textContent = desc_regiao;
-      novaLinha.insertCell(2).textContent = ativo;
-
-      const acoesCell = novaLinha.insertCell(3);
-      const btnEditar = document.createElement('button');
-      btnEditar.textContent = '✏️ Editar';
-      btnEditar.className = 'botao-estiloso';
-      btnEditar.onclick = function () { editarLinha(btnEditar); };
-
-      const btnExcluir = document.createElement('button');
-      btnExcluir.textContent = '🗑️ Excluir';
-      btnExcluir.className = 'botao-salvar ms-2';
-      btnExcluir.onclick = function () { excluirLinha(btnExcluir); };
-
-      acoesCell.appendChild(btnEditar);
-      acoesCell.appendChild(btnExcluir);
+      novaLinha.innerHTML = `
+        <td>${regiao}</td>
+        <td>${desc_regiao}</td>
+        <td>${ativo === 'sim' ? 'Sim' : 'Não'}</td>
+        <td>
+          <button type="button" class="botao-estiloso" onclick="editarLinhaInline(this)">✏️ Editar</button>
+          <button type="button" class="botao-salvar ms-2" onclick="excluirLinha(this)">🗑️ Excluir</button>
+        </td>
+      `;
 
       document.getElementById('regiao').value = '';
       document.getElementById('desc_regiao').value = '';
       document.getElementById('ativo').value = '';
     }
 
-    function buscarEPreencher() {
-      const termo = document.getElementById("busca").value.toLowerCase();
-      const linhas = document.querySelectorAll("#tabela tbody tr");
-      let encontrado = false;
+    function editarLinhaInline(botao) {
+      const linha = botao.closest("tr");
 
-      linhas.forEach(linha => {
-        const regiao = linha.cells[0].textContent.toLowerCase();
-        if (regiao.includes(termo)) {
-          document.getElementById("regiao").value = linha.cells[0].textContent;
-          document.getElementById("desc_regiao").value = linha.cells[1].textContent;
-          document.getElementById("ativo").value = linha.cells[2].textContent;
-          encontrado = true;
-        }
-      });
+      const regiao = linha.cells[0].textContent.trim();
+      const desc_regiao = linha.cells[1].textContent.trim();
+      const ativo = linha.cells[2].textContent.trim().toLowerCase();
 
-      if (!encontrado) {
-        alert("Região não encontrada na tabela.");
-      }
+      linha.innerHTML = `
+        <td><input type="text" class="form-control" value="${regiao}"></td>
+        <td><input type="text" class="form-control" value="${desc_regiao}" /></td>
+        <td>
+          <select class="form-select">
+            <option value="sim" ${ativo === 'sim' ? 'selected' : ''}>Sim</option>
+            <option value="nao" ${ativo === 'nao' ? 'selected' : ''}>Não</option>
+          </select>
+        </td>
+        <td>
+          <button type="button" class="botao-voltar" onclick="salvarEdicao(this)">💾 Salvar</button>
+          <button type="button" class="botao-salvar ms-2" onclick="cancelarEdicao(this, '${regiao}', '${desc_regiao}', '${ativo}')">❌ Cancelar</button>
+        </td>
+      `;
     }
 
-    function editarLinha(botao) {
+    function cancelarEdicao(botao, regiao, desc_regiao, ativo) {
       const linha = botao.closest("tr");
-      document.getElementById("regiao").value = linha.cells[0].textContent;
-      document.getElementById("desc_regiao").value = linha.cells[1].textContent;
-      document.getElementById("ativo").value = linha.cells[2].textContent;
-      linha.remove(); // Remove para permitir edição ao adicionar novamente
+
+      linha.innerHTML = `
+        <td>${regiao}</td>
+        <td>${desc_regiao}</td>
+        <td>${ativo === 'sim' ? 'Sim' : 'Não'}</td>
+        <td>
+          <button type="button" class="botao-estiloso" onclick="editarLinhaInline(this)">✏️ Editar</button>
+          <button type="button" class="botao-salvar ms-2" onclick="excluirLinhaServidor('${regiao}', this)">🗑️ Excluir</button>
+        </td>
+      `;
+    }
+
+    function salvarEdicao(botao) {
+      const linha = botao.closest("tr");
+
+      const regiao = linha.cells[0].querySelector("input").value.trim();
+      const desc_regiao = linha.cells[1].querySelector("input").value.trim();
+      const ativo = linha.cells[2].querySelector("select").value;
+
+      if (!desc_regiao || !ativo) {
+        alert("Preencha todos os campos.");
+        return;
+      }
+
+      fetch('/regiao/editar', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ regiao, desc_regiao, ativo })
+      })
+      .then(res => res.json())
+      .then(data => {
+        alert(data.message || "Região atualizada com sucesso!");
+
+        linha.innerHTML = `
+          <td>${regiao}</td>
+          <td>${desc_regiao}</td>
+          <td>${ativo === 'sim' ? 'Sim' : 'Não'}</td>
+          <td>
+            <button type="button" class="botao-estiloso" onclick="editarLinhaInline(this)">✏️ Editar</button>
+            <button type="button" class="botao-salvar ms-2" onclick="excluirLinhaServidor('${regiao}', this)">🗑️ Excluir</button>
+          </td>
+        `;
+      })
+      .catch(err => {
+        console.error("Erro ao salvar edição:", err);
+        alert("Erro ao salvar edição.");
+      });
     }
 
     function excluirLinha(botao) {
@@ -178,59 +213,74 @@
       }
     }
 
+    function excluirLinhaServidor(regiao, botao) {
+      if (confirm(`Tem certeza que deseja excluir a região "${regiao}"?`)) {
+        fetch('/regiao/', {
+          method: 'DELETE',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ Regiao: regiao })
+        })
+        .then(res => res.json())
+        .then(data => {
+          alert(data.message);
+          botao.closest("tr").remove();
+        })
+        .catch(err => {
+          console.error("Erro ao excluir:", err);
+          alert("Erro ao excluir região.");
+        });
+      }
+    }
+
     function salvartabela() {
+  const linhas = document.querySelectorAll("#tabela tbody tr");
+  const regioes = [];
+
+  linhas.forEach(linha => {
+    // Ignora linhas em modo edição (com input/select visível)
+    if (linha.querySelector("input") || linha.querySelector("select")) return;
+
+    const regiao = linha.cells[0].textContent.trim();
+    const desc_regiao = linha.cells[1].textContent.trim();
+    const ativo = linha.cells[2].textContent.trim().toLowerCase();
+
+    // Evita salvar linhas vazias
+    if (!regiao || !desc_regiao || (ativo !== 'sim' && ativo !== 'não')) return;
+
+    regioes.push({ regiao, desc_regiao, ativo });
+  });
+
+  if (regioes.length === 0) {
+    alert("Nenhuma linha válida para salvar.");
+    return;
+  }
+
+  fetch('/regiao/', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ regioes })
+  })
+  .then(res => res.json())
+  .then(data => {
+    alert(data.message);
+    location.reload();
+  })
+  .catch(err => {
+    console.error("Erro ao salvar regiões:", err);
+    alert("Erro ao salvar regiões.");
+  });
+}
+    function filtrarTabela() {
+      const termo = document.getElementById("busca").value.toLowerCase();
       const linhas = document.querySelectorAll("#tabela tbody tr");
-      const regioes = [];
 
       linhas.forEach(linha => {
-        const regiao = linha.cells[0].textContent.trim();
-        const desc_regiao = linha.cells[1].textContent.trim();
-        const ativo = linha.cells[2].textContent.trim();
-
-        regioes.push({ regiao, desc_regiao, ativo });
-      });
-
-      fetch("/regiao/", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({ regioes })
-      })
-      .then(response => response.json())
-      .then(data => {
-        alert(data.message);
-        location.reload();
-      })
-      .catch(error => {
-        console.error("Erro ao salvar regiões:", error);
+        const regiao = linha.cells[0].textContent.toLowerCase();
+        linha.style.display = regiao.includes(termo) ? "" : "none";
       });
     }
-    function excluirLinhaServidor(regiao, botao) {
-    if (confirm(`Tem certeza que deseja excluir a região "${regiao}"?`)) {
-      fetch('/regiao/', {
-        method: 'DELETE',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ 'Regiao': regiao })
-      })
-      .then(response => response.json())
-      .then(data => {
-        if (data.message) {
-          alert(data.message);
-          const linha = botao.closest('tr');
-          linha.remove();
-        } else {
-          alert('Erro ao excluir a região.');
-        }
-      })
-      .catch(error => {
-        console.error('Erro ao excluir:', error);
-        alert('Erro ao excluir a região.');
-      });
-    }
-  }
+
+    document.getElementById("busca").addEventListener("input", filtrarTabela);
   </script>
 </body>
 </html>

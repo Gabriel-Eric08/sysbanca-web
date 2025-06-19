@@ -2,8 +2,8 @@
 <html lang="pt-br">
 <head>
   <meta charset="UTF-8" name="viewport" content="width=device-width, initial-scale=1"/>
-  <title>Cadastro das Extrações</title>
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" />
+  <title>Cadastro de Áreas</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet"/>
 
   <style>
     .botao-estiloso, .botao-voltar, .botao-salvar {
@@ -45,222 +45,245 @@
 </head>
 <body class="p-4">
 
-  <div class="container">
-    <h2 class="mb-4">Cadastro de Extrações</h2>
+<div class="container">
+  <h2 class="mb-4">Cadastro de Áreas</h2>
 
-    <form method="POST" action="{{ url_for('Extracao.salvar_extracao') }}">
-      <div class="row g-3 mb-3">
-        <div class="col-md-4">
-          <label class="form-label" for="extracao">Extração:</label>
-          <input type="text" class="form-control" id="extracao" />
-        </div>
-
-        <div class="col-md-4">
-          <label class="form-label" for="fechamento">Fechamento:</label>
-          <input type="time" class="form-control" id="fechamento" />
-        </div>
-
-        <div class="col-md-4">
-          <label class="form-label" for="premiacao">Premiação:</label>
-          <select id="premiacao" class="form-select">
-            <option value="">--Selecione--</option>
-            <option value="10">10</option>
-            <option value="7">7</option>
-            <option value="5">5</option>
-          </select>
-        </div>
-
-        <div class="col-md-6">
-          <label class="form-label" for="DiasExtracao">Dias da Semana:</label>
-          <select id="DiasExtracao" class="form-select">
-            <option value="">--Selecione--</option>
-            <option value="Segunda, Terça, Quarta, Quinta, Sexta, Sábado, Domingo">Segunda, Terça, Quarta, Quinta, Sexta, Sábado, Domingo</option>
-            <option value="Segunda, Terça, Quarta, Quinta, Sexta, Sabado">Segunda, Terça, Quarta, Quinta, Sexta, Sabado</option>
-            <option value="Quarta, Sábado">Quarta, Sábado</option>
-            <option value="Domingo">Domingo</option>
-          </select>
-        </div>
-
-        <div class="col-md-6">
-          <label class="form-label" for="ativo">Ativo:</label>
-          <select id="ativo" class="form-select">
-            <option value="sim">Sim</option>
-            <option value="nao">Não</option>
-          </select>
-        </div>
+  <form id="form-area">
+    <div class="row g-3 mb-3">
+      <div class="col-md-4">
+        <label class="form-label" for="regiao_area">Área:</label>
+        <input type="text" class="form-control" id="regiao_area" />
       </div>
 
-      <!-- Botões -->
-      <div class="d-flex flex-wrap gap-2 mb-3">
-        <button type="button" class="botao-estiloso" onclick="adicionarItem()">Adicionar</button>
-
-        <input type="text" id="busca" placeholder="Digite a Extração" class="form-control w-auto" />
-
-        <button type="button" class="botao-estiloso" onclick="buscarEPreencher()">Buscar</button>
-
-        <button type="submit" class="botao-voltar" onclick="prepararEnvio(event)">Salvar</button>
-
-        <a href="principal.html" class="btn botao-salvar">Sair</a>
+      <div class="col-md-4">
+        <label class="form-label" for="desc_area">Complemento:</label>
+        <input type="text" class="form-control" id="desc_area" />
       </div>
-    </form>
 
-    <table class="table table-bordered table-striped">
-      <thead class="table-success">
-        <tr>
-          <th>Extração</th>
-          <th>Fechamento</th>
-          <th>Premiação</th>
-          <th>Dias da Semana</th>
-          <th>Ativo</th>
-          <th>Ações</th>
-        </tr>
-      </thead>
-      <tbody id="tabela-corpo">
-        {% if extracoes %}
-          {% for e in extracoes %}
-            <tr>
-              <td>{{ e.extracao }}</td>
-              <td>{{ e.fechamento.strftime("%H:%M") if e.fechamento else '' }}</td>
-              <td>{{ e.premiacao }}</td>
-              <td>{{ e.dias_extracao }}</td>
-              <td>{% if e.ativo in [1, '1', 'sim', 'Sim', 'SIM', True] %}Sim{% else %}Não{% endif %}</td>
-              <td>
-                <button type="button" class="botao-estiloso" onclick="editarLinha(this)">✏️ Editar</button>
-                <button type="button" class="botao-salvar" onclick="excluirExtracao('{{ e.extracao }}', this)">🗑️ Excluir</button>
-              </td>
-            </tr>
-          {% endfor %}
-        {% else %}
-          <tr>
-            <td colspan="6" class="text-center">Nenhuma extração cadastrada.</td>
+      <div class="col-md-4">
+        <label class="form-label" for="ativo">Ativo:</label>
+        <select id="ativo" class="form-select">
+          <option value="sim">Sim</option>
+          <option value="nao">Não</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="d-flex flex-wrap gap-2 mb-3">
+      <button type="button" class="botao-estiloso" onclick="adicionarArea()">Adicionar</button>
+      <input type="text" id="busca" placeholder="Digite a Área" class="form-control w-auto" />
+      <button type="button" class="botao-estiloso" onclick="buscarArea()">Buscar</button>
+      <button type="button" class="botao-voltar" onclick="prepararEnvioArea()">Salvar</button>
+      <a href="{{ url_for('Home.home') }}" class="btn botao-salvar">Sair</a>
+    </div>
+  </form>
+
+  <table class="table table-bordered table-striped">
+    <thead class="table-success">
+      <tr>
+        <th>Área</th>
+        <th>Complemento</th>
+        <th>Ativo</th>
+        <th>Ações</th>
+      </tr>
+    </thead>
+    <tbody id="tabela-area">
+      {% if areas %}
+        {% for a in areas %}
+          <tr data-id="{{ a.id }}">
+            <td>{{ a.regiao_area }}</td>
+            <td>{{ a.desc_area }}</td>
+            <td>{% if a.ativar_area in [1, '1', 'sim', 'Sim', 'SIM'] %}Sim{% else %}Não{% endif %}</td>
+            <td>
+              <button type="button" class="botao-estiloso">✏️ Editar</button>
+              <button type="button" class="botao-salvar" onclick="excluirArea('{{ a.regiao_area }}', this)">🗑️ Excluir</button>
+            </td>
           </tr>
-        {% endif %}
-      </tbody>
-    </table>
-  </div>
+        {% endfor %}
+    </tbody>
+      {% else %}
+      <div colspan="4" class="text-center"> Nenhuma área cadastrada. </div>
+      {% endif %}
+  </table>
+</div>
 
-  <script>
-    function adicionarItem() {
-      const extracao = document.getElementById('extracao').value.trim();
-      const fechamento = document.getElementById('fechamento').value.trim();
-      const premiacao = document.getElementById('premiacao').value.trim();
-      const DiasExtracao = document.getElementById('DiasExtracao').value.trim();
-      const ativo = document.getElementById('ativo').value.trim();
+<script>
+function adicionarArea() {
+  const regiao = document.getElementById('regiao_area').value.trim();
+  const desc = document.getElementById('desc_area').value.trim();
+  const ativo = document.getElementById('ativo').value.trim();
 
-      if (!extracao || !fechamento || !premiacao || !DiasExtracao || !ativo) {
-        alert("Preencha todos os campos!");
-        return;
-      }
+  if (!regiao || !desc || !ativo) {
+    alert("Preencha todos os campos!");
+    return;
+  }
 
-      const tabela = document.getElementById('tabela-corpo');
-      const novaLinha = tabela.insertRow();
+  const tabela = document.getElementById('tabela-area');
+  const novaLinha = tabela.insertRow();
 
-      novaLinha.insertCell(0).textContent = extracao;
-      novaLinha.insertCell(1).textContent = fechamento;
-      novaLinha.insertCell(2).textContent = premiacao;
-      novaLinha.insertCell(3).textContent = DiasExtracao;
-      novaLinha.insertCell(4).textContent = ativo;
+  novaLinha.insertCell(0).textContent = regiao;
+  novaLinha.insertCell(1).textContent = desc;
+  novaLinha.insertCell(2).textContent = ativo;
 
-      // Coluna ações
-      const celulaAcoes = novaLinha.insertCell(5);
-      celulaAcoes.innerHTML = `
-        <button type="button" class="botao-estiloso" onclick="editarLinha(this)">✏️ Editar</button>
-        <button type="button" class="botao-salvar" onclick="excluirExtracao('${extracao}', this)">🗑️ Excluir</button>
-      `;
+  const acoes = novaLinha.insertCell(3);
+  acoes.innerHTML = `
+    <button type="button" class="botao-estiloso">✏️ Editar</button>
+    <button type="button" class="botao-salvar" onclick="excluirArea('${regiao}', this)">🗑️ Excluir</button>
+  `;
 
-      // Limpa os campos para nova entrada
-      document.getElementById('extracao').value = "";
-      document.getElementById('fechamento').value = "";
-      document.getElementById('premiacao').value = "";
-      document.getElementById('DiasExtracao').value = "";
-      document.getElementById('ativo').value = "sim";
+  document.getElementById('regiao_area').value = "";
+  document.getElementById('desc_area').value = "";
+  document.getElementById('ativo').value = "sim";
+}
+
+function buscarArea() {
+  const termo = document.getElementById("busca").value.toLowerCase();
+  const linhas = document.querySelectorAll("#tabela-area tr");
+
+  let encontrado = false;
+
+  linhas.forEach(linha => {
+    const area = linha.cells[0]?.textContent.toLowerCase();
+    if (area && area.includes(termo)) {
+      document.getElementById("regiao_area").value = linha.cells[0].textContent;
+      document.getElementById("desc_area").value = linha.cells[1].textContent;
+      document.getElementById("ativo").value = linha.cells[2].textContent.toLowerCase();
+      encontrado = true;
     }
+  });
 
-    function buscarEPreencher() {
-      const termo = document.getElementById("busca").value.toLowerCase();
-      const linhas = document.querySelectorAll("#tabela-corpo tr");
+  if (!encontrado) {
+    alert("Área não encontrada na tabela.");
+  }
+}
 
-      let encontrado = false;
+function prepararEnvioArea() {
+  const tabela = document.getElementById('tabela-area');
+  const areas = [];
 
-      linhas.forEach(linha => {
-        const extracao = linha.cells[0].textContent.toLowerCase();
+  for (let i = 0; i < tabela.rows.length; i++) {
+    const cells = tabela.rows[i].cells;
+    areas.push({
+      regiao_area: cells[0].textContent.trim(),
+      desc_area: cells[1].textContent.trim(),
+      ativar_area: cells[2].textContent.trim().toLowerCase() === "sim"
+    });
+  }
 
-        if (extracao.includes(termo)) {
-          document.getElementById("extracao").value = linha.cells[0].textContent;
-          document.getElementById("fechamento").value = linha.cells[1].textContent;
-          document.getElementById("premiacao").value = linha.cells[2].textContent;
-          document.getElementById("DiasExtracao").value = linha.cells[3].textContent;
-          document.getElementById("ativo").value = linha.cells[4].textContent.toLowerCase() === "sim" ? "sim" : "nao";
-
-          encontrado = true;
-        }
-      });
-
-      if (!encontrado) {
-        alert("Extração não encontrada na tabela.");
-      }
+  fetch('/area/', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(areas)
+  })
+  .then(response => response.json())
+  .then(data => {
+    alert(data.message);
+    if (data.success) {
+      window.location.reload();
     }
+  })
+  .catch(error => {
+    console.error('Erro:', error);
+    alert('Erro ao salvar as áreas.');
+  });
+}
 
-    function prepararEnvio(event) {
-      event.preventDefault(); // impede o envio para preparar inputs
+function excluirArea(areaNome, botao) {
+  const row = botao.closest('tr');
+  const id = row.getAttribute('data-id');
 
-      const tabela = document.getElementById('tabela-corpo');
-      const form = document.querySelector('form');
+  if (!confirm(`Deseja excluir a área "${areaNome}"?`)) return;
 
-      // Remove inputs ocultos antigos para evitar duplicação
-      const inputsExistentes = form.querySelectorAll('input[name^="extracoes"]');
-      inputsExistentes.forEach(input => input.remove());
-
-      for (let i = 0; i < tabela.rows.length; i++) {
-        const cells = tabela.rows[i].cells;
-        const campos = ['extracao', 'fechamento', 'premiacao', 'dias_semana', 'ativo'];
-
-        campos.forEach((campo, idx) => {
-          const input = document.createElement('input');
-          input.type = 'hidden';
-          input.name = `extracoes[${i}][${campo}]`;
-          input.value = cells[idx].textContent.trim();
-          form.appendChild(input);
-        });
-      }
-
-      form.submit(); // envia o formulário após adicionar inputs ocultos
+  fetch('/area/', {
+    method: 'DELETE',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ id })
+  })
+  .then(response => response.json())
+  .then(data => {
+    alert(data.message);
+    if (data.success) {
+      row.remove();
     }
+  })
+  .catch(error => {
+    console.error('Erro:', error);
+    alert('Erro ao excluir a área.');
+  });
+}
 
-    function excluirExtracao(extracaoNome, botao) {
-      if (!confirm(`Tem certeza que deseja excluir a extração "${extracaoNome}"?`)) return;
+document.getElementById("busca").addEventListener("input", function () {
+  const termo = this.value.toLowerCase();
+  const linhas = document.querySelectorAll("#tabela-area tr");
 
-      fetch('/extracao/', {
-        method: 'DELETE',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ extracao: extracaoNome })
-      })
-      .then(res => res.json())
-      .then(data => {
-        alert(data.message);
-        if (data.message.includes('sucesso')) {
-          // Remove linha da tabela
-          const linha = botao.closest('tr');
-          linha.remove();
-        }
-      })
-      .catch(err => alert('Erro ao excluir: ' + err));
+  linhas.forEach(linha => {
+    const area = linha.cells[0]?.textContent.toLowerCase() || "";
+    linha.style.display = area.includes(termo) ? "" : "none";
+  });
+});
+document.querySelectorAll('#tabela-area button').forEach(btn => {
+  if (btn.textContent.includes('✏️')) {
+    btn.onclick = () => editarLinha(btn);
+  }
+});
+
+function editarLinha(botao) {
+  const linha = botao.closest('tr');
+  const celulas = linha.querySelectorAll('td');
+  const id = linha.getAttribute('data-id');
+
+  const regiao = celulas[0].textContent.trim();
+  const desc = celulas[1].textContent.trim();
+  const ativo = celulas[2].textContent.trim();
+
+  celulas[0].innerHTML = `<input type="text" class="form-control" value="${regiao}">`;
+  celulas[1].innerHTML = `<input type="text" class="form-control" value="${desc}">`;
+  celulas[2].innerHTML = `
+    <select class="form-select">
+      <option value="sim" ${ativo.toLowerCase() === "sim" ? "selected" : ""}>Sim</option>
+      <option value="nao" ${ativo.toLowerCase() === "nao" ? "selected" : ""}>Não</option>
+    </select>`;
+
+  celulas[3].innerHTML = `
+    <button class="botao-voltar" onclick="salvarEdicao('${id}', this)">💾 Salvar</button>
+    <button class="botao-salvar" onclick="cancelarEdicao(this)">✖ Cancelar</button>
+  `;
+}
+
+function cancelarEdicao(botao) {
+  const linha = botao.closest('tr');
+  window.location.reload(); // Simples e eficaz pra restaurar a tabela original
+}
+
+function salvarEdicao(id, botao) {
+  const linha = botao.closest('tr');
+  const inputs = linha.querySelectorAll('td');
+
+  const dados = {
+    id,
+    regiao_area: inputs[0].querySelector('input').value.trim(),
+    desc_area: inputs[1].querySelector('input').value.trim(),
+    ativar_area: inputs[2].querySelector('select').value.trim()
+  };
+
+  fetch('/area/editar', {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(dados)
+  })
+  .then(res => res.json())
+  .then(data => {
+    alert(data.message);
+    if (data.success) {
+      window.location.reload();
     }
-
-    function editarLinha(botao) {
-      const linha = botao.closest('tr');
-      document.getElementById('extracao').value = linha.cells[0].textContent;
-      document.getElementById('fechamento').value = linha.cells[1].textContent;
-      document.getElementById('premiacao').value = linha.cells[2].textContent;
-      document.getElementById('DiasExtracao').value = linha.cells[3].textContent;
-      document.getElementById('ativo').value = linha.cells[4].textContent.toLowerCase() === 'sim' ? 'sim' : 'nao';
-
-      // Remove a linha antiga para evitar duplicação
-      linha.remove();
-    }
-  </script>
+  })
+  .catch(err => {
+    console.error('Erro ao editar:', err);
+    alert('Erro ao editar a área.');
+  });
+}
+</script>
 
 </body>
 </html>

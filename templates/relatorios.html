@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Relatório de Ações</title>
+
+  <!-- Bootstrap 5 CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" />
+
+  <style>
+    tbody > tr:nth-child(odd) {
+      background-color: #cfd8dd;
+    }
+
+    .botao-estiloso {
+      padding: 5px 20px;
+      font-size: 16px;
+      color: white;
+      background-color: #072749;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+      transition: all 0.3s ease;
+    }
+
+    .botao-estiloso:hover {
+      background-color: #0056b3;
+    }
+  </style>
+</head>
+<body class="container py-4">
+  <h2 class="mb-4">Relatório de Ações</h2>
+
+  <div class="d-flex mb-3">
+    <input type="text" id="buscaRelatorio" class="form-control w-auto me-2" placeholder="Buscar...">
+    <button class="botao-estiloso" onclick="filtrarRelatorio()">Buscar</button>
+  </div>
+
+  <div class="table-responsive">
+    <table class="table table-bordered table-striped">
+      <thead class="table-success">
+        <tr>
+          <th>Usuário</th>
+          <th>Tabela</th>
+          <th>Ação</th>
+          <th>ID Linha</th>
+          <th>Linha</th>
+          <th>Data</th>
+          <th>Horário</th>
+        </tr>
+      </thead>
+      <tbody id="tabelaRelatorio">
+        {% for rel in relatorios %}
+        <tr>
+          <td>{{ rel.usuario }}</td>
+          <td>{{ rel.tabela }}</td>
+          <td>{{ rel.acao }}</td>
+          <td>{{ rel.id_linha }}</td>
+          <td>{{ rel.linha }}</td>
+          <td>{{ rel.data.strftime('%d/%m/%Y') }}</td>
+          <td>{{ rel.horario.strftime('%H:%M') }}</td>
+        </tr>
+        {% else %}
+        <tr>
+          <td colspan="7" class="text-center">Nenhum registro encontrado.</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Bootstrap JS -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
+  <script>
+    function filtrarRelatorio() {
+      const termo = document.getElementById('buscaRelatorio').value.toLowerCase();
+      const linhas = document.querySelectorAll('#tabelaRelatorio tr');
+
+      linhas.forEach((linha) => {
+        const textoLinha = linha.innerText.toLowerCase();
+        linha.style.display = textoLinha.includes(termo) ? '' : 'none';
+      });
+    }
+  </script>
+</body>
+</html>

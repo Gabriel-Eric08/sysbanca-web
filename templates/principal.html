@@ -98,7 +98,7 @@
               Principal
             </a>
             <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="principalDropdown">
-              <li><a class="dropdown-item" href="#">Usuários</a></li>
+              <li><a class="dropdown-item" href="{{ url_for('Admin.admin_page') }}">Usuários</a></li>
               <li><a class="dropdown-item" href="#">Sair do Sistema</a></li>
               <li><a class="dropdown-item" href="#">Jogos</a></li>
             </ul>
@@ -162,7 +162,7 @@
               Administração
             </a>
             <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="administracaoDropdown">
-              <li><a class="dropdown-item" href="{{ url_for('Resultado.resultado_page') }}">Resultado</a></li>
+              <li><a class="dropdown-item" href="{{ url_for('Home.home') }}">Resultado</a></li>
               <li><a class="dropdown-item" href="#">Programação de Extração</a></li>
               <li><a class="dropdown-item" href="#">Números Cotados</a></li>
             </ul>
@@ -183,6 +183,7 @@
             <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="relatoriosDropdown">
               <li><a class="dropdown-item" href="#">Descarrego</a></li>
               <li><a class="dropdown-item" href="#">Números Cotados</a></li>
+              <li><a class="dropdown-item" href=" {{ url_for('Relatorio.relatorio_page') }} ">Relatórios</a></li>
             </ul>
           </li>
 

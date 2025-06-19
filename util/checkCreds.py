@@ -1,6 +1,5 @@
 from flask import request
 from models.models import User
-from werkzeug.security import check_password_hash
 
 def checkCreds():
     # Obtendo o username e senha dos cookies
@@ -17,8 +16,8 @@ def checkCreds():
     if not existing_user:
         return {"success": False, "message": "Usuário não encontrado."}
 
-    # Verificar se a senha está correta
-    if not existing_user.senha:
+    # Verificar se a senha está correta (sem hash)
+    if existing_user.senha != senha:
         return {"success": False, "message": "Senha incorreta."}
 
     # Caso tudo esteja correto

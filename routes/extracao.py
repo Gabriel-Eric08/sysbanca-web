@@ -1,7 +1,8 @@
-from flask import Flask, Blueprint, render_template, request, redirect, url_for, jsonify
-from models.models import Extracao
+from flask import Blueprint, render_template, request, redirect, url_for, jsonify
+from models.models import Extracao, Relatorio
 from util.checkCreds import checkCreds
 from db_config import db
+from datetime import datetime
 
 extracao_route = Blueprint('Extracao', __name__, url_prefix='/extracao')
 
@@ -17,9 +18,9 @@ def extracao_page():
 @extracao_route.route('/', methods=['POST'])
 def salvar_extracao():
     extracoes_form = []
+    usuario = request.cookies.get('username', 'Desconhecido')
 
     for key in request.form:
-        # key exemplo: extracoes[0][extracao]
         if key.startswith('extracoes'):
             import re
             m = re.match(r'extracoes\[(\d+)\]\[(\w+)\]', key)
@@ -27,32 +28,49 @@ def salvar_extracao():
                 idx = int(m.group(1))
                 campo = m.group(2)
 
-                # Garantir espaço na lista
                 while len(extracoes_form) <= idx:
                     extracoes_form.append({})
 
                 extracoes_form[idx][campo] = request.form[key]
 
     for extr in extracoes_form:
-        # Verifica se já existe no banco
         existente = Extracao.query.filter_by(extracao=extr.get('extracao')).first()
         if existente:
-            continue  # pula se já existe
+            continue
 
-        # Converter premiacao para int, se possível
         try:
             premiacao_val = int(extr.get('premiacao', 0))
         except ValueError:
             premiacao_val = 0
 
+        ativo_val = extr.get('ativo', '').lower() in ['sim', '1', 'true', 'yes']
         nova_extracao = Extracao(
             extracao=extr.get('extracao'),
             fechamento=extr.get('fechamento'),
             premiacao=premiacao_val,
             dias_extracao=extr.get('dias_semana'),
-            ativo=extr.get('ativo').lower() in ['sim', '1', 'true', 'yes']
+            ativo=ativo_val
         )
         db.session.add(nova_extracao)
+        db.session.flush()  # Garante que nova_extracao.id estará disponível
+
+        # Relatório de inserção
+        relatorio = Relatorio(
+            usuario=usuario,
+            tabela='tb_Extracao',
+            acao='Inserção',
+            id_linha=nova_extracao.id,
+            linha=str({
+                'extracao': extr.get('extracao'),
+                'fechamento': extr.get('fechamento'),
+                'premiacao': premiacao_val,
+                'dias_extracao': extr.get('dias_semana'),
+                'ativo': 'sim' if ativo_val else 'não'
+            }),
+            data=datetime.now().date(),
+            horario=datetime.now().time()
+        )
+        db.session.add(relatorio)
 
     db.session.commit()
     return redirect(url_for('Extracao.extracao_page'))
@@ -77,6 +95,7 @@ def json_extracoes():
 def excluir_extracao():
     dados = request.get_json()
     extracao_nome = dados.get('extracao')
+    usuario = request.cookies.get('username', 'Desconhecido')
 
     if not extracao_nome:
         return jsonify({'message': 'Nome da extração não fornecido.'}), 400
@@ -84,6 +103,24 @@ def excluir_extracao():
     extracao = Extracao.query.filter_by(extracao=extracao_nome).first()
 
     if extracao:
+        # Relatório antes da exclusão
+        relatorio = Relatorio(
+            usuario=usuario,
+            tabela='tb_Extracao',
+            acao='Exclusão',
+            id_linha=extracao.id,
+            linha=str({
+                'extracao': extracao.extracao,
+                'fechamento': extracao.fechamento.strftime("%H:%M") if extracao.fechamento else None,
+                'premiacao': extracao.premiacao,
+                'dias_extracao': extracao.dias_extracao,
+                'ativo': 'sim' if extracao.ativo else 'não'
+            }),
+            data=datetime.now().date(),
+            horario=datetime.now().time()
+        )
+        db.session.add(relatorio)
+
         db.session.delete(extracao)
         db.session.commit()
         return jsonify({'message': 'Extração excluída com sucesso!'})

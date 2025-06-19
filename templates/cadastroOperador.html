@@ -133,7 +133,7 @@
       <div class="mb-3 d-flex gap-2">
         <button type="button" class="botao-estiloso" onclick="adicionarLinhaOperador()">Adicionar</button>
         <button type="submit" class="botao-voltar">Salvar</button>
-        <a href="principal.html" class="btn botao-salvar">Sair</a>
+        <a href="{{ url_for('Home.home') }}" class="btn botao-salvar">Sair</a>
       </div>
 
       <!-- Inputs ocultos para enviar dados da tabela -->
@@ -162,29 +162,69 @@
         </tr>
       </thead>
       <tbody>
-  {% for operador in operadores %}
-    <tr>
-      <td>{{ operador.nome }}</td>
-      <td>{{ operador.regiao }}</td>
-      <td>{{ operador.ativo }}</td>
-      <td>{{ operador.area }}</td>
-      <td>{{ operador.login }}</td>
-      <td>{{ operador.senha }}</td>
-      <td>{{ operador.comissao }}</td>
-      <td>{{ operador.cancelar_poule }}</td>
-      <td>{{ operador.exibe_comissao }}</td>
-      <td>{{ operador.limite_venda }}</td>
-      <td>{{ operador.tipo_limite }}</td>
-      <td>{{ operador.grade }}</td>
-      <td>{{ operador.teste }}</td>
-      <td>{{ operador.comissao_retida }}</td>
-      <td>{{ operador.serial_maquina }}</td>
-      <td>
-          <button type="button" class="botao-estiloso">✏️ Editar</button>
-          <button type="button" class="botao-salvar">🗑️ Excluir</button>
-      </td>
-    </tr>
-  {% endfor %}
+  <tr>
+    <td>João Silva</td>
+    <td>Norte</td>
+    <td>Sim</td>
+    <td>Financeiro</td>
+    <td>joaos</td>
+    <td>senha123</td>
+    <td>10</td>
+    <td>Não</td>
+    <td>Sim</td>
+    <td>5000</td>
+    <td>Diário</td>
+    <td>A</td>
+    <td>Teste 1</td>
+    <td>5</td>
+    <td>ABC123XYZ</td>
+    <td>
+      <button type="button" class="botao-estiloso">✏️ Editar</button>
+      <button type="button" class="botao-salvar">🗑️ Excluir</button>
+    </td>
+  </tr>
+  <tr>
+    <td>Maria Costa</td>
+    <td>Sudeste</td>
+    <td>Não</td>
+    <td>Vendas</td>
+    <td>mariac</td>
+    <td>mypass456</td>
+    <td>8</td>
+    <td>Sim</td>
+    <td>Não</td>
+    <td>3000</td>
+    <td>Mensal</td>
+    <td>B</td>
+    <td>Teste 2</td>
+    <td>3</td>
+    <td>DEF456LMN</td>
+    <td>
+      <button type="button" class="botao-estiloso">✏️ Editar</button>
+      <button type="button" class="botao-salvar">🗑️ Excluir</button>
+    </td>
+  </tr>
+  <tr>
+    <td>Carlos Mendes</td>
+    <td>Sul</td>
+    <td>Sim</td>
+    <td>Suporte</td>
+    <td>carlosm</td>
+    <td>senha789</td>
+    <td>12</td>
+    <td>Não</td>
+    <td>Sim</td>
+    <td>10000</td>
+    <td>Semanal</td>
+    <td>C</td>
+    <td>Teste 3</td>
+    <td>7</td>
+    <td>GHI789QRS</td>
+    <td>
+      <button type="button" class="botao-estiloso">✏️ Editar</button>
+      <button type="button" class="botao-salvar">🗑️ Excluir</button>
+    </td>
+  </tr>
 </tbody>
     </table>
   </div>

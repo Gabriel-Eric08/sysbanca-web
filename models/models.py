@@ -1,8 +1,18 @@
 from db_config import db
 
-class Usuario(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    nome = db.Column(db.String(50), nullable=False)
+class Aposta(db.Model):
+    __tablename__ = 'tb_apostas'
+
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    vendedor = db.Column(db.Text, nullable=False)
+    data_atual = db.Column(db.Date, nullable=False)
+    hora_atual = db.Column(db.Time, nullable=False)
+    valor_total = db.Column(db.Float, nullable=False)
+    horario_selecionado = db.Column(db.Time, nullable=False)
+    apostas = db.Column(db.Text, nullable=False)
+
+    pre_datar = db.Column(db.Boolean, default=False, nullable=False)
+    data_agendada = db.Column(db.Date, nullable=True)
 
 
 class Pessoa(db.Model):
@@ -72,12 +82,12 @@ class Extracao(db.Model):
 
 class Modalidade(db.Model):
     __tablename__ = 'tb_modalidade'
-    modalidade = db.Column(db.String(15), primary_key=True)
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    modalidade = db.Column(db.String(15), unique=True, nullable=False)
     unidade = db.Column(db.Integer, nullable=False)
     limite_por_aposta = db.Column('LimitePorAposta', db.Integer, nullable=False)
-    limite_por_jogo = db.Column('LimitePorJogo', db.Integer, nullable=False)
-    cotacao = db.Column('cotacao', db.Float, nullable=False)
-    ativar_area = db.Column('ativar_area', db.Text, nullable=False)
+    cotacao = db.Column(db.Float, nullable=False)
+    ativar_area = db.Column(db.String(25), nullable=False)
 
 class Operador(db.Model):
     __tablename__ = 'tb_operador'
@@ -125,6 +135,30 @@ class Resultado(db.Model):
     premio_9 = db.Column(db.Integer, nullable=False)
     premio_10 = db.Column(db.Integer, nullable=False)
 
+class User(db.Model):
+    __tablename__ = 'tb_users'
+
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    username = db.Column(db.String(50), unique=True, nullable=False)
+    senha = db.Column(db.String(255), nullable=False)
+
+    # Permissões representadas por 0 (não) ou 1 (sim)
+    acesso_usuario = db.Column(db.Integer, default=0)
+    acesso_modalidade = db.Column(db.Integer, default=0)
+    acesso_regiao = db.Column(db.Integer, default=0)
+    acesso_extracao = db.Column(db.Integer, default=0)
+    acesso_area_extracao = db.Column(db.Integer, default=0)
+    acesso_area_cotacao = db.Column(db.Integer, default=0)
+    acesso_area_comissao_modalidade = db.Column(db.Integer, default=0)
+    acesso_coletor = db.Column(db.Integer, default=0)
+    acesso_vendedor = db.Column(db.Integer, default=0)
+    acesso_vendas_por_periodo_operador = db.Column(db.Integer, default=0)
+    acesso_relatorio_geral_de_vendas = db.Column(db.Integer, default=0)
+    acesso_numeros_cotados = db.Column(db.Integer, default=0)
+    acesso_programacao_extracao = db.Column(db.Integer, default=0)
+    acesso_descarrego = db.Column(db.Integer, default=0)
+    acesso_cancelamento_fora_do_horario = db.Column(db.Integer, default=0)
+    acesso_administracao = db.Column(db.Integer, default=0)
 
 class Venda(db.Model):
     __tablename__ = 'tb_venda'
@@ -138,10 +172,22 @@ class Venda(db.Model):
     valor_total_aposta = db.Column('ValorTotalAposta', db.Integer, nullable=False)
     valor_total_poule = db.Column('ValorTotalPoule', db.Integer, nullable=False)
 
-class User(db.Model):
-    __tablename__='tb_users'
+class Vendedor(db.Model):
+    __tablename__='tb_vendedores'
     id = db.Column('id', db.Integer, primary_key=True, autoincrement=True)
     nome = db.Column('nome', db.String(25), nullable=False)
     username = db.Column('username', db.String(25), nullable=False)
     senha = db.Column('senha', db.String(25), nullable=False)
     serial = db.Column('serial', db.String(25), nullable=False)
+
+class Relatorio(db.Model):
+    __tablename__ = 'tb_Relatorios'
+
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    usuario = db.Column(db.String(50), nullable=False)
+    tabela = db.Column(db.String(50), nullable=False)
+    acao = db.Column(db.String(30), nullable=False)
+    id_linha = db.Column(db.Integer, nullable=False)
+    linha = db.Column(db.Text, nullable=False)  # Armazena a linha como texto (ex: JSON string)
+    data = db.Column(db.Date, nullable=False)
+    horario = db.Column(db.Time, nullable=False)
