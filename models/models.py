@@ -8,12 +8,11 @@ class Aposta(db.Model):
     data_atual = db.Column(db.Date, nullable=False)
     hora_atual = db.Column(db.Time, nullable=False)
     valor_total = db.Column(db.Float, nullable=False)
-    horario_selecionado = db.Column(db.Time, nullable=False)
+    extracao = db.Column('horario_selecionado',db.String(50), nullable=False)  # Alterado de Time para String
     apostas = db.Column(db.Text, nullable=False)
-
     pre_datar = db.Column(db.Boolean, default=False, nullable=False)
     data_agendada = db.Column(db.Date, nullable=True)
-
+    area = db.Column(db.String(25), nullable=False)
 
 class Pessoa(db.Model):
     __tablename__ = 'tblpessoa'
@@ -159,6 +158,7 @@ class User(db.Model):
     acesso_descarrego = db.Column(db.Integer, default=0)
     acesso_cancelamento_fora_do_horario = db.Column(db.Integer, default=0)
     acesso_administracao = db.Column(db.Integer, default=0)
+    acesso_area = db.Column(db.Integer, default=0)
 
 class Venda(db.Model):
     __tablename__ = 'tb_venda'
@@ -179,6 +179,7 @@ class Vendedor(db.Model):
     username = db.Column('username', db.String(25), nullable=False)
     senha = db.Column('senha', db.String(25), nullable=False)
     serial = db.Column('serial', db.String(25), nullable=False)
+    area = db.Column('area', db.String(25), nullable=True)
 
 class Relatorio(db.Model):
     __tablename__ = 'tb_Relatorios'
@@ -191,3 +192,11 @@ class Relatorio(db.Model):
     linha = db.Column(db.Text, nullable=False)  # Armazena a linha como texto (ex: JSON string)
     data = db.Column(db.Date, nullable=False)
     horario = db.Column(db.Time, nullable=False)
+
+class AreaExtracao(db.Model):
+    __tablename__ = 'extracao_area'
+
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    area = db.Column('area',db.String(100), nullable=True)
+    extracao = db.Column('extracao',db.String(100), nullable=True)
+    ativar = db.Column('ativar',db.String(10), nullable=True, default="Não")

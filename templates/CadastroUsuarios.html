@@ -4,13 +4,8 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Cadastro de Usuários</title>
-
-  <!-- Bootstrap CSS -->
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet"/>
-
-  <!-- Choices.js CSS -->
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/choices.js/public/assets/styles/choices.min.css" />
-
   <style>
     .botao-estiloso, .botao-voltar, .botao-salvar {
       font-size: 18px;
@@ -24,15 +19,12 @@
       padding: 6px 20px;
       cursor: pointer;
     }
-
     .botao-estiloso { background-color: #072749; }
     .botao-voltar { background-color: #1fa53c; }
     .botao-salvar { background-color: #be0d0d; }
-
     .botao-estiloso:hover { background-color: #0056b3; }
     .botao-voltar:hover { background-color: #128d2e; }
     .botao-salvar:hover { background-color: #ec5050; }
-
     .botao-estiloso::after, .botao-voltar::after, .botao-salvar::after {
       content: "";
       position: absolute;
@@ -44,13 +36,11 @@
       transform: skewX(-20deg);
       transition: left 0.5s ease;
     }
-
     .botao-estiloso:hover::after,
     .botao-voltar:hover::after,
     .botao-salvar:hover::after {
       left: 100%;
     }
-
     tbody > tr:nth-child(odd) {
       background-color: #f2f2f2;
     }
@@ -66,12 +56,10 @@
         <label for="login" class="form-label">Login:</label>
         <input type="text" id="login" class="form-control" />
       </div>
-
       <div class="col-md-4">
         <label for="senha" class="form-label">Senha:</label>
         <input type="text" id="senha" class="form-control" />
       </div>
-
       <div class="col-md-4">
         <label for="ativo" class="form-label">Ativo:</label>
         <select id="ativo" class="form-select">
@@ -79,7 +67,6 @@
           <option value="nao">Não</option>
         </select>
       </div>
-
       <div class="col-12">
         <label for="permissoes" class="form-label">Permissões:</label>
         <select id="permissoes" class="form-select" multiple>
@@ -98,11 +85,11 @@
           <option value="programacao extracao">Programação Extração</option>
           <option value="descarrego">Descarrego</option>
           <option value="cancelamento fora do horario">Cancelamento Fora do Horário</option>
-          <option value="cancelamento fora do horario">Administração</option>
+          <option value="administracao">Administração</option>
+          <option value="area">Área</option>
         </select>
       </div>
     </div>
-
     <div class="d-flex flex-wrap gap-2 mb-3">
       <button type="button" class="botao-estiloso" onclick="adicionarUsuario()">Adicionar</button>
       <input type="text" id="busca" placeholder="Buscar usuário" class="form-control w-auto" />
@@ -119,15 +106,32 @@
         <th>Senha</th>
         <th>Permissões</th>
         <th>Ativo</th>
+        <th>Ações</th>
       </tr>
     </thead>
     <tbody id="tabela-usuario">
-      <!-- Conteúdo dinâmico -->
+      {% if usuarios_permissoes %}
+        {% for u in usuarios_permissoes %}
+          <tr>
+            <td>{{ u.username }}</td>
+            <td>{{ u.senha }}</td>
+            <td>{{ u.permissoes }}</td>
+            <td>{{ "Sim" if u.ativo else "Não" }}</td>
+            <td>
+              <button type="button" class="botao-estiloso" onclick="editarLinha(this)">✏️ Editar</button>
+              <button type="button" class="botao-salvar" onclick="excluirUsuario(this, '{{ u.username }}')">🗑️ Excluir</button>
+            </td>
+          </tr>
+        {% endfor %}
+      {% else %}
+        <tr>
+          <td colspan="5" class="text-center">Nenhum usuário cadastrado.</td>
+        </tr>
+      {% endif %}
     </tbody>
   </table>
 </div>
 
-<!-- Choices.js -->
 <script src="https://cdn.jsdelivr.net/npm/choices.js/public/assets/scripts/choices.min.js"></script>
 <script>
   const choices = new Choices('#permissoes', {
@@ -140,19 +144,26 @@
     const login = document.getElementById("login").value.trim();
     const senha = document.getElementById("senha").value.trim();
     const ativo = document.getElementById("ativo").value;
-    const permissoes = choices.getValue(true); // array de permissões
+    const permissoes = choices.getValue(true);
 
-    if (!login || !senha || !ativo || permissoes.length === 0) {
-      alert("Preencha todos os campos!");
+    if (!login || !senha) {
+      alert("Login e senha são obrigatórios!");
       return;
     }
 
     const tabela = document.getElementById("tabela-usuario");
     const novaLinha = tabela.insertRow();
+    
     novaLinha.insertCell(0).textContent = login;
     novaLinha.insertCell(1).textContent = senha;
     novaLinha.insertCell(2).textContent = permissoes.join(", ");
-    novaLinha.insertCell(3).textContent = ativo;
+    novaLinha.insertCell(3).textContent = ativo === "sim" ? "Sim" : "Não";
+    
+    const cellAcoes = novaLinha.insertCell(4);
+    cellAcoes.innerHTML = `
+      <button type="button" class="botao-estiloso" onclick="editarLinha(this)">✏️ Editar</button>
+      <button type="button" class="botao-salvar" onclick="excluirUsuario(this, '${login}')">🗑️ Excluir</button>
+    `;
 
     // Limpar campos
     document.getElementById("login").value = "";
@@ -165,22 +176,81 @@
     const termo = document.getElementById("busca").value.toLowerCase();
     const linhas = document.querySelectorAll("#tabela-usuario tr");
 
-    let encontrado = false;
     linhas.forEach(linha => {
       const login = linha.cells[0].textContent.toLowerCase();
-      if (login.includes(termo)) {
-        alert(`Usuário encontrado:\nLogin: ${linha.cells[0].textContent}`);
-        encontrado = true;
-      }
+      linha.style.display = login.includes(termo) ? "" : "none";
     });
-
-    if (!encontrado) {
-      alert("Usuário não encontrado.");
-    }
   }
 
   function prepararEnvioUsuario() {
-    alert("Simulação: dados prontos para envio.");
+    const linhas = document.querySelectorAll("#tabela-usuario tr");
+    if (linhas.length === 0 || (linhas.length === 1 && linhas[0].cells[0].textContent === "Nenhum usuário cadastrado.")) {
+      alert("Não há usuários para salvar.");
+      return;
+    }
+
+    const usuarios = Array.from(linhas).map(linha => {
+      if (linha.cells[0].textContent === "Nenhum usuário cadastrado.") return null;
+      
+      return {
+        "Username": linha.cells[0].textContent.trim(),
+        "Password": linha.cells[1].textContent.trim(),
+        "Permissões": linha.cells[2].textContent.trim(),
+        "Ativo": linha.cells[3].textContent.trim() === "Sim"
+      };
+    }).filter(user => user !== null);
+
+    fetch('/admin/', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(usuarios)
+    })
+    .then(response => response.json())
+    .then(data => {
+      if (data.success) {
+        alert(`Sucesso: ${data.message}\nSalvos: ${data.salvos.join(', ')}\nIgnorados: ${data.ignorados.join(', ')}`);
+      } else {
+        alert(`Erro: ${data.message}`);
+      }
+    })
+    .catch(error => {
+      console.error("Erro:", error);
+      alert("Erro ao comunicar com o servidor");
+    });
+  }
+
+  function editarLinha(botao) {
+    const linha = botao.closest('tr');
+    const cells = linha.cells;
+    
+    // Transformar células em editáveis
+    cells[0].innerHTML = `<input type="text" value="${cells[0].textContent}" class="form-control">`;
+    cells[1].innerHTML = `<input type="text" value="${cells[1].textContent}" class="form-control">`;
+    
+    // Atualizar botão para "Salvar Edição"
+    botao.textContent = "💾 Salvar";
+    botao.onclick = function() { salvarEdicao(this); };
+  }
+
+  function salvarEdicao(botao) {
+    const linha = botao.closest('tr');
+    const inputs = linha.querySelectorAll('input');
+    
+    // Atualizar conteúdo das células
+    linha.cells[0].textContent = inputs[0].value;
+    linha.cells[1].textContent = inputs[1].value;
+    
+    // Restaurar botão original
+    botao.textContent = "✏️ Editar";
+    botao.onclick = function() { editarLinha(this); };
+  }
+
+  function excluirUsuario(botao, username) {
+    if (confirm(`Tem certeza que deseja excluir o usuário ${username}?`)) {
+      botao.closest('tr').remove();
+    }
   }
 </script>
 </body>

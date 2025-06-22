@@ -1,5 +1,5 @@
-from flask import Flask, Blueprint, render_template, request, redirect, url_for, flash, jsonify
-from models.models import Modalidade, Relatorio
+from flask import Flask, Blueprint, render_template, request, redirect, url_for, flash, jsonify, session
+from models.models import Modalidade, Relatorio, User
 from util.checkCreds import checkCreds
 from db_config import db
 from datetime import datetime
@@ -8,12 +8,25 @@ modalidade_route = Blueprint('Modalidade', __name__)
 
 @modalidade_route.route('/')
 def modalidade_page():
-    check_creds = checkCreds()
-    if check_creds['success']:
-        modalidades = Modalidade.query.all()
-        return render_template('cadastroModalidade.html', modalidades=modalidades)
-    else:
-        return check_creds['message']
+
+    check_result = checkCreds()
+    
+
+    if not check_result['success']:
+        return check_result['message'], 401
+    
+    user = check_result['user']
+    
+    try:
+        if int(user.acesso_modalidade) != 1:
+            return "Usuário não autorizado", 403
+    except (AttributeError, ValueError):
+        return "Configuração de permissão inválida", 500
+
+    modalidades = Modalidade.query.all()
+
+    return render_template('cadastroModalidade.html', 
+                         modalidades=modalidades)
 
 @modalidade_route.route('/', methods=['POST'])
 def adicionar_modalidades():

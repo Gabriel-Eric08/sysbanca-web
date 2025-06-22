@@ -18,12 +18,12 @@
     }
 
     .botao-adicionar { background-color: #072749; }
-    .botao-atualizar { background-color: #1fa53c; }
-    .botao-excluir { background-color: #be0d0d; }
     .botao-salvar { background-color: #ff9900; }
     .botao-voltar { background-color: #6c757d; }
+    .botao-editar { background-color: #1fa53c; }
+    .botao-excluir { background-color: #be0d0d; }
 
-    .botao-adicionar, .botao-atualizar, .botao-excluir, .botao-salvar, .botao-voltar {
+    .botao-adicionar, .botao-salvar, .botao-voltar, .botao-editar, .botao-excluir {
       font-size: 18px;
       color: white;
       border-radius: 8px;
@@ -34,15 +34,20 @@
       border: none;
       padding: 6px 20px;
       cursor: pointer;
+      margin-right: 10px;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
     }
 
     .botao-adicionar:hover { background-color: #0056b3; }
-    .botao-atualizar:hover { background-color: #128d2e; }
-    .botao-excluir:hover { background-color: #ec5050; }
     .botao-salvar:hover { background-color: #ffa733; }
     .botao-voltar:hover { background-color: #5a6268; }
+    .botao-editar:hover { background-color: #128d2e; }
+    .botao-excluir:hover { background-color: #ec5050; }
 
-    .botao-adicionar::after, .botao-atualizar::after, .botao-excluir::after, .botao-salvar::after, .botao-voltar::after {
+    .botao-adicionar::after, .botao-salvar::after, .botao-voltar::after,
+    .botao-editar::after, .botao-excluir::after {
       content: "";
       position: absolute;
       top: 0;
@@ -55,10 +60,10 @@
     }
 
     .botao-adicionar:hover::after,
-    .botao-atualizar:hover::after,
-    .botao-excluir:hover::after,
     .botao-salvar:hover::after,
-    .botao-voltar:hover::after {
+    .botao-voltar:hover::after,
+    .botao-editar:hover::after,
+    .botao-excluir:hover::after {
       left: 100%;
     }
 
@@ -76,55 +81,54 @@
   <div class="container">
     <h2 class="mb-4">Cadastro de Coletor</h2>
 
-    <div class="row g-3">
-      <div class="col-md-4">
-        <label for="nome" class="form-label">Nome</label>
-        <input type="text" id="nome" class="form-control" />
+    <form id="formColetor" onsubmit="return false;">
+      <div class="row g-3 align-items-end">
+        <div class="col-md-4">
+          <label for="nome" class="form-label">Nome</label>
+          <input type="text" id="nome" class="form-control" />
+        </div>
+
+        <div class="col-md-4">
+          <label for="area" class="form-label">Área</label>
+          <select id="area" name="area" class="form-select">
+            <option value=""></option>
+            <option value="Área 1">Área 1</option>
+            <option value="Área 2">Área 2</option>
+          </select>
+        </div>
+
+        <div class="col-md-4">
+          <label for="login" class="form-label">Login</label>
+          <input type="text" id="login" class="form-control" />
+        </div>
+
+        <div class="col-md-4">
+          <label for="senha" class="form-label">Senha</label>
+          <input type="text" id="senha" class="form-control" />
+        </div>
+
+        <div class="col-md-4">
+          <label for="AtivarColetor" class="form-label">Ativar</label>
+          <select id="AtivarColetor" class="form-select">
+            <option value=""></option>
+            <option value="sim">Sim</option>
+            <option value="nao">Não</option>
+          </select>
+        </div>
+
+        <div class="col-md-4">
+          <label for="buscaNome" class="form-label">Buscar por Nome</label>
+          <input type="text" id="buscaNome" class="form-control" placeholder="Digite o nome para buscar" />
+        </div>
       </div>
 
-      <div class="col-md-4">
-        <label for="area" class="form-label">Área</label>
-        <select id="area" name="area" class="form-select">
-          <option value=""></option>
-          <option value="Área 1">Área 1</option>
-          <option value="Área 2">Área 2</option>
-        </select>
+      <div class="my-4">
+        <button class="botao-adicionar" type="button" onclick="adicionarLinha()">➕ Adicionar</button>
+        <button class="botao-salvar" type="button" onclick="salvarTabela()">💾 Salvar</button>
       </div>
+    </form>
 
-      <div class="col-md-4">
-        <label for="login" class="form-label">Login</label>
-        <input type="text" id="login" class="form-control" />
-      </div>
-
-      <div class="col-md-4">
-        <label for="senha" class="form-label">Senha</label>
-        <input type="text" id="senha" class="form-control" />
-      </div>
-
-      <div class="col-md-4">
-        <label for="AtivarColetor" class="form-label">Ativar</label>
-        <select id="AtivarColetor" class="form-select">
-          <option value=""></option>
-          <option value="sim">Sim</option>
-          <option value="nao">Não</option>
-        </select>
-      </div>
-
-      <div class="col-md-4 d-flex align-items-end">
-        <input type="text" id="buscaNome" class="form-control me-2" placeholder="Buscar por Nome" />
-        <button class="botao-atualizar" onclick="buscarColetor()">🔍 Buscar</button>
-      </div>
-    </div>
-
-    <div class="d-flex flex-wrap gap-2 mt-4">
-      <button class="botao-adicionar" onclick="adicionarLinha()">➕ Adicionar</button>
-      <button class="botao-atualizar" onclick="atualizarLinha()">♻ Atualizar</button>
-      <button class="botao-excluir" onclick="excluirLinha()">🗑 Excluir</button>
-      <button class="botao-salvar" onclick="salvartabela()">💾 Salvar</button>
-      <a href="{{ url_for('Home.home') }}" class="botao-voltar text-decoration-none d-inline-block text-center">↩ Voltar</a>
-    </div>
-
-    <table class="table table-bordered table-striped mt-4">
+    <table class="table table-bordered table-striped">
       <thead class="table-primary">
         <tr>
           <th>Coletor</th>
@@ -132,6 +136,7 @@
           <th>Login</th>
           <th>Senha</th>
           <th>Ativar</th>
+          <th>Ações</th>
         </tr>
       </thead>
       <tbody id="tabela">
@@ -142,11 +147,11 @@
 
   <script>
     function adicionarLinha() {
-      const nome = document.getElementById('nome').value;
-      const area = document.getElementById('area').value;
-      const login = document.getElementById('login').value;
-      const senha = document.getElementById('senha').value;
-      const ativar = document.getElementById('AtivarColetor').value;
+      const nome = document.getElementById('nome').value.trim();
+      const area = document.getElementById('area').value.trim();
+      const login = document.getElementById('login').value.trim();
+      const senha = document.getElementById('senha').value.trim();
+      const ativar = document.getElementById('AtivarColetor').value.trim();
 
       if (!nome || !area || !login || !senha || !ativar) {
         alert('Preencha todos os campos!');
@@ -162,11 +167,22 @@
       novaLinha.insertCell(3).textContent = senha;
       novaLinha.insertCell(4).textContent = ativar;
 
+      const celulaAcoes = novaLinha.insertCell(5);
+      celulaAcoes.innerHTML = `
+        <button class="botao-editar btn btn-sm me-2" type="button" onclick="editarLinha(this)">✏️ Editar</button>
+        <button class="botao-excluir btn btn-sm" type="button" onclick="excluirLinha(this)">🗑 Excluir</button>
+      `;
+
+      limparCampos();
+    }
+
+    function limparCampos() {
       document.getElementById('nome').value = '';
       document.getElementById('area').value = '';
       document.getElementById('login').value = '';
       document.getElementById('senha').value = '';
       document.getElementById('AtivarColetor').value = '';
+      document.getElementById('buscaNome').value = '';
     }
 
     function buscarColetor() {
@@ -187,31 +203,50 @@
         }
       });
 
-      if (!encontrado) {
+      if (!encontrado && termo !== '') {
         alert("Coletor não encontrado.");
       }
     }
 
-    function atualizarLinha() {
-      alert("Função de atualização ainda não implementada.");
+    document.getElementById('buscaNome').addEventListener('input', buscarColetor);
+
+    function editarLinha(botao) {
+      const linha = botao.closest('tr');
+      const cells = linha.cells;
+
+      document.getElementById('nome').value = cells[0].textContent;
+      document.getElementById('area').value = cells[1].textContent;
+      document.getElementById('login').value = cells[2].textContent;
+      document.getElementById('senha').value = cells[3].textContent;
+      document.getElementById('AtivarColetor').value = cells[4].textContent;
+
+      // Opcional: Remove a linha para evitar duplicação quando salvar
+      linha.remove();
     }
 
-    function excluirLinha() {
-      const termo = document.getElementById("buscaNome").value.toLowerCase();
-      const linhas = document.querySelectorAll("#tabela tr");
+    function excluirLinha(botao) {
+      const linha = botao.closest('tr');
+      linha.remove();
+      limparCampos();
+    }
 
-      linhas.forEach((linha, index) => {
-        const nome = linha.cells[0].textContent.toLowerCase();
-        if (nome.includes(termo)) {
-          document.getElementById("tabela").deleteRow(index);
-        }
+    function salvarTabela() {
+      const linhas = [];
+      document.querySelectorAll('#tabela tr').forEach(tr => {
+        linhas.push({
+          nome: tr.cells[0].textContent,
+          area: tr.cells[1].textContent,
+          login: tr.cells[2].textContent,
+          senha: tr.cells[3].textContent,
+          ativar: tr.cells[4].textContent,
+        });
       });
-    }
 
-    function salvartabela() {
-      alert("Função de salvamento ainda não implementada.");
+      console.log('Dados para salvar:', linhas);
+      alert('Função de salvamento ainda não implementada.');
     }
   </script>
 
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>

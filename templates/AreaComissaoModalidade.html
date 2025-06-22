@@ -1,150 +1,107 @@
 <!DOCTYPE html>
 <html lang="pt-br">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Cadastro Comissão por Área</title>
+
+  <!-- Bootstrap 5 CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" />
+
   <style>
-    body {
-      font-family: Arial, sans-serif;
-      padding: 20px;
-    }
-
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      margin-top: 20px;
-    }
-
-    th, td {
-      border: 1px solid #ddd;
-      padding: 10px;
-      text-align: left;
-    }
-
-    th {
-      background-color: #007BFF;
-      color: white;
-    }
-
     tbody > tr:nth-child(odd) {
       background-color: #cfd8dd;
     }
-
-    input, select, button {
-      padding: 6px;
-      margin: 5px 0;
-      font-size: 16px;
-    }
-
-    .botao-adicionar {
-      background-color: #072749;
-    }
-
-    .botao-atualizar {
-      background-color: #1fa53c;
-    }
-
-    .botao-excluir {
-      background-color: #be0d0d;
-    }
-
-    .botao-salvar {
-      background-color: #ff9900;
-    }
-
-    .botao-voltar {
-      background-color: #6c757d;
-    }
-
-    .botao-adicionar, .botao-atualizar, .botao-excluir, .botao-salvar, .botao-voltar {
+    .botao-estiloso, .botao-voltar, .botao-salvar {
       padding: 5px 20px;
       font-size: 18px;
       color: white;
       border: none;
       border-radius: 8px;
       cursor: pointer;
-      box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+      box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
       transition: all 0.3s ease;
       position: relative;
       overflow: hidden;
       margin-right: 10px;
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
     }
-
-    .form-section {
-      margin-bottom: 20px;
-    }
-
-    .botoes {
-      margin-bottom: 20px;
-    }
-
-    .busca-section {
-      margin-bottom: 20px;
-    }
-
-    input[readonly] {
-      background-color: #f1f1f1;
-    }
+    .botao-estiloso { background-color: #072749; }
+    .botao-estiloso:hover { background-color: #0056b3; box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3); }
+    .botao-voltar { background-color: #1fa53c; }
+    .botao-voltar:hover { background-color: #14802a; box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3); }
+    .botao-salvar { background-color: #be0d0d; }
+    .botao-salvar:hover { background-color: #ec5050; box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3); }
   </style>
 </head>
-<body>
+<body class="container py-4">
+  <h2 class="mb-4">Cadastro das Comissões por Área</h2>
 
-  <h2>Cadastro das Comissões por Área</h2>
+  <form id="formComissao" action="#" method="POST">
+    <div class="row g-3 align-items-end">
 
-  <label>Número</label>
-  <input type="text" id="idAreaComissao" size="4" readonly>
+      <div class="col-md-2">
+        <label for="idAreaComissao" class="form-label">Número</label>
+        <input type="text" id="idAreaComissao" name="idAreaComissao" class="form-control" readonly />
+      </div>
 
-  <label>Área</label>
-  <select id="area">
-    <option value=""></option>
-    <option value="Área 1">Área 1</option>
-    <option value="Área 2">Área 2</option>
-  </select>
+      <div class="col-md-3">
+        <label for="area" class="form-label">Área</label>
+        <select id="area" name="area" class="form-select">
+          <option value=""></option>
+          <option value="Área 1">Área 1</option>
+          <option value="Área 2">Área 2</option>
+        </select>
+      </div>
 
-  <label>Modalidade</label>
-  <select id="modalidade">
-    <option value=""></option>
-    <option value="Modalidade 1">Modalidade 1</option>
-    <option value="Modalidade 2">Modalidade 2</option>
-  </select>
+      <div class="col-md-3">
+        <label for="modalidade" class="form-label">Modalidade</label>
+        <select id="modalidade" name="modalidade" class="form-select">
+          <option value=""></option>
+          <option value="Modalidade 1">Modalidade 1</option>
+          <option value="Modalidade 2">Modalidade 2</option>
+        </select>
+      </div>
 
-  <label>Comissão</label>
-  <input type="number" id="comissao" size="4">
+      <div class="col-md-2">
+        <label for="comissao" class="form-label">Comissão</label>
+        <input type="number" id="comissao" name="comissao" class="form-control" />
+      </div>
 
-  <label>Ativar</label>
-  <select id="AtivarAreaComissao">
-    <option value=""></option>
-    <option value="sim">Sim</option>
-    <option value="nao">Não</option>
-  </select><br>
+      <div class="col-md-2">
+        <label for="ativarAreaComissao" class="form-label">Ativar</label>
+        <select id="ativarAreaComissao" name="ativarAreaComissao" class="form-select">
+          <option value=""></option>
+          <option value="sim">Sim</option>
+          <option value="nao">Não</option>
+        </select>
+      </div>
 
-  <div class="busca-section">
-    <label>Buscar por Nome: <input type="text" id="buscaNome"></label>
-    <button onclick="buscarLinha()">Buscar</button>
-  </div>
+    </div>
 
-  <div class="botoes">
-    <button class="botao-adicionar" onclick="adicionarLinha()">➕ Adicionar</button>
-    <button class="botao-atualizar" onclick="atualizarLinha()">♻ Atualizar</button>
-    <button class="botao-excluir" onclick="excluirLinha()">🗑 Excluir</button>
-    <button class="botao-salvar" onclick="salvartabela()">💾 Salvar</button>
-    <a href="principal.html"><button class="botao-voltar">↩ Voltar</button></a>
-  </div>
+    <div class="row my-4 align-items-center">
+      <div class="col-md-4">
+        <input type="text" id="buscaNome" class="form-control" placeholder="Digite a Área para buscar" />
+      </div>
+      <div class="col-md-8">
+        <button type="button" class="botao-estiloso" onclick="adicionarLinha()">Adicionar</button>
+        <button type="submit" class="botao-salvar">Salvar</button>
+      </div>
+    </div>
+  </form>
 
-  <table id="tabela">
-    <thead>
+  <table class="table table-bordered table-striped" id="tabela">
+    <thead class="table-success">
       <tr>
         <th>Número</th>
         <th>Área</th>
         <th>Modalidade</th>
         <th>Comissão</th>
-        <th>Ativar Área Comissão</th>
+        <th>Ativar</th>
+        <th>Ações</th>
       </tr>
     </thead>
     <tbody>
+      <!-- Linhas adicionadas dinamicamente -->
     </tbody>
   </table>
 
@@ -152,110 +109,119 @@
     let contador = 1;
 
     function adicionarLinha() {
-      const area = document.getElementById('area').value;
-      const modalidade = document.getElementById('modalidade').value;
-      const comissao = document.getElementById('comissao').value;
-      const AtivarAreaComissao = document.getElementById('AtivarAreaComissao').value;
+      const area = document.getElementById('area').value.trim();
+      const modalidade = document.getElementById('modalidade').value.trim();
+      const comissao = document.getElementById('comissao').value.trim();
+      const ativar = document.getElementById('ativarAreaComissao').value.trim();
 
-      if (area === '' || modalidade === '' || comissao === '' || AtivarAreaComissao === '') {
+      if (!area || !modalidade || !comissao || !ativar) {
         alert('Preencha todos os campos!');
         return;
       }
 
-      const tabela = document.getElementById('tabela').getElementsByTagName('tbody')[0];
+      const tabela = document.querySelector('#tabela tbody');
       const novaLinha = tabela.insertRow();
 
-      const celulaId = novaLinha.insertCell(0);
-      const celulaArea = novaLinha.insertCell(1);
-      const celulaModalidade = novaLinha.insertCell(2);
-      const celulaComissao = novaLinha.insertCell(3);
-      const celulaAtivar = novaLinha.insertCell(4);
+      novaLinha.setAttribute('data-id', contador);
 
-      celulaId.innerText = contador;
-      celulaArea.innerText = area;
-      celulaModalidade.innerText = modalidade;
-      celulaComissao.innerText = comissao;
-      celulaAtivar.innerText = AtivarAreaComissao;
+      novaLinha.insertCell(0).innerText = contador;
+      novaLinha.insertCell(1).innerText = area;
+      novaLinha.insertCell(2).innerText = modalidade;
+      novaLinha.insertCell(3).innerText = comissao;
+      novaLinha.insertCell(4).innerText = ativar;
+
+      const acoes = novaLinha.insertCell(5);
+      acoes.innerHTML = `
+        <button class="btn btn-sm btn-warning me-2" onclick="editarLinha(this)">Editar</button>
+        <button class="btn btn-sm btn-danger" onclick="excluirLinha(this)">Excluir</button>
+      `;
 
       contador++;
 
+      // Limpar inputs
       document.getElementById('idAreaComissao').value = '';
       document.getElementById('area').value = '';
       document.getElementById('modalidade').value = '';
       document.getElementById('comissao').value = '';
-      document.getElementById('AtivarAreaComissao').value = '';
+      document.getElementById('ativarAreaComissao').value = '';
       document.getElementById('buscaNome').value = '';
     }
 
-    function buscarLinha() {
-      const termo = document.getElementById("buscaNome").value.toLowerCase();
-      const linhas = document.querySelectorAll("#tabela tbody tr");
-
+    // Função de busca - preenche os campos com os dados da linha encontrada
+    document.getElementById('buscaNome').addEventListener('input', function () {
+      const termo = this.value.toLowerCase();
+      const linhas = document.querySelectorAll('#tabela tbody tr');
       let encontrado = false;
 
       linhas.forEach(linha => {
-        const numero = linha.cells[0].textContent;
-        const area = linha.cells[1].textContent;
-        const modalidade = linha.cells[2].textContent;
-        const comissao = linha.cells[3].textContent;
-        const ativar = linha.cells[4].textContent;
-
-        if (area.toLowerCase().includes(termo)) {
-          document.getElementById("idAreaComissao").value = numero;
-          document.getElementById("area").value = area;
-          document.getElementById("modalidade").value = modalidade;
-          document.getElementById("comissao").value = comissao;
-          document.getElementById("AtivarAreaComissao").value = ativar;
+        const area = linha.cells[1].innerText.toLowerCase();
+        if (area.includes(termo)) {
+          document.getElementById('idAreaComissao').value = linha.cells[0].innerText;
+          document.getElementById('area').value = linha.cells[1].innerText;
+          document.getElementById('modalidade').value = linha.cells[2].innerText;
+          document.getElementById('comissao').value = linha.cells[3].innerText;
+          document.getElementById('ativarAreaComissao').value = linha.cells[4].innerText;
           encontrado = true;
         }
       });
 
       if (!encontrado) {
-        alert("Área não encontrada na tabela.");
+        // Se quiser limpar os campos caso não ache, pode descomentar:
+        // document.getElementById('idAreaComissao').value = '';
+        // document.getElementById('area').value = '';
+        // document.getElementById('modalidade').value = '';
+        // document.getElementById('comissao').value = '';
+        // document.getElementById('ativarAreaComissao').value = '';
       }
+    });
+
+    function editarLinha(botao) {
+      const linha = botao.closest('tr');
+      const cells = linha.cells;
+
+      // Colocar valores nos inputs
+      document.getElementById('idAreaComissao').value = cells[0].innerText;
+      document.getElementById('area').value = cells[1].innerText;
+      document.getElementById('modalidade').value = cells[2].innerText;
+      document.getElementById('comissao').value = cells[3].innerText;
+      document.getElementById('ativarAreaComissao').value = cells[4].innerText;
     }
 
-    function atualizarLinha() {
-      const id = document.getElementById('idAreaComissao').value;
-      const linhas = document.querySelectorAll("#tabela tbody tr");
+    function excluirLinha(botao) {
+      const linha = botao.closest('tr');
+      linha.remove();
 
-      linhas.forEach(linha => {
-        if (linha.cells[0].textContent === id) {
-          linha.cells[1].textContent = document.getElementById('area').value;
-          linha.cells[2].textContent = document.getElementById('modalidade').value;
-          linha.cells[3].textContent = document.getElementById('comissao').value;
-          linha.cells[4].textContent = document.getElementById('AtivarAreaComissao').value;
-        }
-      });
-
+      // Limpar inputs ao excluir
       document.getElementById('idAreaComissao').value = '';
       document.getElementById('area').value = '';
       document.getElementById('modalidade').value = '';
       document.getElementById('comissao').value = '';
-      document.getElementById('AtivarAreaComissao').value = '';
+      document.getElementById('ativarAreaComissao').value = '';
     }
 
-    function excluirLinha() {
-      const id = document.getElementById('idAreaComissao').value;
-      const linhas = document.querySelectorAll("#tabela tbody tr");
+    // Salvar dados (exemplo só alerta, implemente backend)
+    document.getElementById('formComissao').addEventListener('submit', function(e) {
+      e.preventDefault();
 
-      linhas.forEach((linha, index) => {
-        if (linha.cells[0].textContent === id) {
-          linha.remove();
-        }
+      const linhas = [];
+      document.querySelectorAll('#tabela tbody tr').forEach(tr => {
+        linhas.push({
+          id: tr.cells[0].innerText,
+          area: tr.cells[1].innerText,
+          modalidade: tr.cells[2].innerText,
+          comissao: tr.cells[3].innerText,
+          ativar: tr.cells[4].innerText
+        });
       });
 
-      document.getElementById('idAreaComissao').value = '';
-      document.getElementById('area').value = '';
-      document.getElementById('modalidade').value = '';
-      document.getElementById('comissao').value = '';
-      document.getElementById('AtivarAreaComissao').value = '';
-    }
+      // Enviar linhas para o backend via fetch ou formulário
+      console.log('Dados para salvar:', linhas);
 
-    function salvartabela() {
-      alert("Função de salvar ainda não implementada.");
-    }
+      alert('Função salvar ainda não implementada.');
+    });
   </script>
 
+  <!-- Bootstrap 5 JS Bundle -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>

@@ -7,8 +7,17 @@ coletor_route = Blueprint('Coletor', __name__)
 @coletor_route.route('/')
 def coletor_page():
 
-    check_creds = checkCreds()
-    if check_creds['success'] == True:
-        return render_template('CadastroColetor.html')
-    else:
-        return check_creds['message']
+    check_result = checkCreds()
+
+    if not check_result['success']:
+        return check_result['message'], 401  
+    
+    user = check_result['user']
+
+    try:
+        if int(user.acesso_coletor) != 1:
+            return "Usuário não autorizado", 403
+    except (AttributeError, ValueError):
+        return "Configuração de permissão inválida", 500
+    
+    return render_template('CadastroColetor.html')

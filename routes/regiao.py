@@ -8,12 +8,23 @@ regiao_route = Blueprint('Regiao', __name__)
 
 @regiao_route.route('/', methods=['GET'])
 def regiao_page():
-    check_creds = checkCreds()
-    if check_creds['success']:
-        regioes = Regiao.query.all()
-        return render_template('cadastroRegiao.html', regioes=regioes)
-    else:
-        return check_creds['message']
+    check_result = checkCreds()
+
+    if not check_result['success']:
+        return check_result['message'], 401  
+    
+    user = check_result['user']
+
+    try:
+        if int(user.acesso_regiao) != 1:
+            return "Usuário não autorizado", 403
+    except (AttributeError, ValueError):
+        return "Configuração de permissão inválida", 500
+    
+    regioes = Regiao.query.all()
+    
+    return render_template('cadastroRegiao.html', regioes=regioes)
+    
 
 @regiao_route.route('/', methods=['POST'])
 def adicionar_regiao():

@@ -1,24 +1,26 @@
-from flask import request
+from flask import request, session
 from models.models import User
 
 def checkCreds():
-    # Obtendo o username e senha dos cookies
+    # Obtém credenciais dos cookies
     username = request.cookies.get('username')
     senha = request.cookies.get('senha')
 
-    # Verificar se os cookies contêm os dados necessários
     if not username or not senha:
-        return {"success": False, "message": "Usuário ou senha não encontrados nos cookies."}
+        return {"success": False, "message": "Credenciais não encontradas nos cookies"}
 
-    # Verificar se o usuário existe no banco de dados
-    existing_user = User.query.filter_by(username=username).first()
-
-    if not existing_user:
-        return {"success": False, "message": "Usuário não encontrado."}
-
-    # Verificar se a senha está correta (sem hash)
-    if existing_user.senha != senha:
-        return {"success": False, "message": "Senha incorreta."}
-
-    # Caso tudo esteja correto
-    return {"success": True, "message": "Login bem-sucedido!"}
+    # Busca usuário no banco de dados
+    user = User.query.filter_by(username=username).first()
+    
+    if not user:
+        return {"success": False, "message": "Usuário não encontrado"}
+    
+    # Verificação de senha (idealmente deveria usar hash)
+    if user.senha != senha:
+        return {"success": False, "message": "Senha incorreta"}
+    
+    return {
+        "success": True,
+        "message": "Autenticado com sucesso",
+        "user": user  # Retorna todos os dados do usuário
+    }

@@ -8,12 +8,24 @@ extracao_route = Blueprint('Extracao', __name__, url_prefix='/extracao')
 
 @extracao_route.route('/', methods=['GET'])
 def extracao_page():
-    check_creds = checkCreds()
-    if check_creds['success']:
-        extracoes = Extracao.query.all()
-        return render_template('cadastroExtracao.html', extracoes=extracoes)
-    else:
-        return check_creds['message']
+
+    check_result = checkCreds()
+
+    if not check_result['success']:
+        return check_result['message'], 401  
+    
+    user = check_result['user']
+
+    try:
+        if int(user.acesso_extracao) != 1:
+            return "Usuário não autorizado", 403
+    except (AttributeError, ValueError):
+        return "Configuração de permissão inválida", 500
+    
+    extracoes = Extracao.query.all()
+
+    return render_template('cadastroExtracao.html', extracoes=extracoes)
+ 
 
 @extracao_route.route('/', methods=['POST'])
 def salvar_extracao():
@@ -126,3 +138,68 @@ def excluir_extracao():
         return jsonify({'message': 'Extração excluída com sucesso!'})
     else:
         return jsonify({'message': 'Extração não encontrada.'}), 404
+
+@extracao_route.route('/editar', methods=['POST'])
+def editar_extracao():
+    try:
+        data = request.get_json()
+        if not data:
+            return jsonify({"success": False, "message": "Dados inválidos"}), 400
+
+        extracao_nome = data.get("extracao")
+        if not extracao_nome:
+            return jsonify({"success": False, "message": "Nome da extração é obrigatório"}), 400
+
+        # Busca a extração
+        extr = Extracao.query.filter_by(extracao=extracao_nome).first()
+        if not extr:
+            return jsonify({"success": False, "message": "Extração não encontrada"}), 404
+
+        # Atualiza os campos com tratamento de erros
+        if 'fechamento' in data:
+            try:
+                # Corrige o formato do horário (aceita HH:MM ou HH:MM:SS)
+                fechamento_str = data['fechamento']
+                if len(fechamento_str) == 5:  # Formato HH:MM
+                    fechamento_str += ":00"  # Adiciona segundos
+                extr.fechamento = datetime.strptime(fechamento_str, "%H:%M:%S").time()
+            except ValueError as e:
+                return jsonify({
+                    "success": False,
+                    "message": f"Formato de horário inválido. Use HH:MM (ex: 14:30). Erro: {str(e)}"
+                }), 400
+
+        if 'premiacao' in data:
+            try:
+                extr.premiacao = int(data['premiacao'])
+            except ValueError:
+                return jsonify({
+                    "success": False,
+                    "message": "Premiação deve ser um número inteiro"
+                }), 400
+
+        if 'dias_extracao' in data:
+            extr.dias_extracao = data['dias_extracao']
+
+        if 'ativo' in data:
+            extr.ativo = data['ativo'].lower() in ['sim', '1', 'true', 'yes']
+
+        db.session.commit()
+        return jsonify({
+            "success": True,
+            "message": "Extração atualizada com sucesso!",
+            "data": {
+                "extracao": extr.extracao,
+                "fechamento": extr.fechamento.strftime("%H:%M") if extr.fechamento else None,
+                "premiacao": extr.premiacao,
+                "dias_extracao": extr.dias_extracao,
+                "ativo": "sim" if extr.ativo else "não"
+            }
+        })
+
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({
+            "success": False,
+            "message": f"Erro interno: {str(e)}"
+        }), 500

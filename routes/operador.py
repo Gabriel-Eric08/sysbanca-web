@@ -7,12 +7,22 @@ operadores_route = Blueprint('Operadores', __name__)
 
 @operadores_route.route('/', methods=['GET'])
 def operadores_page():
-    check_creds = checkCreds()
-    if check_creds['success'] == True:
-        operadores = Operador.query.all()
-        return render_template('cadastroOperador.html', operadores=operadores)
-    else:
-        return check_creds['message']
+    check_result = checkCreds()
+    
+
+    if not check_result['success']:
+        return check_result['message'], 401
+    
+    user = check_result['user']
+    
+    try:
+        if int(user.acesso_modalidade) != 1:
+            return "Usuário não autorizado", 403
+    except (AttributeError, ValueError):
+        return "Configuração de permissão inválida", 500
+    
+    operadores = Operador.query.all()
+    return render_template('cadastroOperador.html', operadores=operadores)
 
 @operadores_route.route('/', methods=['POST'])
 def novo_operador():

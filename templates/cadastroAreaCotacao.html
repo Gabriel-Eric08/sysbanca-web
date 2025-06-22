@@ -105,11 +105,12 @@
         <th>Modalidade</th>
         <th>Cotação</th>
         <th>Ativar Área</th>
+        <th>Ações</th>
       </tr>
     </thead>
     <tbody>
       {% for area in areasCotacao %}
-      <tr>
+      <tr data-id="{{ area.id }}">
         <td>{{ area.idCotArea if area.idCotArea else loop.index }}</td>
         <td>{{ area.area }}</td>
         <td>{{ area.extracao }}</td>
@@ -117,20 +118,46 @@
         <td>{{ area.cotacao }}</td>
         <td>{{ area.ativar_area_cotacao }}</td>
         <td>
-          <button class="btn btn-sm btn-warning me-2" disabled>Editar</button>
-          <button class="btn btn-sm btn-danger" onclick="excluirLinhaServidor('{{ area.id }}', this)">Excluir</button>
+          <button type="button" class="botao-estiloso" onclick="editarLinha(this)">Editar</button>
+          <button type="button" class="botao-salvar" onclick="excluirLinhaServidor('{{ area.id }}', this)">Excluir</button>
         </td>
       </tr>
     </tbody>
     {% else %}
-    <div colspan="6"><div class="alert alert-success"> Nenhuma areaCotacao cadastrada.</div>
-      {% endfor %}
+      <div colspan="6"><div class="alert alert-success"> Nenhuma areaCotacao cadastrada.</div>
+    {% endfor %}
   </table>
 
   <!-- Scripts -->
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/choices.js/public/assets/scripts/choices.min.js"></script>
   <script>
+  document.getElementById('formCotacao').addEventListener('submit', function (e) {
+    const tabela = document.querySelector("#tabela tbody");
+    const linhas = tabela.querySelectorAll("tr");
+    const dados = [];
+
+    linhas.forEach(linha => {
+      const cells = linha.children;
+      // ignora linhas sem botão "Excluir" que indica linha válida
+      if (!cells[6] || !cells[6].innerText.includes("Excluir")) return;
+
+      const registro = {
+        area: cells[1].innerText.trim(),
+        extracao: cells[2].innerText.trim(),
+        modalidade: cells[3].innerText.trim(),
+        cotacao: parseFloat(cells[4].innerText.trim()),
+        ativar_area_cotacao: cells[5].innerText.trim()
+      };
+      dados.push(registro);
+    });
+
+    // Preenche o campo hidden com os dados em JSON
+    document.getElementById("linhasInput").value = JSON.stringify(dados);
+  });
+</script>
+  <script>
+    
     const areaSelect = document.getElementById("area");
     const choices = new Choices(areaSelect, {
       removeItemButton: true,
@@ -161,64 +188,106 @@
       novaLinha.insertCell(4).innerText = cotacao;
       novaLinha.insertCell(5).innerText = ativar_area_cotacao;
 
-      document.getElementById("idCotArea").value = "";
-      choices.removeActiveItems();
-      document.getElementById("extracao").value = "";
-      document.getElementById("modalidade").value = "";
-      document.getElementById("cotacao").value = "";
-      document.getElementById("ativar_area_cotacao").value = "";
-      document.getElementById("busca").value = "";
+      const cellAcoes = novaLinha.insertCell(6);
+      cellAcoes.innerHTML = `
+        <button class="btn btn-sm btn-warning me-2" onclick="editarLinha(this)">Editar</button>
+        <button class="btn btn-sm btn-danger" onclick="excluirLinhaServidor('novo', this)">Excluir</button>
+      `;
     }
 
-    function buscarEPreencher() {
-      const termo = document.getElementById("busca").value.toLowerCase();
-      const linhas = document.querySelectorAll("#tabela tbody tr");
-      let encontrado = false;
-      linhas.forEach((linha) => {
-        const area = linha.cells[1].textContent.toLowerCase();
-        if (area.includes(termo)) {
-          document.getElementById("idCotArea").value = linha.cells[0].textContent;
-          const areasSelecionadas = linha.cells[1].textContent.split(", ");
-          choices.setChoiceByValue(areasSelecionadas);
-          document.getElementById("extracao").value = linha.cells[2].textContent;
-          document.getElementById("modalidade").value = linha.cells[3].textContent;
-          document.getElementById("cotacao").value = linha.cells[4].textContent;
-          document.getElementById("ativar_area_cotacao").value = linha.cells[5].textContent;
-          encontrado = true;
-        }
-      });
-      if (!encontrado) alert("Área não encontrada na tabela.");
-    }
+    function editarLinha(botao) {
+    const linha = botao.closest('tr');
+    const cells = linha.children;
+    const id = linha.dataset.id;
 
-    document.getElementById("formCotacao").addEventListener("submit", function (e) {
-      const linhas = [];
-      const tabela = document.querySelectorAll("#tabela tbody tr");
-      tabela.forEach((linha) => {
-        const dados = {
-          idCotArea: linha.cells[0].innerText,
-          area: linha.cells[1].innerText,
-          extracao: linha.cells[2].innerText,
-          modalidade: linha.cells[3].innerText,
-          cotacao: linha.cells[4].innerText,
-          ativar_area_cotacao: linha.cells[5].innerText,
-        };
-        linhas.push(dados);
-      });
-      document.getElementById("linhasInput").value = JSON.stringify(linhas);
+    linha.dataset.original = JSON.stringify({
+      idCotArea: cells[0].innerText,
+      area: cells[1].innerText,
+      extracao: cells[2].innerText,
+      modalidade: cells[3].innerText,
+      cotacao: cells[4].innerText,
+      ativar: cells[5].innerText
     });
 
-    function excluirLinhaServidor(id, botao) {
-      if (!confirm("Tem certeza que deseja excluir esta cotação?")) return;
-      fetch(`/areacotacao/deletar/${id}`, { method: "DELETE" })
-        .then((res) => {
-          if (res.ok) botao.closest("tr").remove();
-          else alert("Erro ao excluir. Tente novamente.");
-        })
-        .catch((err) => {
-          console.error(err);
-          alert("Erro na requisição.");
-        });
+    cells[1].innerHTML = `<input class='form-control' value='${cells[1].innerText}' />`;
+    cells[2].innerHTML = `<input class='form-control' value='${cells[2].innerText}' />`;
+    cells[3].innerHTML = `<input class='form-control' value='${cells[3].innerText}' />`;
+    cells[4].innerHTML = `<input class='form-control' value='${cells[4].innerText}' />`;
+    cells[5].innerHTML = `
+      <select class='form-select'>
+        <option value="sim" ${cells[5].innerText === 'sim' ? 'selected' : ''}>Sim</option>
+        <option value="nao" ${cells[5].innerText === 'nao' ? 'selected' : ''}>Não</option>
+      </select>`;
+
+    cells[6].innerHTML = `
+      <button class="btn btn-sm btn-success me-2" onclick="salvarEdicao(this, ${id})">Salvar</button>
+      <button class="btn btn-sm btn-secondary" onclick="cancelarEdicao(this)">Cancelar</button>
+    `;
+  }
+
+    function salvarEdicao(botao, id) {
+    const linha = botao.closest('tr');
+    const cells = linha.children;
+    const dados = {
+      area: cells[1].querySelector('input').value,
+      extracao: cells[2].querySelector('input').value,
+      modalidade: cells[3].querySelector('input').value,
+      cotacao: cells[4].querySelector('input').value,
+      ativar_area_cotacao: cells[5].querySelector('select').value
+    };
+
+    fetch(`/areacotacao/editar/${id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(dados)
+    }).then(res => {
+      if (!res.ok) throw new Error('Erro ao salvar');
+      return res.json();
+    }).then(() => {
+      cells[1].innerText = dados.area;
+      cells[2].innerText = dados.extracao;
+      cells[3].innerText = dados.modalidade;
+      cells[4].innerText = dados.cotacao;
+      cells[5].innerText = dados.ativar_area_cotacao;
+      cells[6].innerHTML = `
+        <button class="btn btn-sm btn-warning me-2" onclick="editarLinha(this)">Editar</button>
+        <button class="btn btn-sm btn-danger" onclick="excluirLinhaServidor('${id}', this)">Excluir</button>
+      `;
+    }).catch(err => alert(err));
+  }
+
+    function cancelarEdicao(botao) {
+    const linha = botao.closest('tr');
+    const original = JSON.parse(linha.dataset.original);
+    linha.children[1].innerText = original.area;
+    linha.children[2].innerText = original.extracao;
+    linha.children[3].innerText = original.modalidade;
+    linha.children[4].innerText = original.cotacao;
+    linha.children[5].innerText = original.ativar;
+    linha.children[6].innerHTML = `
+      <button class="btn btn-sm btn-warning me-2" onclick="editarLinha(this)">Editar</button>
+      <button class="btn btn-sm btn-danger" onclick="excluirLinhaServidor('${original.idCotArea}', this)">Excluir</button>
+    `;
+  }
+  function excluirLinhaServidor(id, botao) {
+    if (id === 'novo') {
+      botao.closest('tr').remove();
+      return;
     }
+
+    if (!confirm("Deseja excluir esta linha?")) return;
+
+    fetch(`/areacotacao/deletar/${id}`, {
+      method: 'DELETE'
+    }).then(res => {
+      if (!res.ok) throw new Error('Erro ao excluir');
+      return res.json();
+    }).then(() => {
+      botao.closest('tr').remove();
+    }).catch(err => {
+      alert("Erro ao excluir: " + err);
+    });
+  }
   </script>
 </body>
 </html>

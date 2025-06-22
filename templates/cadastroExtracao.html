@@ -46,6 +46,28 @@
     tbody > tr:nth-child(odd) {
       background-color: #f2f2f2;
     }
+    /* Estilos para o multi-select durante edição */
+    #editDiasExtracao + .choices {
+      margin-bottom: 0;
+      min-height: 38px;
+    }
+    #editDiasExtracao + .choices .choices__inner {
+      min-height: 38px;
+      padding: 0;
+      border: 1px solid #ced4da;
+      border-radius: 0.25rem;
+    }
+    #editDiasExtracao + .choices .choices__list--multiple .choices__item {
+      margin: 2px;
+      padding: 2px 6px;
+      font-size: 14px;
+      background-color: #072749;
+      border: 1px solid #0056b3;
+    }
+    #editDiasExtracao + .choices .choices__input {
+      margin: 0;
+      padding: 2px;
+    }
   </style>
 </head>
 <body class="p-4">
@@ -119,14 +141,14 @@
       <tbody id="tabela-corpo">
         {% if extracoes %}
           {% for e in extracoes %}
-            <tr>
+            <tr data-original-values='{"extracao":"{{ e.extracao }}","fechamento":"{{ e.fechamento }}","premiacao":"{{ e.premiacao }}","dias_extracao":"{{ e.dias_extracao }}","ativo":"{% if e.ativo in [1, '1', 'sim', 'Sim', 'SIM'] %}sim{% else %}nao{% endif %}"}'>
               <td>{{ e.extracao }}</td>
               <td>{{ e.fechamento }}</td>
               <td>{{ e.premiacao }}</td>
               <td>{{ e.dias_extracao }}</td>
               <td>{% if e.ativo in [1, '1', 'sim', 'Sim', 'SIM'] %}Sim{% else %}Não{% endif %}</td>
               <td>
-                <button type="button" class="botao-estiloso">✏️ Editar</button>
+                <button type="button" class="botao-estiloso" onclick="editarLinha(this)">✏️ Editar</button>
                 <button type="button" class="botao-salvar" onclick="excluirExtracao('{{ e.extracao }}', this)">🗑️ Excluir</button>
               </td>
             </tr>
@@ -142,12 +164,15 @@
   <script src="https://cdn.jsdelivr.net/npm/choices.js/public/assets/scripts/choices.min.js"></script>
 
   <script>
+    // Variáveis globais
     const choicesDias = new Choices('#DiasExtracao', {
       removeItemButton: true,
       searchEnabled: false,
       placeholderValue: 'Selecione os dias',
       shouldSort: false
     });
+    
+    let choicesEditDias = null;
 
     function adicionarItem() {
       const extracao = document.getElementById('extracao').value.trim();
@@ -155,8 +180,8 @@
       const premiacao = document.getElementById('premiacao').value.trim();
       const ativo = document.getElementById('ativo').value.trim();
 
-      const selecionados = choicesDias.getValue(true); // Pega os valores selecionados
-      const DiasExtracao = selecionados.join(', '); // Junta com vírgula
+      const selecionados = choicesDias.getValue(true);
+      const DiasExtracao = selecionados.join(', ');
 
       if (!extracao || !fechamento || !premiacao || selecionados.length === 0 || !ativo) {
         alert("Preencha todos os campos!");
@@ -165,14 +190,21 @@
 
       const tabela = document.getElementById('tabela-corpo');
       const novaLinha = tabela.insertRow();
+      novaLinha.dataset.originalValues = JSON.stringify({
+        extracao: extracao,
+        fechamento: fechamento,
+        premiacao: premiacao,
+        dias_extracao: DiasExtracao,
+        ativo: ativo
+      });
 
       novaLinha.insertCell(0).textContent = extracao;
       novaLinha.insertCell(1).textContent = fechamento;
       novaLinha.insertCell(2).textContent = premiacao;
       novaLinha.insertCell(3).textContent = DiasExtracao;
-      novaLinha.insertCell(4).textContent = ativo;
+      novaLinha.insertCell(4).textContent = ativo === 'sim' ? 'Sim' : 'Não';
       novaLinha.insertCell(5).innerHTML = `
-        <button type="button" class="botao-estiloso">✏️ Editar</button>
+        <button type="button" class="botao-estiloso" onclick="editarLinha(this)">✏️ Editar</button>
         <button type="button" class="botao-salvar" onclick="excluirExtracao('${extracao}', this)">🗑️ Excluir</button>
       `;
 
@@ -181,7 +213,7 @@
       document.getElementById('fechamento').value = "";
       document.getElementById('premiacao').value = "";
       document.getElementById('ativo').value = "sim";
-      choicesDias.clearStore(); // Limpa seleção
+      choicesDias.clearStore();
     }
 
     function filtrarTabela() {
@@ -189,8 +221,10 @@
       const linhas = document.querySelectorAll("#tabela-corpo tr");
 
       linhas.forEach(linha => {
-        const extracao = linha.cells[0].textContent.toLowerCase();
-        linha.style.display = extracao.includes(termo) ? "" : "none";
+        if (linha.cells.length > 0) {
+          const extracao = linha.cells[0].textContent.toLowerCase();
+          linha.style.display = extracao.includes(termo) ? "" : "none";
+        }
       });
     }
 
@@ -204,6 +238,8 @@
 
       for (let i = 0; i < tabela.rows.length; i++) {
         const cells = tabela.rows[i].cells;
+        if (cells.length === 0) continue;
+
         const campos = ['extracao', 'fechamento', 'premiacao', 'dias_semana', 'ativo'];
 
         campos.forEach((campo, idx) => {
@@ -218,6 +254,184 @@
       form.submit();
     }
 
+    function editarLinha(botao) {
+      const linha = botao.closest("tr");
+      const valoresOriginais = JSON.parse(linha.dataset.originalValues);
+      
+      // Cria inputs para edição
+      linha.cells[0].innerHTML = `<input class="form-control" value="${valoresOriginais.extracao}" readonly>`;
+      linha.cells[1].innerHTML = `<input type="time" class="form-control" value="${valoresOriginais.fechamento}">`;
+      
+      // Select para premiação
+      const premiacaoOptions = ['', '10', '7', '5'];
+      let premiacaoSelect = `<select class="form-select">`;
+      premiacaoOptions.forEach(opt => {
+        const selected = opt === valoresOriginais.premiacao ? 'selected' : '';
+        premiacaoSelect += `<option value="${opt}" ${selected}>${opt || '--Selecione--'}</option>`;
+      });
+      premiacaoSelect += `</select>`;
+      linha.cells[2].innerHTML = premiacaoSelect;
+      
+      // Multi-select para dias da semana
+      const diasDisponiveis = ['Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado', 'Domingo'];
+      const diasSelecionados = valoresOriginais.dias_extracao.split(',').map(d => d.trim());
+      
+      linha.cells[3].innerHTML = `
+        <select id="editDiasExtracao" class="form-select" multiple>
+          ${diasDisponiveis.map(dia => 
+              `<option value="${dia}" ${diasSelecionados.includes(dia) ? 'selected' : ''}>${dia}</option>`
+          ).join('')}
+        </select>
+      `;
+      
+      // Inicializa o Choices para o multi-select
+      if (choicesEditDias) {
+        choicesEditDias.destroy();
+      }
+      choicesEditDias = new Choices('#editDiasExtracao', {
+        removeItemButton: true,
+        searchEnabled: false,
+        placeholderValue: 'Selecione os dias',
+        shouldSort: false
+      });
+      
+      // Select para ativo
+      const ativoOptions = ['sim', 'nao'];
+      let ativoSelect = `<select class="form-select">`;
+      ativoOptions.forEach(opt => {
+        const selected = opt === valoresOriginais.ativo ? 'selected' : '';
+        const displayText = opt === 'sim' ? 'Sim' : 'Não';
+        ativoSelect += `<option value="${opt}" ${selected}>${displayText}</option>`;
+      });
+      ativoSelect += `</select>`;
+      linha.cells[4].innerHTML = ativoSelect;
+      
+      // Botões de ação
+      linha.cells[5].innerHTML = `
+        <button class="botao-voltar" onclick="salvarEdicao(this)">💾 Salvar</button>
+        <button class="botao-salvar" onclick="cancelarEdicao(this)">❌ Cancelar</button>
+      `;
+    }
+
+    function salvarEdicao(botao) {
+    const linha = botao.closest("tr");
+    const valoresOriginais = JSON.parse(linha.dataset.originalValues);
+    
+    const extracao = linha.cells[0].querySelector("input").value;
+    const fechamentoInput = linha.cells[1].querySelector("input");
+    const fechamento = fechamentoInput.value;
+    const premiacao = linha.cells[2].querySelector("select").value;
+    const diasSelecionados = choicesEditDias.getValue(true);
+    const dias_extracao = diasSelecionados.join(', ');
+    const ativo = linha.cells[4].querySelector("select").value;
+
+    // Validação dos campos
+    if (!extracao || !fechamento || !premiacao || diasSelecionados.length === 0 || !ativo) {
+        alert("Preencha todos os campos corretamente!");
+        return;
+    }
+
+    // Validação do formato do horário
+    if (!/^([01]?[0-9]|2[0-3]):[0-5][0-9]$/.test(fechamento)) {
+        alert("Formato de horário inválido. Use HH:MM (ex: 14:30)");
+        fechamentoInput.focus();
+        return;
+    }
+
+    // Mostra feedback visual durante o processamento
+    const botaoSalvar = botao;
+    botaoSalvar.disabled = true;
+    botaoSalvar.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Salvando...';
+
+    // Prepara os dados para envio
+    const dados = {
+        extracao: extracao,
+        fechamento: fechamento + ":00",  // Adiciona segundos para o servidor
+        premiacao: premiacao,
+        dias_extracao: dias_extracao,
+        ativo: ativo
+    };
+
+    fetch('/extracao/editar', {
+        method: 'POST',
+        headers: { 
+            'Content-Type': 'application/json',
+            'X-Requested-With': 'XMLHttpRequest'
+        },
+        body: JSON.stringify(dados)
+    })
+    .then(response => {
+        if (!response.ok) {
+            return response.json().then(err => { 
+                throw new Error(err.message || 'Erro na resposta do servidor');
+            });
+        }
+        return response.json();
+    })
+    .then(data => {
+        if (data.success) {
+            // Atualiza a linha com os novos valores (sem os segundos)
+            linha.cells[0].textContent = data.data.extracao;
+            linha.cells[1].textContent = data.data.fechamento;
+            linha.cells[2].textContent = data.data.premiacao;
+            linha.cells[3].textContent = data.data.dias_extracao;
+            linha.cells[4].textContent = data.data.ativo === 'sim' ? 'Sim' : 'Não';
+            
+            // Atualiza os valores originais
+            linha.dataset.originalValues = JSON.stringify({
+                extracao: data.data.extracao,
+                fechamento: data.data.fechamento,
+                premiacao: data.data.premiacao,
+                dias_extracao: data.data.dias_extracao,
+                ativo: data.data.ativo
+            });
+            
+            // Restaura os botões normais
+            linha.cells[5].innerHTML = `
+                <button type="button" class="botao-estiloso" onclick="editarLinha(this)">✏️ Editar</button>
+                <button type="button" class="botao-salvar" onclick="excluirExtracao('${data.data.extracao}', this)">🗑️ Excluir</button>
+            `;
+            
+            // Limpa o Choices
+            if (choicesEditDias) {
+                choicesEditDias.destroy();
+                choicesEditDias = null;
+            }
+        } else {
+            throw new Error(data.message);
+        }
+    })
+    .catch(error => {
+        console.error("Erro ao editar:", error);
+        alert(error.message || "Erro ao editar extração. Por favor, tente novamente.");
+        botaoSalvar.disabled = false;
+        botaoSalvar.textContent = '💾 Salvar';
+    });
+}
+
+    function cancelarEdicao(botao) {
+      const linha = botao.closest("tr");
+      const valoresOriginais = JSON.parse(linha.dataset.originalValues);
+      
+      // Restaura os valores originais
+      linha.cells[0].textContent = valoresOriginais.extracao;
+      linha.cells[1].textContent = valoresOriginais.fechamento;
+      linha.cells[2].textContent = valoresOriginais.premiacao;
+      linha.cells[3].textContent = valoresOriginais.dias_extracao;
+      linha.cells[4].textContent = valoresOriginais.ativo === 'sim' ? 'Sim' : 'Não';
+      
+      linha.cells[5].innerHTML = `
+        <button type="button" class="botao-estiloso" onclick="editarLinha(this)">✏️ Editar</button>
+        <button type="button" class="botao-salvar" onclick="excluirExtracao('${valoresOriginais.extracao}', this)">🗑️ Excluir</button>
+      `;
+      
+      // Limpa o Choices
+      if (choicesEditDias) {
+        choicesEditDias.destroy();
+        choicesEditDias = null;
+      }
+    }
+
     function excluirExtracao(extracaoNome, botao) {
       if (!confirm(`Tem certeza que deseja excluir a extração "${extracaoNome}"?`)) return;
 
@@ -226,13 +440,14 @@
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ extracao: extracaoNome })
       })
-      .then(response => response.json())
+      .then(response => {
+        if (!response.ok) throw new Error('Erro ao excluir extração');
+        return response.json();
+      })
       .then(data => {
         alert(data.message);
-        if (data.message.includes('sucesso')) {
-          const row = botao.closest('tr');
-          row.remove();
-        }
+        const linha = botao.closest('tr');
+        linha.remove();
       })
       .catch(error => {
         console.error('Erro:', error);

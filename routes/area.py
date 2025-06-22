@@ -1,13 +1,28 @@
 from flask import Blueprint, render_template, request, jsonify
 from db_config import db
-from models.models import Area, Relatorio
+from models.models import Area, Relatorio, Vendedor
 from datetime import datetime
+from util.checkCreds import checkCreds
 
 area_route = Blueprint('Area', __name__)
 
 # GET - Página de cadastro
 @area_route.route('/', methods=['GET'])
 def area_page():
+
+    check_result = checkCreds()
+
+    if not check_result['success']:
+        return check_result['message'], 401  
+    
+    user = check_result['user']
+
+    try:
+        if int(user.acesso_area) != 1:
+            return "Usuário não autorizado", 403
+    except (AttributeError, ValueError):
+        return "Configuração de permissão inválida", 500
+
     areas = Area.query.order_by(Area.regiao_area).all()
     return render_template('CadastroArea.html', areas=areas)
 
@@ -135,3 +150,15 @@ def editar_area():
     db.session.commit()
 
     return jsonify({'message': 'Área atualizada com sucesso!', 'success': True}), 200
+
+@area_route.route('/<serial>')
+def get_vendedor_by_serial(serial):
+    vendedor = Vendedor.query.filter_by(serial=serial).first()
+    
+    if not vendedor:
+        return jsonify({"success": False, "message": "Vendedor não encontrado"}), 404
+    
+    return jsonify({
+        "success": True,
+        "area": vendedor.area
+    }), 200

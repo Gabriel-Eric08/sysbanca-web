@@ -7,8 +7,17 @@ area_comissao_route = Blueprint('AreaComissaoModalidade', __name__)
 @area_comissao_route.route('/')
 def area_comissao_page():
 
-    check_creds = checkCreds()
-    if check_creds['success'] == True:
-        return render_template('AreaComissaoModalidade.html')
-    else:
-        return check_creds['message']
+    check_result = checkCreds()
+
+    if not check_result['success']:
+        return check_result['message'], 401  
+    
+    user = check_result['user']
+
+    try:
+        if int(user.acesso_area_comissao_modalidade) != 1:
+            return "Usuário não autorizado", 403
+    except (AttributeError, ValueError):
+        return "Configuração de permissão inválida", 500
+    
+    return render_template('AreaComissaoModalidade.html')
