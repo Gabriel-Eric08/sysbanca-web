@@ -1,5 +1,14 @@
 from db_config import db
 
+class ComissaoArea(db.Model):
+    __tablename__ = 'tb_comissaoArea'
+
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    area = db.Column(db.String, nullable=False)
+    modalidade = db.Column(db.String, nullable=False)
+    comissao = db.Column(db.Float, nullable=False)
+    ativar = db.Column(db.String, nullable=False)
+
 class Aposta(db.Model):
     __tablename__ = 'tb_apostas'
 
@@ -19,14 +28,12 @@ class Pessoa(db.Model):
     nome = db.Column(db.String(20), primary_key=True)
     sobrenome = db.Column(db.String(20), nullable=False)
 
-
 class Area(db.Model):
     __tablename__ = 'tb_area'
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     regiao_area = db.Column('RegiaoArea', db.String(20), nullable=False)
     desc_area = db.Column('DescArea', db.String(20), nullable=False)
     ativar_area = db.Column('AtivarArea', db.Text, nullable=False)
-
 
 class AreaCotacao(db.Model):
     __tablename__ = 'tb_AreaCotacao'
@@ -45,6 +52,15 @@ class AreaLimite(db.Model):
     extracao_area_limite = db.Column(db.String(15), nullable=False)
     modalidade_area_limite = db.Column(db.String(15), nullable=False)
     limite_area_palpite = db.Column(db.Integer, nullable=False)
+
+class CadastroDescarrego(db.Model):
+    __tablename__ = 'cadastro_descarrego'
+
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    areas = db.Column(db.Text, nullable=False)
+    modalidade = db.Column(db.Text, nullable=False)
+    extracao = db.Column(db.Text, nullable=False)
+    limite = db.Column(db.Float, nullable=False)
 
 
 class ColetaVendedor(db.Model):
@@ -68,6 +84,16 @@ class Coletor(db.Model):
     senha = db.Column(db.String(10), nullable=False)
     ativar_coletor = db.Column(db.Text, nullable=False)
 
+class Descarrego(db.Model):
+    __tablename__ = 'descarregos'
+
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    bilhete = db.Column(db.Integer, nullable=False)
+    extracao = db.Column(db.Text, nullable=False)
+    valor_apostado = db.Column(db.Float, nullable=False)
+    valor_excedente = db.Column(db.Float, nullable=False)
+    numeros = db.Column(db.Text, nullable=False)
+    data = db.Column(db.DateTime, nullable=False)
 
 class Extracao(db.Model):
     __tablename__ = 'tb_extracao'
@@ -159,6 +185,7 @@ class User(db.Model):
     acesso_cancelamento_fora_do_horario = db.Column(db.Integer, default=0)
     acesso_administracao = db.Column(db.Integer, default=0)
     acesso_area = db.Column(db.Integer, default=0)
+    ativo = db.Column(db.Text, default='não')
 
 class Venda(db.Model):
     __tablename__ = 'tb_venda'
@@ -173,13 +200,25 @@ class Venda(db.Model):
     valor_total_poule = db.Column('ValorTotalPoule', db.Integer, nullable=False)
 
 class Vendedor(db.Model):
-    __tablename__='tb_vendedores'
-    id = db.Column('id', db.Integer, primary_key=True, autoincrement=True)
-    nome = db.Column('nome', db.String(25), nullable=False)
-    username = db.Column('username', db.String(25), nullable=False)
-    senha = db.Column('senha', db.String(25), nullable=False)
-    serial = db.Column('serial', db.String(25), nullable=False)
-    area = db.Column('area', db.String(25), nullable=True)
+    __tablename__ = 'tb_vendedores'
+
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    nome = db.Column(db.String(100), nullable=False)
+    username = db.Column(db.String(50), nullable=False, unique=True)
+    senha = db.Column(db.String(255), nullable=False)
+    serial = db.Column(db.String(100), unique=True)
+    area = db.Column(db.String(25), nullable=True)
+
+    regiao = db.Column(db.String(50), nullable=True)
+    ativo = db.Column(db.Enum('sim', 'nao'), nullable=True)
+    comissao = db.Column(db.Numeric(5, 2), nullable=True)
+    cancelar_poule = db.Column(db.Enum('sim', 'nao'), nullable=True)
+    exibe_comissao = db.Column(db.Enum('sim', 'nao'), nullable=True)
+    limite_venda = db.Column(db.Numeric(10, 2), nullable=True)
+    tipo_limite = db.Column(db.String(50), nullable=True)
+    grade = db.Column(db.String(50), nullable=True)
+    teste = db.Column(db.String(100), nullable=True)
+    comissao_retida = db.Column(db.Numeric(5, 2), nullable=True)
 
 class Relatorio(db.Model):
     __tablename__ = 'tb_Relatorios'

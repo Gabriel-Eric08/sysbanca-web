@@ -133,20 +133,20 @@ def excluir_modalidades():
 def editar_modalidade():
     try:
         data = request.get_json()
-        modalidade = data.get("modalidade")
+        modalidade_nome = data.get("modalidade")
 
-        # Busca a modalidade
-        m = Modalidade.query.filter_by(modalidade=modalidade).first()
+        m = Modalidade.query.filter_by(modalidade=modalidade_nome).first()
         if not m:
             return jsonify({"success": False, "message": "Modalidade não encontrada"}), 404
 
-        m.cotacao = data.get("cotacao")
-        m.unidade = data.get("unidade")
-        m.limite_por_aposta = data.get("limite_por_aposta")
-        m.ativar_area = data.get("ativar_area")
+        m.cotacao = float(data.get("cotacao"))
+        m.unidade = int(data.get("unidade"))
+        m.limite_por_aposta = int(data.get("limite_por_aposta"))
+        m.ativar_area = data.get("ativar_area").strip().lower()
 
         db.session.commit()
         return jsonify({"success": True, "message": "Modalidade atualizada com sucesso!"})
 
     except Exception as e:
-        return jsonify({"success": False, "message": str(e)}), 400
+        db.session.rollback()
+        return jsonify({"success": False, "message": f"Erro ao editar: {str(e)}"}), 400

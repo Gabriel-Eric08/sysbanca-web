@@ -47,13 +47,14 @@ def salvar_extracao():
         return redirect(url_for('AreaCotacao.area_cotacao_page'))
 
     for linha in linhas:
-        # Verifica se já existe um registro igual
+        ativar_area_cotacao = 1 if linha['ativar_area_cotacao'].lower() == 'sim' else 0
+
         existe = AreaCotacao.query.filter_by(
             area=linha['area'],
             extracao=linha['extracao'],
             modalidade=linha['modalidade'],
             cotacao=int(linha['cotacao']),
-            ativar_area_cotacao=linha['ativar_area_cotacao']
+            ativar_area_cotacao=ativar_area_cotacao
         ).first()
 
         if not existe:
@@ -62,9 +63,9 @@ def salvar_extracao():
                 extracao=linha['extracao'],
                 modalidade=linha['modalidade'],
                 cotacao=int(linha['cotacao']),
-                ativar_area_cotacao=linha['ativar_area_cotacao']
+                ativar_area_cotacao=ativar_area_cotacao
             )
-            db.session.add(nova_area)
+            db.session.add(nova_area)   
 
     db.session.commit()
     return redirect(url_for('AreaCotacao.area_cotacao_page'))
@@ -102,7 +103,7 @@ def editar_area_cotacao(id):
         area.extracao = dados['extracao']
         area.modalidade = dados['modalidade']
         area.cotacao = dados['cotacao']  # Corrigido para float
-        area.ativar_area_cotacao = dados['ativar_area_cotacao']
+        area.ativar_area_cotacao = 1 if dados['ativar_area_cotacao'].lower() == 'sim' else 0
         db.session.commit()
         return {'success': True}, 200
     except Exception as e:

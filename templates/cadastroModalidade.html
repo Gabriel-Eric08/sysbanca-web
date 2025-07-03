@@ -188,31 +188,46 @@
   }
 
   function editarLinha(botao) {
-    const linha = botao.closest("tr");
-    const valoresOriginais = [];
+  const linha = botao.closest("tr");
+  const valoresOriginais = [];
 
-    for (let i = 0; i < 5; i++) {
-      const valor = linha.cells[i].textContent.trim();
-      valoresOriginais.push(valor);
-      linha.cells[i].innerHTML = `<input class="form-control" value="${valor}">`;
-    }
-
-    linha.cells[5].innerHTML = `
-      <button class="botao-voltar" onclick="salvarEdicao(this)">💾 Salvar</button>
-      <button class="botao-salvar" onclick='cancelarEdicao(this, ${JSON.stringify(valoresOriginais)})'>❌ Cancelar</button>
-    `;
+  // Salva os valores originais
+  for (let i = 0; i < 5; i++) {
+    valoresOriginais.push(linha.cells[i].textContent.trim());
   }
+
+  // Modalidade, Cotação, Unidade, LimitePorAposta como input
+  for (let i = 0; i < 4; i++) {
+    const valor = valoresOriginais[i];
+    linha.cells[i].innerHTML = `<input class="form-control" value="${valor}">`;
+  }
+
+  // Campo "Ativar Área" como select
+  const valorAtivar = valoresOriginais[4];
+  linha.cells[4].innerHTML = `
+    <select class="form-select">
+      <option value="sim" ${valorAtivar === "sim" ? "selected" : ""}>Sim</option>
+      <option value="nao" ${valorAtivar === "nao" ? "selected" : ""}>Não</option>
+    </select>
+  `;
+
+  linha.cells[5].innerHTML = `
+    <button class="botao-voltar" onclick="salvarEdicao(this)">💾 Salvar</button>
+    <button class="botao-salvar" onclick='cancelarEdicao(this, ${JSON.stringify(valoresOriginais)})'>❌ Cancelar</button>
+  `;
+}
 
   function salvarEdicao(botao) {
     const linha = botao.closest("tr");
     const inputs = linha.querySelectorAll("input");
+    const selectAtivo = linha.cells[4].querySelector("select");
 
     const dados = {
-      modalidade: inputs[0].value,
+      modalidade: inputs[0].value.trim(),
       cotacao: parseFloat(inputs[1].value),
       unidade: parseInt(inputs[2].value),
       limite_por_aposta: parseInt(inputs[3].value),
-      ativar_area: inputs[4].value
+      ativar_area: selectAtivo.value
     };
 
     fetch('/modalidade/editar', {
@@ -223,9 +238,12 @@
     .then(response => response.json())
     .then(data => {
       if (data.success) {
-        for (let i = 0; i < 5; i++) {
-          linha.cells[i].textContent = inputs[i].value;
-        }
+        linha.cells[0].textContent = dados.modalidade;
+        linha.cells[1].textContent = dados.cotacao.toFixed(2);
+        linha.cells[2].textContent = dados.unidade;
+        linha.cells[3].textContent = dados.limite_por_aposta;
+        linha.cells[4].textContent = dados.ativar_area;
+
         linha.cells[5].innerHTML = `
           <button class="botao-estiloso" onclick="editarLinha(this)">✏️ Editar</button>
           <button class="botao-salvar" onclick="excluirModalidade(this, '${dados.modalidade}')">🗑️ Excluir</button>

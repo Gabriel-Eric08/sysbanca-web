@@ -120,10 +120,10 @@
       </div>
 
       <div class="d-flex flex-wrap gap-2 mb-3">
-        <button type="button" class="botao-estiloso" onclick="adicionarItem()">Adicionar</button>
-        <input type="text" id="busca" placeholder="Filtrar por Extração" class="form-control w-auto" oninput="filtrarTabela()" />
-        <button type="submit" class="botao-voltar" onclick="prepararEnvio(event)">Salvar</button>
-        <a href="{{ url_for('Home.home') }}" class="btn botao-salvar">Sair</a>
+        <button type="button" class="botao-estiloso" onclick="adicionarItem()">➕ Adicionar</button>
+        <input type="text" id="busca" placeholder="🔍Digite a Extração" class="form-control w-auto" oninput="filtrarTabela()" />
+        <button type="submit" class="botao-voltar" onclick="prepararEnvio(event)">💾 Salvar</button>
+        <a href="{{ url_for('Home.home') }}" class="btn botao-salvar d-inline-flex align-items-center">❌ Sair</a>
       </div>
     </form>
 
@@ -141,9 +141,10 @@
       <tbody id="tabela-corpo">
         {% if extracoes %}
           {% for e in extracoes %}
-            <tr data-original-values='{"extracao":"{{ e.extracao }}","fechamento":"{{ e.fechamento }}","premiacao":"{{ e.premiacao }}","dias_extracao":"{{ e.dias_extracao }}","ativo":"{% if e.ativo in [1, '1', 'sim', 'Sim', 'SIM'] %}sim{% else %}nao{% endif %}"}'>
+            <tr data-original-values='{"extracao":"{{ e.extracao }}","fechamento":"{{ e.fechamento.strftime('%H:%M') if e.fechamento else '' }}"
+,"premiacao":"{{ e.premiacao }}","dias_extracao":"{{ e.dias_extracao }}","ativo":"{% if e.ativo in [1, '1', 'sim', 'Sim', 'SIM'] %}sim{% else %}nao{% endif %}"}'>
               <td>{{ e.extracao }}</td>
-              <td>{{ e.fechamento }}</td>
+              <td>{{ e.fechamento.strftime("%H:%M") if e.fechamento else '' }}</td>
               <td>{{ e.premiacao }}</td>
               <td>{{ e.dias_extracao }}</td>
               <td>{% if e.ativo in [1, '1', 'sim', 'Sim', 'SIM'] %}Sim{% else %}Não{% endif %}</td>
@@ -153,10 +154,10 @@
               </td>
             </tr>
           {% endfor %}
-        {% else %}
-          <tr><td colspan="6" class="text-center">Nenhuma extração cadastrada.</td></tr>
-        {% endif %}
       </tbody>
+      {% else %}
+          <div colspan="6" class="text-center">Nenhuma extração cadastrada.</div>
+      {% endif %}
     </table>
   </div>
 

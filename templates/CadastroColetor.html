@@ -4,132 +4,83 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Cadastro de Coletor</title>
-
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" />
-
   <style>
-    body {
-      font-family: Arial, sans-serif;
-      padding: 20px;
-    }
-
-    tbody > tr:nth-child(odd) {
-      background-color: #cfd8dd;
-    }
-
-    .botao-adicionar { background-color: #072749; }
-    .botao-salvar { background-color: #ff9900; }
-    .botao-voltar { background-color: #6c757d; }
-    .botao-editar { background-color: #1fa53c; }
-    .botao-excluir { background-color: #be0d0d; }
-
-    .botao-adicionar, .botao-salvar, .botao-voltar, .botao-editar, .botao-excluir {
+    tbody > tr:nth-child(odd) { background-color: #cfd8dd; }
+    .botao-estiloso, .botao-salvar, .botao-voltar {
+      padding: 5px 20px;
       font-size: 18px;
       color: white;
-      border-radius: 8px;
-      box-shadow: 0 5px 15px rgba(0,0,0,0.2);
-      transition: all 0.3s ease;
-      position: relative;
-      overflow: hidden;
       border: none;
-      padding: 6px 20px;
+      border-radius: 8px;
       cursor: pointer;
+      box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+      transition: all 0.3s ease;
       margin-right: 10px;
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
     }
-
-    .botao-adicionar:hover { background-color: #0056b3; }
-    .botao-salvar:hover { background-color: #ffa733; }
-    .botao-voltar:hover { background-color: #5a6268; }
-    .botao-editar:hover { background-color: #128d2e; }
-    .botao-excluir:hover { background-color: #ec5050; }
-
-    .botao-adicionar::after, .botao-salvar::after, .botao-voltar::after,
-    .botao-editar::after, .botao-excluir::after {
-      content: "";
-      position: absolute;
-      top: 0;
-      left: -100%;
-      width: 100%;
-      height: 100%;
-      background: rgba(255, 255, 255, 0.2);
-      transform: skewX(-20deg);
-      transition: left 0.5s ease;
-    }
-
-    .botao-adicionar:hover::after,
-    .botao-salvar:hover::after,
-    .botao-voltar:hover::after,
-    .botao-editar:hover::after,
-    .botao-excluir:hover::after {
-      left: 100%;
-    }
-
-    .form-label {
-      font-weight: bold;
-    }
-
-    input[readonly] {
-      background-color: #f1f1f1;
-    }
+    .botao-estiloso { background-color: #072749; }
+    .botao-estiloso:hover { background-color: #0056b3; }
+    .botao-salvar { background-color: #be0d0d; }
+    .botao-salvar:hover { background-color: #ec5050; }
+    .botao-voltar { background-color: #1fa53c; }
+    .botao-voltar:hover { background-color: #128d2e; }
   </style>
 </head>
-<body>
+<body class="container py-4">
 
-  <div class="container">
-    <h2 class="mb-4">Cadastro de Coletor</h2>
+  <h2 class="mb-4">Cadastro de Coletor</h2>
 
-    <form id="formColetor" onsubmit="return false;">
-      <div class="row g-3 align-items-end">
-        <div class="col-md-4">
-          <label for="nome" class="form-label">Nome</label>
-          <input type="text" id="nome" class="form-control" />
-        </div>
-
-        <div class="col-md-4">
-          <label for="area" class="form-label">Área</label>
-          <select id="area" name="area" class="form-select">
-            <option value=""></option>
-            <option value="Área 1">Área 1</option>
-            <option value="Área 2">Área 2</option>
-          </select>
-        </div>
-
-        <div class="col-md-4">
-          <label for="login" class="form-label">Login</label>
-          <input type="text" id="login" class="form-control" />
-        </div>
-
-        <div class="col-md-4">
-          <label for="senha" class="form-label">Senha</label>
-          <input type="text" id="senha" class="form-control" />
-        </div>
-
-        <div class="col-md-4">
-          <label for="AtivarColetor" class="form-label">Ativar</label>
-          <select id="AtivarColetor" class="form-select">
-            <option value=""></option>
-            <option value="sim">Sim</option>
-            <option value="nao">Não</option>
-          </select>
-        </div>
-
-        <div class="col-md-4">
-          <label for="buscaNome" class="form-label">Buscar por Nome</label>
-          <input type="text" id="buscaNome" class="form-control" placeholder="Digite o nome para buscar" />
-        </div>
+  <form id="formColetor" method="POST" action="/coletor/" onsubmit="prepararEnvio()">
+    <div class="row g-3 align-items-end">
+      <div class="col-md-4">
+        <label for="nome" class="form-label">Nome</label>
+        <input type="text" id="nome" class="form-control" />
       </div>
-
-      <div class="my-4">
-        <button class="botao-adicionar" type="button" onclick="adicionarLinha()">➕ Adicionar</button>
-        <button class="botao-salvar" type="button" onclick="salvarTabela()">💾 Salvar</button>
+      <div class="col-md-4">
+        <label for="area" class="form-label">Área</label>
+        <select id="area" name="area" class="form-select">
+          <option value="">Selecione</option>
+          {% for a in areas %}
+            <option value="{{ a.regiao_area }}">{{ a.regiao_area }}</option>
+          {% endfor %}
+        </select>
       </div>
-    </form>
+      <div class="col-md-4">
+        <label for="login" class="form-label">Login</label>
+        <input type="text" id="login" class="form-control" />
+      </div>
+      <div class="col-md-4">
+        <label for="senha" class="form-label">Senha</label>
+        <input type="text" id="senha" class="form-control" />
+      </div>
+      <div class="col-md-4">
+        <label for="ativar" class="form-label">Ativar</label>
+        <select id="ativar" class="form-select">
+          <option value=""></option>
+          <option value="sim">Sim</option>
+          <option value="nao">Não</option>
+        </select>
+      </div>
+      <div class="col-md-4">
+        <label for="buscaNome" class="form-label">Buscar por Nome</label>
+        <input type="text" id="buscaNome" class="form-control" placeholder="Digite o nome para buscar" />
+      </div>
+    </div>
 
+    <div class="mt-4">
+      <button type="button" class="botao-estiloso" onclick="adicionarLinha()">➕ Adicionar</button>
+      <button type="submit" class="botao-salvar">💾 Salvar</button>
+      <a href="{{ url_for('Home.home') }}">
+        <button type="button" class="botao-voltar">Sair</button>
+      </a>
+    </div>
+
+    <div id="hiddenFields"></div>
+  </form>
+
+  <div class="mt-4 table-responsive">
     <table class="table table-bordered table-striped">
-      <thead class="table-primary">
+      <thead class="table-success">
         <tr>
           <th>Coletor</th>
           <th>Área</th>
@@ -140,18 +91,159 @@
         </tr>
       </thead>
       <tbody id="tabela">
-        <!-- Linhas adicionadas dinamicamente -->
+        {% if coletores %}
+          {% for c in coletores %}
+            <tr>
+              <td>{{ c.nome_coletor }}</td>
+              <td>{{ c.area }}</td>
+              <td>{{ c.login }}</td>
+              <td>{{ c.senha }}</td>
+              <td>{{ c.ativar_coletor }}</td>
+              <td>
+                <button type="button" class="botao-estiloso" onclick="editarLinha(this)">✏️ Editar</button>
+                <button type="button" class="botao-salvar" onclick="excluirLinha(this)">🗑️ Excluir</button>
+              </td>
+            </tr>
+          {% endfor %}
+        {% else %}
+          <tr><td colspan="6" class="text-center">Nenhum coletor cadastrado</td></tr>
+        {% endif %}
       </tbody>
     </table>
   </div>
 
+  <script id="areas-data" type="application/json">
+    {{ areas_json | tojson }}
+  </script>
+
   <script>
+    const areasData = JSON.parse(document.getElementById('areas-data').textContent);
+
+    function editarLinha(botao) {
+      const linha = botao.closest("tr");
+      const valoresOriginais = [];
+
+      for (let i = 0; i < 5; i++) {
+        valoresOriginais.push(linha.cells[i].textContent.trim());
+      }
+
+      linha.setAttribute("data-original", JSON.stringify(valoresOriginais));
+
+      linha.cells[0].innerHTML = `<input class="form-control" value="${valoresOriginais[0]}">`;
+
+      const selectArea = document.createElement("select");
+      selectArea.className = "form-select";
+      areasData.forEach(area => {
+        const opt = new Option(area.regiao_area, area.regiao_area);
+        if (opt.value === valoresOriginais[1]) opt.selected = true;
+        selectArea.appendChild(opt);
+      });
+      linha.cells[1].innerHTML = '';
+      linha.cells[1].appendChild(selectArea);
+
+      linha.cells[2].innerHTML = `<input class="form-control" value="${valoresOriginais[2]}">`;
+      linha.cells[3].innerHTML = `<input class="form-control" value="${valoresOriginais[3]}">`;
+
+      const selectAtivar = document.createElement("select");
+      selectAtivar.className = "form-select";
+      selectAtivar.innerHTML = `
+        <option value="sim" ${valoresOriginais[4].toLowerCase() === 'sim' ? 'selected' : ''}>Sim</option>
+        <option value="nao" ${valoresOriginais[4].toLowerCase() === 'nao' ? 'selected' : ''}>Não</option>
+      `;
+      linha.cells[4].innerHTML = '';
+      linha.cells[4].appendChild(selectAtivar);
+
+      linha.cells[5].innerHTML = `
+        <button class="botao-voltar" onclick="salvarEdicao(this)">💾 Salvar</button>
+        <button class="botao-salvar" onclick="cancelarEdicao(this)">❌ Cancelar</button>
+      `;
+    }
+
+    function salvarEdicao(botao) {
+      const linha = botao.closest("tr");
+      const valores = linha.querySelectorAll("input, select");
+
+      const dados = {
+        nome_original: JSON.parse(linha.getAttribute("data-original"))[0],
+        nome_coletor: valores[0].value,
+        area: valores[1].value,
+        login: valores[2].value,
+        senha: valores[3].value,
+        ativar_coletor: valores[4].value
+      };
+
+      fetch('/coletor/editar', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(dados)
+      })
+      .then(res => res.json())
+      .then(data => {
+        if (data.success) {
+          linha.cells[0].textContent = dados.nome_coletor;
+          linha.cells[1].textContent = dados.area;
+          linha.cells[2].textContent = dados.login;
+          linha.cells[3].textContent = dados.senha;
+          linha.cells[4].textContent = dados.ativar_coletor;
+          linha.cells[5].innerHTML = `
+            <button type="button" class="botao-estiloso" onclick="editarLinha(this)">✏️ Editar</button>
+            <button type="button" class="botao-salvar" onclick="excluirLinha(this)">🗑️ Excluir</button>
+          `;
+        } else {
+          alert(data.message);
+        }
+      })
+      .catch(err => {
+        console.error("Erro ao editar:", err);
+        alert("Erro ao editar coletor.");
+      });
+    }
+
+    function cancelarEdicao(botao) {
+      const linha = botao.closest("tr");
+      const originais = JSON.parse(linha.getAttribute("data-original"));
+
+      for (let i = 0; i < 5; i++) {
+        linha.cells[i].textContent = originais[i];
+      }
+
+      linha.cells[5].innerHTML = `
+        <button type="button" class="botao-estiloso" onclick="editarLinha(this)">✏️ Editar</button>
+        <button type="button" class="botao-salvar" onclick="excluirLinha(this)">🗑️ Excluir</button>
+      `;
+    }
+
+    function excluirLinha(botao) {
+      const linha = botao.closest("tr");
+      const nome = linha.cells[0].textContent;
+
+      if (!confirm(`Tem certeza que deseja excluir o coletor "${nome}"?`)) return;
+
+      fetch('/coletor/deletar_coletor', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ nome })
+      })
+      .then(res => res.json())
+      .then(data => {
+        if (data.success) {
+          linha.remove();
+        } else {
+          alert(data.message || 'Erro ao excluir coletor');
+        }
+      })
+      .catch(err => {
+        console.error('Erro:', err);
+        alert('Erro ao conectar com o servidor');
+      });
+    }
+
     function adicionarLinha() {
       const nome = document.getElementById('nome').value.trim();
       const area = document.getElementById('area').value.trim();
       const login = document.getElementById('login').value.trim();
       const senha = document.getElementById('senha').value.trim();
-      const ativar = document.getElementById('AtivarColetor').value.trim();
+      const ativar = document.getElementById('ativar').value.trim();
 
       if (!nome || !area || !login || !senha || !ativar) {
         alert('Preencha todos os campos!');
@@ -160,90 +252,57 @@
 
       const tabela = document.getElementById('tabela');
       const novaLinha = tabela.insertRow();
-
       novaLinha.insertCell(0).textContent = nome;
       novaLinha.insertCell(1).textContent = area;
       novaLinha.insertCell(2).textContent = login;
       novaLinha.insertCell(3).textContent = senha;
       novaLinha.insertCell(4).textContent = ativar;
-
-      const celulaAcoes = novaLinha.insertCell(5);
-      celulaAcoes.innerHTML = `
-        <button class="botao-editar btn btn-sm me-2" type="button" onclick="editarLinha(this)">✏️ Editar</button>
-        <button class="botao-excluir btn btn-sm" type="button" onclick="excluirLinha(this)">🗑 Excluir</button>
+      novaLinha.insertCell(5).innerHTML = `
+        <button type="button" class="botao-estiloso" onclick="editarLinha(this)">✏️ Editar</button>
+        <button type="button" class="botao-salvar" onclick="excluirLinha(this)">🗑️ Excluir</button>
       `;
 
       limparCampos();
     }
 
     function limparCampos() {
-      document.getElementById('nome').value = '';
-      document.getElementById('area').value = '';
-      document.getElementById('login').value = '';
-      document.getElementById('senha').value = '';
-      document.getElementById('AtivarColetor').value = '';
-      document.getElementById('buscaNome').value = '';
+      ['nome', 'area', 'login', 'senha', 'ativar', 'buscaNome'].forEach(id => {
+        document.getElementById(id).value = '';
+      });
     }
 
-    function buscarColetor() {
-      const termo = document.getElementById("buscaNome").value.toLowerCase();
+    document.getElementById('buscaNome').addEventListener('input', function () {
+      const termo = this.value.toLowerCase();
       const linhas = document.querySelectorAll("#tabela tr");
-
-      let encontrado = false;
 
       linhas.forEach(linha => {
         const nome = linha.cells[0].textContent.toLowerCase();
         if (nome.includes(termo)) {
-          document.getElementById("nome").value = linha.cells[0].textContent;
-          document.getElementById("area").value = linha.cells[1].textContent;
-          document.getElementById("login").value = linha.cells[2].textContent;
-          document.getElementById("senha").value = linha.cells[3].textContent;
-          document.getElementById("AtivarColetor").value = linha.cells[4].textContent;
-          encontrado = true;
+          document.getElementById('nome').value = linha.cells[0].textContent;
+          document.getElementById('area').value = linha.cells[1].textContent;
+          document.getElementById('login').value = linha.cells[2].textContent;
+          document.getElementById('senha').value = linha.cells[3].textContent;
+          document.getElementById('ativar').value = linha.cells[4].textContent;
         }
       });
+    });
 
-      if (!encontrado && termo !== '') {
-        alert("Coletor não encontrado.");
-      }
-    }
+    function prepararEnvio() {
+      const tbody = document.querySelector("#tabela");
+      const hidden = document.getElementById("hiddenFields");
+      hidden.innerHTML = '';
 
-    document.getElementById('buscaNome').addEventListener('input', buscarColetor);
+      const campos = ['nome', 'area', 'login', 'senha', 'ativar'];
 
-    function editarLinha(botao) {
-      const linha = botao.closest('tr');
-      const cells = linha.cells;
-
-      document.getElementById('nome').value = cells[0].textContent;
-      document.getElementById('area').value = cells[1].textContent;
-      document.getElementById('login').value = cells[2].textContent;
-      document.getElementById('senha').value = cells[3].textContent;
-      document.getElementById('AtivarColetor').value = cells[4].textContent;
-
-      // Opcional: Remove a linha para evitar duplicação quando salvar
-      linha.remove();
-    }
-
-    function excluirLinha(botao) {
-      const linha = botao.closest('tr');
-      linha.remove();
-      limparCampos();
-    }
-
-    function salvarTabela() {
-      const linhas = [];
-      document.querySelectorAll('#tabela tr').forEach(tr => {
-        linhas.push({
-          nome: tr.cells[0].textContent,
-          area: tr.cells[1].textContent,
-          login: tr.cells[2].textContent,
-          senha: tr.cells[3].textContent,
-          ativar: tr.cells[4].textContent,
+      tbody.querySelectorAll("tr").forEach(linha => {
+        campos.forEach((campo, i) => {
+          const input = document.createElement("input");
+          input.type = "hidden";
+          input.name = campo + "[]";
+          input.value = linha.cells[i].textContent.trim();
+          hidden.appendChild(input);
         });
       });
-
-      console.log('Dados para salvar:', linhas);
-      alert('Função de salvamento ainda não implementada.');
     }
   </script>
 

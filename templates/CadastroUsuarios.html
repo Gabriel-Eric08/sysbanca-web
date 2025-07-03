@@ -63,8 +63,8 @@
       <div class="col-md-4">
         <label for="ativo" class="form-label">Ativo:</label>
         <select id="ativo" class="form-select">
-          <option value="sim">Sim</option>
-          <option value="nao">Não</option>
+          <option value="Sim">Sim</option>
+          <option value="Não">Não</option>
         </select>
       </div>
       <div class="col-12">
@@ -94,8 +94,8 @@
       <button type="button" class="botao-estiloso" onclick="adicionarUsuario()">Adicionar</button>
       <input type="text" id="busca" placeholder="Buscar usuário" class="form-control w-auto" />
       <button type="button" class="botao-estiloso" onclick="buscarUsuario()">Buscar</button>
-      <button type="button" class="botao-voltar" onclick="prepararEnvioUsuario()">Salvar</button>
-      <a href="#" class="btn botao-salvar">Sair</a>
+      <button type="button" class="botao-voltar" onclick="salvarUsuarios()">Salvar</button>
+      <a href="{{ url_for('Home.home') }}" class="btn botao-salvar">Sair</a>
     </div>
   </form>
 
@@ -124,9 +124,7 @@
           </tr>
         {% endfor %}
       {% else %}
-        <tr>
-          <td colspan="5" class="text-center">Nenhum usuário cadastrado.</td>
-        </tr>
+        <tr><td colspan="5" class="text-center">Nenhum usuário cadastrado.</td></tr>
       {% endif %}
     </tbody>
   </table>
@@ -134,124 +132,155 @@
 
 <script src="https://cdn.jsdelivr.net/npm/choices.js/public/assets/scripts/choices.min.js"></script>
 <script>
-  const choices = new Choices('#permissoes', {
-    removeItemButton: true,
-    placeholderValue: 'Selecione as permissões',
-    searchEnabled: true
-  });
+  const choices = new Choices('#permissoes', { removeItemButton: true });
 
   function adicionarUsuario() {
-    const login = document.getElementById("login").value.trim();
-    const senha = document.getElementById("senha").value.trim();
+    const login = document.getElementById("login").value;
+    const senha = document.getElementById("senha").value;
     const ativo = document.getElementById("ativo").value;
-    const permissoes = choices.getValue(true);
+    const permissoes = choices.getValue(true).join(", ");
 
-    if (!login || !senha) {
-      alert("Login e senha são obrigatórios!");
+    if (!login || !senha || !permissoes || !ativo) {
+      alert("Preencha todos os campos.");
       return;
     }
 
-    const tabela = document.getElementById("tabela-usuario");
-    const novaLinha = tabela.insertRow();
-    
-    novaLinha.insertCell(0).textContent = login;
-    novaLinha.insertCell(1).textContent = senha;
-    novaLinha.insertCell(2).textContent = permissoes.join(", ");
-    novaLinha.insertCell(3).textContent = ativo === "sim" ? "Sim" : "Não";
-    
-    const cellAcoes = novaLinha.insertCell(4);
-    cellAcoes.innerHTML = `
-      <button type="button" class="botao-estiloso" onclick="editarLinha(this)">✏️ Editar</button>
-      <button type="button" class="botao-salvar" onclick="excluirUsuario(this, '${login}')">🗑️ Excluir</button>
+    const tbody = document.getElementById("tabela-usuario");
+    const novaLinha = document.createElement("tr");
+
+    novaLinha.innerHTML = `
+      <td>${login}</td>
+      <td>${senha}</td>
+      <td>${permissoes}</td>
+      <td>${ativo}</td>
+      <td>
+        <button class="botao-estiloso" onclick="editarLinha(this)">✏️ Editar</button>
+        <button class="botao-salvar" onclick="excluirUsuario(this, '${login}')">🗑️ Excluir</button>
+      </td>
     `;
 
-    // Limpar campos
-    document.getElementById("login").value = "";
-    document.getElementById("senha").value = "";
-    document.getElementById("ativo").value = "sim";
-    choices.removeActiveItems();
+    tbody.appendChild(novaLinha);
+    document.getElementById("form-usuario").reset();
+    choices.clearStore();
   }
+
+  function editarLinha(botao) {
+    const linha = botao.closest("tr");
+    const valores = Array.from(linha.children).slice(0, 4).map(td => td.textContent);
+
+    linha.innerHTML = `
+      <td><input class="form-control" value="${valores[0]}"></td>
+      <td><input class="form-control" value="${valores[1]}"></td>
+      <td><input class="form-control" value="${valores[2]}"></td>
+      <td>
+        <select class="form-select">
+          <option value="Sim" ${valores[3] === "Sim" ? "selected" : ""}>Sim</option>
+          <option value="Não" ${valores[3] === "Não" ? "selected" : ""}>Não</option>
+        </select>
+      </td>
+      <td>
+        <button class="botao-voltar" onclick="salvarEdicao(this)">💾 Salvar</button>
+        <button class="botao-salvar" onclick="cancelarEdicao(this, ${JSON.stringify(valores)})">❌ Cancelar</button>
+      </td>
+    `;
+  }
+
+  function salvarEdicao(botao) {
+    const linha = botao.closest("tr");
+    const inputs = linha.querySelectorAll("input");
+    const select = linha.querySelector("select");
+
+    const login = inputs[0].value;
+    const senha = inputs[1].value;
+    const permissoes = inputs[2].value;
+    const ativo = select.value;
+
+    linha.innerHTML = `
+      <td>${login}</td>
+      <td>${senha}</td>
+      <td>${permissoes}</td>
+      <td>${ativo}</td>
+      <td>
+        <button class="botao-estiloso" onclick="editarLinha(this)">✏️ Editar</button>
+        <button class="botao-salvar" onclick="excluirUsuario(this, '${login}')">🗑️ Excluir</button>
+      </td>
+    `;
+  }
+
+  function cancelarEdicao(botao, valores) {
+    const linha = botao.closest("tr");
+    linha.innerHTML = `
+      <td>${valores[0]}</td>
+      <td>${valores[1]}</td>
+      <td>${valores[2]}</td>
+      <td>${valores[3]}</td>
+      <td>
+        <button class="botao-estiloso" onclick="editarLinha(this)">✏️ Editar</button>
+        <button class="botao-salvar" onclick="excluirUsuario(this, '${valores[0]}')">🗑️ Excluir</button>
+      </td>
+    `;
+  }
+
+  function excluirUsuario(botao, login) {
+  if (!confirm(`Deseja excluir o usuário ${login}?`)) return;
+
+  fetch(`/admin/${login}`, {
+    method: "DELETE"
+  })
+  .then(res => res.json())
+  .then(data => {
+    if(data.success) {
+      alert(data.message);
+      botao.closest("tr").remove();
+    } else {
+      alert("Erro: " + data.message);
+    }
+  })
+  .catch(err => alert("Erro: " + err.message));
+}
 
   function buscarUsuario() {
     const termo = document.getElementById("busca").value.toLowerCase();
     const linhas = document.querySelectorAll("#tabela-usuario tr");
 
     linhas.forEach(linha => {
-      const login = linha.cells[0].textContent.toLowerCase();
-      linha.style.display = login.includes(termo) ? "" : "none";
+      const login = linha.cells[0]?.textContent?.toLowerCase();
+      linha.style.display = login && login.includes(termo) ? "" : "none";
     });
   }
 
-  function prepararEnvioUsuario() {
-    const linhas = document.querySelectorAll("#tabela-usuario tr");
-    if (linhas.length === 0 || (linhas.length === 1 && linhas[0].cells[0].textContent === "Nenhum usuário cadastrado.")) {
-      alert("Não há usuários para salvar.");
-      return;
-    }
+  function salvarUsuarios() {
+  const linhas = document.querySelectorAll("#tabela-usuario tr");
+  const usuarios = [];
 
-    const usuarios = Array.from(linhas).map(linha => {
-      if (linha.cells[0].textContent === "Nenhum usuário cadastrado.") return null;
-      
-      return {
-        "Username": linha.cells[0].textContent.trim(),
-        "Password": linha.cells[1].textContent.trim(),
-        "Permissões": linha.cells[2].textContent.trim(),
-        "Ativo": linha.cells[3].textContent.trim() === "Sim"
-      };
-    }).filter(user => user !== null);
+  linhas.forEach(linha => {
+    const colunas = linha.querySelectorAll("td");
+    if (colunas.length < 5) return; // ignorar linha "Nenhum usuário"
 
-    fetch('/admin/', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify(usuarios)
-    })
-    .then(response => response.json())
-    .then(data => {
-      if (data.success) {
-        alert(`Sucesso: ${data.message}\nSalvos: ${data.salvos.join(', ')}\nIgnorados: ${data.ignorados.join(', ')}`);
-      } else {
-        alert(`Erro: ${data.message}`);
-      }
-    })
-    .catch(error => {
-      console.error("Erro:", error);
-      alert("Erro ao comunicar com o servidor");
+    usuarios.push({
+      Username: colunas[0].textContent.trim(),
+      Password: colunas[1].textContent.trim(),
+      "Permissões": colunas[2].textContent.trim(),
+      Ativo: colunas[3].textContent.trim().toLowerCase() === "sim"
     });
-  }
+  });
 
-  function editarLinha(botao) {
-    const linha = botao.closest('tr');
-    const cells = linha.cells;
-    
-    // Transformar células em editáveis
-    cells[0].innerHTML = `<input type="text" value="${cells[0].textContent}" class="form-control">`;
-    cells[1].innerHTML = `<input type="text" value="${cells[1].textContent}" class="form-control">`;
-    
-    // Atualizar botão para "Salvar Edição"
-    botao.textContent = "💾 Salvar";
-    botao.onclick = function() { salvarEdicao(this); };
-  }
-
-  function salvarEdicao(botao) {
-    const linha = botao.closest('tr');
-    const inputs = linha.querySelectorAll('input');
-    
-    // Atualizar conteúdo das células
-    linha.cells[0].textContent = inputs[0].value;
-    linha.cells[1].textContent = inputs[1].value;
-    
-    // Restaurar botão original
-    botao.textContent = "✏️ Editar";
-    botao.onclick = function() { editarLinha(this); };
-  }
-
-  function excluirUsuario(botao, username) {
-    if (confirm(`Tem certeza que deseja excluir o usuário ${username}?`)) {
-      botao.closest('tr').remove();
+  fetch("/admin/", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(usuarios)
+  })
+  .then(res => res.json())
+  .then(data => {
+    if(data.success) {
+      alert(data.message);
+      // Pode opcionalmente atualizar a tabela, recarregar página etc
+    } else {
+      alert("Erro: " + data.message);
     }
-  }
+  })
+  .catch(err => alert("Erro: " + err.message));
+}
 </script>
 </body>
 </html>

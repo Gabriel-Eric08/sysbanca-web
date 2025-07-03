@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Dados dos Descarregos</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
+  <style>
+    body { font-family: Arial, sans-serif; padding: 20px; }
+    tbody > tr:nth-child(odd) { background-color: #cfd8dd; }
+    .form-label { font-weight: bold; }
+    .botao-padrao {
+      font-size: 18px;
+      color: white;
+      border-radius: 8px;
+      box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+      transition: all 0.3s ease;
+      border: none;
+      padding: 6px 20px;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .botao-consultar { background-color: #072749; }
+    .botao-consultar:hover { background-color: #0056b3; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h2 class="mb-4">Dados do Descarrego</h2>
+    <div class="row g-3">
+      <div class="col-md-3">
+        <label for="bilhete" class="form-label">Bilhete Nº</label>
+        <input type="text" id="bilhete" class="form-control" readonly value="{{ descarregos[0].bilhete if descarregos else '' }}">
+      </div>
+      <div class="col-md-3">
+        <label for="extracao" class="form-label">Extração</label>
+        <input type="text" id="extracao" class="form-control" readonly value="{{ descarregos[0].extracao if descarregos else '' }}">
+      </div>
+      <div class="col-md-3">
+        <label for="valor" class="form-label">Valor Apostado (R$)</label>
+        <input type="text" id="valor" class="form-control" readonly value="{{ '%.2f'|format(descarregos[0].valor_apostado) if descarregos else '' }}">
+      </div>
+      <div class="col-md-3">
+        <label for="excedente" class="form-label">Excedente (R$)</label>
+        <input type="text" id="excedente" class="form-control text-danger fw-bold" readonly value="{{ '%.2f'|format(descarregos[0].valor_excedente) if descarregos else '' }}">
+      </div>
+      <div class="col-md-12">
+        <label for="numeros" class="form-label">Números Apostados</label>
+        <textarea id="numeros" rows="2" class="form-control" readonly>{{ descarregos[0].numeros if descarregos else '' }}</textarea>
+      </div>
+    </div>
+
+    <h4 class="mt-5">Histórico de Apostas com Excedente</h4>
+    <table class="table table-bordered table-striped mt-3">
+      <thead class="table-primary">
+        <tr>
+          <th>Bilhete</th>
+          <th>Extração</th>
+          <th>Valor Apostado</th>
+          <th>Excedente</th>
+          <th>Números</th>
+          <th>Data</th>
+        </tr>
+      </thead>
+      <tbody id="tabelaExcedentes">
+        {% for d in descarregos %}
+          <tr>
+            <td>{{ d.bilhete }}</td>
+            <td>{{ d.extracao }}</td>
+            <td>R$ {{ '%.2f'|format(d.valor_apostado) }}</td>
+            <td>R$ {{ '%.2f'|format(d.valor_excedente) }}</td>
+            <td>{{ d.numeros }}</td>
+            <td>{{ d.data.strftime('%d/%m/%Y %H:%M:%S') }}</td>
+          </tr>
+        {% else %}
+          <tr><td colspan="6" class="text-center">Nenhum descarrego encontrado</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+
+    <h4 class="mt-5">Consultar por Período</h4>
+    <div class="row g-3 align-items-end">
+      <div class="col-md-4">
+        <label for="dataInicio" class="form-label">Data Inicial</label>
+        <input type="date" id="dataInicio" class="form-control">
+      </div>
+      <div class="col-md-4">
+        <label for="dataFim" class="form-label">Data Final</label>
+        <input type="date" id="dataFim" class="form-control">
+      </div>
+      <div class="col-md-4">
+        <button class="botao-padrao botao-consultar" onclick="consultarPorPeriodo()">📄 Consultar</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    function consultarPorPeriodo() {
+      const { jsPDF } = window.jspdf;
+      const doc = new jsPDF();
+
+      const inicio = document.getElementById("dataInicio").value;
+      const fim = document.getElementById("dataFim").value;
+
+      if (!inicio || !fim) {
+        alert("Selecione as duas datas.");
+        return;
+      }
+
+      const start = new Date(inicio);
+      const end = new Date(fim);
+      end.setHours(23, 59, 59);
+
+      // Filtrar linhas da tabela na página pelo período
+      const linhas = [...document.querySelectorAll("#tabelaExcedentes tr")];
+      const linhasFiltradas = linhas.filter(tr => {
+        const dataStr = tr.cells[5]?.textContent;
+        if (!dataStr) return false;
+        // Data no formato dd/mm/yyyy hh:mm:ss
+        const partes = dataStr.split(' ');
+        const dataPartes = partes[0].split('/');
+        const horaPartes = partes[1].split(':');
+        const dataObj = new Date(
+          parseInt(dataPartes[2]),
+          parseInt(dataPartes[1]) - 1,
+          parseInt(dataPartes[0]),
+          parseInt(horaPartes[0]),
+          parseInt(horaPartes[1]),
+          parseInt(horaPartes[2])
+        );
+        return dataObj >= start && dataObj <= end;
+      });
+
+      if (linhasFiltradas.length === 0) {
+        alert("Nenhum dado encontrado no período informado.");
+        return;
+      }
+
+      const dadosPDF = linhasFiltradas.map(tr => [
+        tr.cells[0].textContent,
+        tr.cells[1].textContent,
+        tr.cells[2].textContent,
+        tr.cells[3].textContent,
+        tr.cells[4].textContent,
+        tr.cells[5].textContent,
+      ]);
+
+      doc.setFontSize(16);
+      doc.text("Relatório de Apostas com Descarrego", 14, 20);
+      doc.setFontSize(10);
+      doc.text("Gerado em: " + new Date().toLocaleString(), 14, 28);
+      doc.text(`Período: ${inicio} a ${fim}`, 14, 34);
+
+      doc.autoTable({
+        head: [["Bilhete", "Extração", "Valor", "Excedente", "Números", "Data"]],
+        body: dadosPDF,
+        startY: 40
+      });
+
+      doc.save("relatorio_excedentes.pdf");
+    }
+  </script>
+</body>
+</html>

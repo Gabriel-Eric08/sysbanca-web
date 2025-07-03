@@ -55,10 +55,10 @@
       </div>
     </div>
     <div class="d-flex flex-wrap gap-2 mb-3">
-      <button type="button" class="botao-estiloso" onclick="adicionarLinha()">Adicionar</button>
-      <input type="text" id="busca" placeholder="Buscar Extração" class="form-control w-auto" oninput="filtrarTabela()" />
-      <button type="submit" class="botao-voltar">Salvar</button>
-      <a href="{{ url_for('Home.home') }}" class="btn botao-salvar">Sair</a>
+      <button type="button" class="botao-estiloso" onclick="adicionarLinha()">➕ Adicionar</button>
+      <input type="text" id="busca" placeholder="🔎 Buscar Extração" class="form-control w-auto" oninput="filtrarTabela()" />
+      <button type="submit" class="botao-voltar">💾 Salvar</button>
+      <a href="{{ url_for('Home.home') }}" class="btn botao-salvar">❌ Sair</a>
     </div>
   </form>
 
@@ -78,10 +78,10 @@
           <button type="button" class="botao-salvar" onclick="excluirLinha('{{ d.id }}', this)">🔚 Excluir</button>
         </td>
       </tr>
-      {% else %}
-      <tr><td colspan="5" class="text-center">Nenhuma associação cadastrada</td></tr>
-      {% endfor %}
     </tbody>
+    {% else %}
+      <div class="alert alert-success">Nenhuma linha cadastrada.</div>
+    {% endfor %}
   </table>
 </div>
 

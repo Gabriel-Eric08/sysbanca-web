@@ -99,7 +99,7 @@
             </a>
             <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="principalDropdown">
               <li><a class="dropdown-item" href="{{ url_for('Admin.admin_page') }}">Usuários</a></li>
-              <li><a class="dropdown-item" href="#">Sair do Sistema</a></li>
+              <li><a class="dropdown-item" href="{{ url_for('Home.home') }}">Sair do Sistema</a></li>
               <li><a class="dropdown-item" href="#">Jogos</a></li>
             </ul>
           </li>
@@ -125,7 +125,8 @@
               <li><a class="dropdown-item" href="{{ url_for('AreaCotacao.area_cotacao_page') }}">Área Cotação</a></li>
               <li><a class="dropdown-item" href="{{ url_for('AreaComissaoModalidade.area_comissao_page') }}">Área Comissão Modalidade</a></li>
               <li><a class="dropdown-item" href="{{ url_for('Coletor.coletor_page') }}">Coletor/Recolhe</a></li>
-              <li><a class="dropdown-item" href="{{ url_for('Operadores.operadores_page') }}">Vendedor/Operador</a></li>
+              <li><a class="dropdown-item" href="{{ url_for('Vendedores.vendedores_page') }}">Vendedor/Operador</a></li>
+              <li><a class="dropdown-item" href="{{ url_for('CadastroDescarrego.cadastro_page') }}">Descarrego</a></li>
             </ul>
           </li>
 
@@ -162,8 +163,9 @@
               Administração
             </a>
             <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="administracaoDropdown">
-              <li><a class="dropdown-item" href="{{ url_for('Home.home') }}">Resultado</a></li>
+              <li><a class="dropdown-item" href="{{ url_for('Resultado1.resultado_page') }}">Resultado</a></li>
               <li><a class="dropdown-item" href="#">Programação de Extração</a></li>
+              <li><a class="dropdown-item" href="{{ url_for('Resultado.resultado_page') }}">Programação de resultados</a></li>
               <li><a class="dropdown-item" href="#">Números Cotados</a></li>
             </ul>
           </li>
@@ -181,7 +183,7 @@
               Relatórios
             </a>
             <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="relatoriosDropdown">
-              <li><a class="dropdown-item" href="#">Descarrego</a></li>
+              <li><a class="dropdown-item" href="{{ url_for('Descarrego.descarrego_page') }}">Descarrego</a></li>
               <li><a class="dropdown-item" href="#">Números Cotados</a></li>
               <li><a class="dropdown-item" href=" {{ url_for('Relatorio.relatorio_page') }} ">Relatórios</a></li>
             </ul>

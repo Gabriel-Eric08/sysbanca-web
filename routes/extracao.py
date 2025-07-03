@@ -1,5 +1,5 @@
 from flask import Blueprint, render_template, request, redirect, url_for, jsonify
-from models.models import Extracao, Relatorio
+from models.models import Extracao, Relatorio, AreaCotacao, Modalidade
 from util.checkCreds import checkCreds
 from db_config import db
 from datetime import datetime
@@ -203,3 +203,49 @@ def editar_extracao():
             "success": False,
             "message": f"Erro interno: {str(e)}"
         }), 500
+    
+@extracao_route.route('/cotacao', methods=['POST'])
+def extracao_cotacao_premiacao():
+    data = request.get_json()
+
+    if not data or 'modalidade' not in data or 'extracao' not in data or 'area' not in data:
+        return jsonify({'error': 'Parâmetros "modalidade", "extracao" e "area" são obrigatórios.'}), 400
+
+    # Normalize strings
+    modalidade = data['modalidade'].strip().lower()
+    extracao = data['extracao'].strip().lower()
+    area = data['area'].strip().lower()
+
+    # Busca a extração
+    extracao_filter = Extracao.query.filter(db.func.lower(Extracao.extracao) == extracao).first()
+    if not extracao_filter:
+        return jsonify({'error': 'Extração não encontrada!'}), 404
+
+    # Busca cotação específica
+    areacotacao = AreaCotacao.query.filter(
+        db.func.lower(AreaCotacao.extracao) == extracao,
+        db.func.lower(AreaCotacao.modalidade) == modalidade,
+        db.func.lower(AreaCotacao.area) == area
+    ).first()
+
+    if areacotacao:
+        cotacao = areacotacao.cotacao
+    else:
+        modalidade_obj = Modalidade.query.filter(db.func.lower(Modalidade.modalidade) == modalidade).first()
+        if not modalidade_obj:
+            return jsonify({'error': 'Modalidade não encontrada!'}), 404
+        cotacao = modalidade_obj.cotacao
+
+    if extracao_filter.ativo != "0":
+        resultado = {
+            'id': extracao_filter.id,
+            'extracao': extracao_filter.extracao,
+            'premiacao': extracao_filter.premiacao,
+            'cotacao': cotacao
+        }
+    else:
+        resultado = {
+            'message': 'Extração não está ativa'
+        }
+
+    return jsonify(resultado)

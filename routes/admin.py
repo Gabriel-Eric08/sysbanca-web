@@ -7,15 +7,13 @@ admin_route = Blueprint('Admin', __name__)
 
 @admin_route.route('/')
 def admin_page():
-
     check_result = checkCreds()
-    
 
     if not check_result['success']:
         return check_result['message'], 401
-    
+
     user = check_result['user']
-    
+
     try:
         if int(user.acesso_usuario) != 1:
             return "Usuário não autorizado", 403
@@ -23,52 +21,34 @@ def admin_page():
         return "Configuração de permissão inválida", 500
 
     usuarios = User.query.all()
-
     usuarios_permissoes = []
 
     for user in usuarios:
         permissoes = []
 
-        if user.acesso_usuario == 1:
-            permissoes.append(" Usuário")
-        if user.acesso_modalidade == 1:
-            permissoes.append(" Modalidade")
-        if user.acesso_regiao == 1:
-            permissoes.append(" Regiao")
-        if user.acesso_extracao == 1:
-            permissoes.append(" Extracao")
-        if user.acesso_area_extracao == 1:
-            permissoes.append(" Area extracao")
-        if user.acesso_area_cotacao == 1:
-            permissoes.append(" Area cotacao")
-        if user.acesso_area_comissao_modalidade == 1:
-            permissoes.append(" Area comissao modalidade")
-        if user.acesso_coletor == 1:
-            permissoes.append(" Coletor")
-        if user.acesso_vendedor == 1:
-            permissoes.append(" Vendedor")
-        if user.acesso_vendas_por_periodo_operador == 1:
-            permissoes.append(" Vendas por periodo operador")
-        if user.acesso_relatorio_geral_de_vendas == 1:
-            permissoes.append(" Relatorio geral de vendas")
-        if user.acesso_numeros_cotados == 1:
-            permissoes.append(" Numeros cotados")
-        if user.acesso_programacao_extracao == 1:
-            permissoes.append(" Programacao extracao")
-        if user.acesso_descarrego == 1:
-            permissoes.append(" Descarrego")
-        if user.acesso_cancelamento_fora_do_horario == 1:
-            permissoes.append(" Cancelamento fora do horario")
-        if user.acesso_administracao == 1:
-            permissoes.append(" Administracao")
-
-        permissoes_str = ",".join(permissoes)  # Junta com vírgula sem espaço
+        if user.acesso_usuario: permissoes.append("usuario")
+        if user.acesso_modalidade: permissoes.append("modalidade")
+        if user.acesso_regiao: permissoes.append("regiao")
+        if user.acesso_extracao: permissoes.append("extracao")
+        if user.acesso_area_extracao: permissoes.append("area extracao")
+        if user.acesso_area_cotacao: permissoes.append("area cotacao")
+        if user.acesso_area_comissao_modalidade: permissoes.append("area comissao modalidade")
+        if user.acesso_coletor: permissoes.append("coletor")
+        if user.acesso_vendedor: permissoes.append("vendedor")
+        if user.acesso_vendas_por_periodo_operador: permissoes.append("vendas por periodo operador")
+        if user.acesso_relatorio_geral_de_vendas: permissoes.append("relatorio geral de vendas")
+        if user.acesso_numeros_cotados: permissoes.append("numeros cotados")
+        if user.acesso_programacao_extracao: permissoes.append("programacao extracao")
+        if user.acesso_descarrego: permissoes.append("descarrego")
+        if user.acesso_cancelamento_fora_do_horario: permissoes.append("cancelamento fora do horario")
+        if user.acesso_administracao: permissoes.append("administracao")
+        if user.acesso_area: permissoes.append("area")
 
         usuarios_permissoes.append({
             "username": user.username,
             "senha": user.senha,
-            "permissoes": permissoes_str,
-            "ativo": getattr(user, "ativo", False)  # se tiver campo ativo
+            "permissoes": ", ".join(permissoes),
+            "ativo": user.ativo == 1
         })
 
     return render_template('CadastroUsuarios.html', usuarios_permissoes=usuarios_permissoes)
@@ -78,8 +58,6 @@ def admin_page():
 def cadastrar_usuario():
     try:
         data = request.get_json()
-
-        # Suporta enviar um único usuário ou uma lista de usuários
         usuarios = data if isinstance(data, list) else [data]
 
         salvos = []
@@ -92,41 +70,47 @@ def cadastrar_usuario():
             ativo = usuario_data.get("Ativo", False)
 
             if not username or not password:
-                # Ignora entrada inválida
-                continue
-
-            # Verifica se usuário já existe
-            if User.query.filter_by(username=username).first():
-                ignorados.append(username)
+                ignorados.append(username or "(sem username)")
                 continue
 
             permissoes_array = [p.strip().lower() for p in permissoes_texto.split(",") if p.strip()]
+            user_existente = User.query.filter_by(username=username).first()
 
-            novo_user = User(
-                username=username,
-                senha=password,
-                acesso_usuario=1 if 'usuario' in permissoes_array else 0,
-                acesso_modalidade=1 if 'modalidade' in permissoes_array else 0,
-                acesso_regiao=1 if 'regiao' in permissoes_array else 0,
-                acesso_extracao=1 if 'extracao' in permissoes_array else 0,
-                acesso_area_extracao=1 if 'area extracao' in permissoes_array else 0,
-                acesso_area_cotacao=1 if 'area cotacao' in permissoes_array else 0,
-                acesso_area_comissao_modalidade=1 if 'area comissao modalidade' in permissoes_array else 0,
-                acesso_coletor=1 if 'coletor' in permissoes_array else 0,
-                acesso_vendedor=1 if 'vendedor' in permissoes_array else 0,
-                acesso_vendas_por_periodo_operador=1 if 'vendas por periodo operador' in permissoes_array else 0,
-                acesso_relatorio_geral_de_vendas=1 if 'relatorio geral de vendas' in permissoes_array else 0,
-                acesso_numeros_cotados=1 if 'numeros cotados' in permissoes_array else 0,
-                acesso_programacao_extracao=1 if 'programacao extracao' in permissoes_array else 0,
-                acesso_descarrego=1 if 'descarrego' in permissoes_array else 0,
-                acesso_cancelamento_fora_do_horario=1 if 'cancelamento fora do horario' in permissoes_array else 0,
-                acesso_administracao=1 if 'administracao' in permissoes_array else 0,
-                acesso_area=1 if 'area' in permissoes_array else 0,  # Nova permissão
-                ativo=1 if ativo else 0
-            )
+            campos = {
+                'acesso_usuario': 'usuario',
+                'acesso_modalidade': 'modalidade',
+                'acesso_regiao': 'regiao',
+                'acesso_extracao': 'extracao',
+                'acesso_area_extracao': 'area extracao',
+                'acesso_area_cotacao': 'area cotacao',
+                'acesso_area_comissao_modalidade': 'area comissao modalidade',
+                'acesso_coletor': 'coletor',
+                'acesso_vendedor': 'vendedor',
+                'acesso_vendas_por_periodo_operador': 'vendas por periodo operador',
+                'acesso_relatorio_geral_de_vendas': 'relatorio geral de vendas',
+                'acesso_numeros_cotados': 'numeros cotados',
+                'acesso_programacao_extracao': 'programacao extracao',
+                'acesso_descarrego': 'descarrego',
+                'acesso_cancelamento_fora_do_horario': 'cancelamento fora do horario',
+                'acesso_administracao': 'administracao',
+                'acesso_area': 'area'
+            }
 
-            db.session.add(novo_user)
-            salvos.append(username)
+            if user_existente:
+                user_existente.senha = password
+                for attr, chave in campos.items():
+                    setattr(user_existente, attr, 1 if chave in permissoes_array else 0)
+                user_existente.ativo = 1 if ativo else 0
+                salvos.append(username)
+            else:
+                novo_user = User(
+                    username=username,
+                    senha=password,
+                    ativo=1 if ativo else 0,
+                    **{ attr: 1 if chave in permissoes_array else 0 for attr, chave in campos.items() }
+                )
+                db.session.add(novo_user)
+                salvos.append(username)
 
         db.session.commit()
 
@@ -134,8 +118,21 @@ def cadastrar_usuario():
             "success": True,
             "salvos": salvos,
             "ignorados": ignorados,
-            "message": f"{len(salvos)} usuários cadastrados, {len(ignorados)} ignorados (já existentes)."
+            "message": f"{len(salvos)} usuários salvos, {len(ignorados)} ignorados."
         }), 200
+
+    except Exception as e:
+        db.session.rollback()
+@admin_route.route('/<username>', methods=['DELETE'])
+def deletar_usuario(username):
+    try:
+        user = User.query.filter_by(username=username).first()
+        if not user:
+            return jsonify({"success": False, "message": "Usuário não encontrado."}), 404
+
+        db.session.delete(user)
+        db.session.commit()
+        return jsonify({"success": True, "message": f"Usuário {username} excluído."}), 200
 
     except Exception as e:
         db.session.rollback()
