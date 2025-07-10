@@ -48,7 +48,7 @@ def adicionar_modalidades():
             cotacao=cotacoes[i],
             unidade=unidades[i],
             limite_por_aposta=limites_aposta[i],
-            ativar_area=ativacoes[i]
+            ativar_area=1 if str(ativacoes[i]).strip().lower() in ['sim', '1'] else 0
         )
         db.session.add(nova)
         db.session.flush()
@@ -75,7 +75,7 @@ def adicionar_modalidades():
 
 @modalidade_route.route('/json', methods=['GET'])
 def json_modalidades():
-    modalidades = Modalidade.query.all()
+    modalidades = Modalidade.query.filter_by(ativar_area=1).all()
     resultado = []
     for m in modalidades:
         linha = [
@@ -142,7 +142,7 @@ def editar_modalidade():
         m.cotacao = float(data.get("cotacao"))
         m.unidade = int(data.get("unidade"))
         m.limite_por_aposta = int(data.get("limite_por_aposta"))
-        m.ativar_area = data.get("ativar_area").strip().lower()
+        m.ativar_area = 1 if str(data.get("ativar_area")).strip().lower() in ['sim', '1'] else 0
 
         db.session.commit()
         return jsonify({"success": True, "message": "Modalidade atualizada com sucesso!"})

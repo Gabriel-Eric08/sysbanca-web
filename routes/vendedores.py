@@ -14,7 +14,7 @@ def vendedores_page():
 
     user = check_result['user']
     try:
-        if int(user.acesso_modalidade) != 1:
+        if int(user.acesso_vendedor) != 1:
             return "Usuário não autorizado", 403
     except (AttributeError, ValueError):
         return "Permissão inválida", 500

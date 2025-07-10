@@ -144,10 +144,10 @@
               <button class="botao-excluir btn btn-sm" type="button" onclick="excluirLinha(this)">🗑 Excluir</button>
             </td>
           </tr>
-        {% else %}
-          <tr><td colspan="5" class="text-center">Nenhum descarrego cadastrado</td></tr>
-        {% endfor %}
       </tbody>
+      {% else %}
+          <div colspan="5" class="text-center">Nenhum descarrego cadastrado</div>
+      {% endfor %}
     </table>
   </div>
 

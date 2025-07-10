@@ -33,7 +33,7 @@ class Area(db.Model):
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     regiao_area = db.Column('RegiaoArea', db.String(20), nullable=False)
     desc_area = db.Column('DescArea', db.String(20), nullable=False)
-    ativar_area = db.Column('AtivarArea', db.Text, nullable=False)
+    ativar_area = db.Column('AtivarArea',db.Integer, nullable=False)
 
 class AreaCotacao(db.Model):
     __tablename__ = 'tb_AreaCotacao'
@@ -102,7 +102,7 @@ class Extracao(db.Model):
     fechamento = db.Column(db.Time, nullable=False)
     premiacao = db.Column(db.Integer, nullable=False)
     dias_extracao = db.Column('DiasExtracao', db.String(100), nullable=False)
-    ativo = db.Column(db.String(5), nullable=False)
+    ativo = db.Column(db.Integer, nullable=False)
 
 
 class Modalidade(db.Model):
@@ -112,7 +112,7 @@ class Modalidade(db.Model):
     unidade = db.Column(db.Integer, nullable=False)
     limite_por_aposta = db.Column('LimitePorAposta', db.Integer, nullable=False)
     cotacao = db.Column(db.Float, nullable=False)
-    ativar_area = db.Column(db.String(25), nullable=False)
+    ativar_area = db.Column(db.Integer, nullable=False)
 
 class Operador(db.Model):
     __tablename__ = 'tb_operador'

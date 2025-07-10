@@ -112,7 +112,7 @@
               <td>{{ m.cotacao }}</td>
               <td>{{ m.unidade }}</td>
               <td>{{ m.limite_por_aposta }}</td>
-              <td>{{ m.ativar_area }}</td>
+              <td>{% if m.ativar_area in [1, '1', 'sim', 'Sim', 'SIM'] %}Sim{% else %}Não{% endif %}</td>
               <td>
                 <button type="button" class="botao-estiloso" onclick="editarLinha(this)">✏️ Editar</button>
                 <button type="button" class="botao-salvar" onclick="excluirModalidade(this, '{{ m.modalidade }}')">🗑️ Excluir</button>
@@ -242,7 +242,7 @@
         linha.cells[1].textContent = dados.cotacao.toFixed(2);
         linha.cells[2].textContent = dados.unidade;
         linha.cells[3].textContent = dados.limite_por_aposta;
-        linha.cells[4].textContent = dados.ativar_area;
+        linha.cells[4].textContent = dados.ativar_area === "sim" || dados.ativar_area === "1" || dados.ativar_area === 1 ? "Sim" : "Não";
 
         linha.cells[5].innerHTML = `
           <button class="botao-estiloso" onclick="editarLinha(this)">✏️ Editar</button>

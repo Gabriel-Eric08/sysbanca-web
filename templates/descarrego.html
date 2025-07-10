@@ -74,7 +74,7 @@
             <td>R$ {{ '%.2f'|format(d.valor_apostado) }}</td>
             <td>R$ {{ '%.2f'|format(d.valor_excedente) }}</td>
             <td>{{ d.numeros }}</td>
-            <td>{{ d.data.strftime('%d/%m/%Y %H:%M:%S') }}</td>
+            <td>{{ d.data.strftime('%d-%m-%Y %H:%M:%S') }}</td>
           </tr>
         {% else %}
           <tr><td colspan="6" class="text-center">Nenhum descarrego encontrado</td></tr>
@@ -112,8 +112,7 @@
       }
 
       const start = new Date(inicio);
-      const end = new Date(fim);
-      end.setHours(23, 59, 59);
+      const end = new Date(fim + "T23:59:59");
 
       // Filtrar linhas da tabela na página pelo período
       const linhas = [...document.querySelectorAll("#tabelaExcedentes tr")];
@@ -122,7 +121,7 @@
         if (!dataStr) return false;
         // Data no formato dd/mm/yyyy hh:mm:ss
         const partes = dataStr.split(' ');
-        const dataPartes = partes[0].split('/');
+        const dataPartes = partes[0].split('-');
         const horaPartes = partes[1].split(':');
         const dataObj = new Date(
           parseInt(dataPartes[2]),
@@ -146,14 +145,19 @@
         tr.cells[2].textContent,
         tr.cells[3].textContent,
         tr.cells[4].textContent,
-        tr.cells[5].textContent,
+        tr.cells[5].textContent
       ]);
 
       doc.setFontSize(16);
       doc.text("Relatório de Apostas com Descarrego", 14, 20);
       doc.setFontSize(10);
       doc.text("Gerado em: " + new Date().toLocaleString(), 14, 28);
-      doc.text(`Período: ${inicio} a ${fim}`, 14, 34);
+      const formatarData = (dataStr) => {
+        const [ano, mes, dia] = dataStr.split("-");
+        return `${dia}-${mes}-${ano}`;
+      };
+
+doc.text(`Período: ${formatarData(inicio)} a ${formatarData(fim)}`, 14, 34);
 
       doc.autoTable({
         head: [["Bilhete", "Extração", "Valor", "Excedente", "Números", "Data"]],

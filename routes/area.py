@@ -106,7 +106,7 @@ def excluir_area():
 # GET - Listar todas áreas como JSON
 @area_route.route('/json', methods=['GET'])
 def listar_areas_json():
-    areas = Area.query.all()
+    areas = Area.query.filter(Area.ativar_area == 1).all()
     lista = [{
         'id': a.id,
         'regiao_area': a.regiao_area,

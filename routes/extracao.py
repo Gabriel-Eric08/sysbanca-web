@@ -89,7 +89,7 @@ def salvar_extracao():
 
 @extracao_route.route('/json', methods=['GET'])
 def json_extracoes():
-    extracoes = Extracao.query.all()
+    extracoes = Extracao.query.filter_by(ativo=1).all()
     resultado = []
     for m in extracoes:
         linha = {
