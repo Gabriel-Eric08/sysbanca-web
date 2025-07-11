@@ -19,6 +19,8 @@ from routes.relatorio import relatorio_route
 from routes.admin import admin_route
 from routes.cadastro_descarrego import cadastro_descarrego_route
 from routes.descarrego import descarrego_route
+import unicodedata
+import re
 
 app = Flask(__name__)
 init_db(app)
@@ -59,6 +61,26 @@ app.register_blueprint(modalidade_route, url_prefix='/modalidade')
 app.register_blueprint(regiao_route, url_prefix='/regiao')
 app.register_blueprint(area_route, url_prefix='/area')
 app.register_blueprint(extracao_route, url_prefix='/extracao')
+
+def normalize_extracao(value):
+    if not value:
+        return ''
+    value = unicodedata.normalize('NFD', value).encode('ascii', 'ignore').decode('utf-8')
+    value = value.lower()
+    value = re.sub(r'[:\-\.\s]', '_', value)
+    value = re.sub(r'[^a-z0-9_]', '', value)
+    return f"extracao_{value}"
+
+app.jinja_env.filters['normalize'] = normalize_extracao
+
+def remover_acentos(texto):
+    return ''.join(
+        c for c in unicodedata.normalize('NFD', texto)
+        if unicodedata.category(c) != 'Mn'
+    )
+
+# No Flask, registre o filtro
+app.jinja_env.filters['remover_acentos'] = remover_acentos
 
 if __name__ == "__main__":
     app.run(debug=True)

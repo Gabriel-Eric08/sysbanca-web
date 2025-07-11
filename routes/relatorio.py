@@ -1,6 +1,6 @@
 from flask import Blueprint, render_template, request, jsonify
-from db_config import db  # ajuste se o seu SQLAlchemy for importado de outro lugar
-from models.models import Relatorio, Aposta  # modelo Area já criado
+from db_config import db
+from models.models import Relatorio, Aposta, Extracao, Area, Vendedor  
 
 relatorio_route = Blueprint('Relatorio', __name__)
 
@@ -34,8 +34,12 @@ def relatorio_vendas():
     return jsonify(resultado)
 
 @relatorio_route.route('/vendas', methods=['GET'])
-def relatorio_page():
+def relatorio_page1():
     apostas = Aposta.query.order_by(Aposta.data_atual.desc()).all()
     total_geral = sum(aposta.valor_total for aposta in apostas)
 
-    return render_template('relatorios.html', apostas=apostas, total_geral=round(total_geral, 2))
+    areas= Area.query.all()
+    extracoes=Extracao.query.all()
+    vendedores=Vendedor.query.all()
+
+    return render_template('relatoriovendas.html', apostas=apostas, total_geral=round(total_geral, 2), areas=areas,extracoes=extracoes,vendedores=vendedores)

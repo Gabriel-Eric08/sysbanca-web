@@ -1,6 +1,6 @@
 from flask import Blueprint, request, jsonify
 from sqlalchemy import func
-from models.models import Aposta, AreaCotacao, Modalidade, Descarrego, CadastroDescarrego
+from models.models import Aposta, AreaCotacao, Modalidade, Descarrego, CadastroDescarrego, ApostaExcluida
 from db_config import db
 import json
 from datetime import time, date, datetime
@@ -176,3 +176,38 @@ def get_ultimo_id_aposta():
         return jsonify({"success": False, "message": str(e)}), 400
 
 
+@aposta_route.route('/<int:aposta_id>', methods=['DELETE'])
+def excluir_aposta_temporariamente(aposta_id):
+    try:
+        aposta = Aposta.query.get(aposta_id)
+
+        if not aposta:
+            return jsonify({"success": False, "message": f"Aposta com ID {aposta_id} não encontrada."}), 404
+
+        # Mover para tabela de exclusões temporárias
+        aposta_excluida = ApostaExcluida(
+            aposta_id_original=aposta.id,
+            area=aposta.area,
+            vendedor=aposta.vendedor,
+            data_atual=aposta.data_atual,
+            hora_atual=aposta.hora_atual,
+            valor_total=aposta.valor_total,
+            extracao=aposta.extracao,
+            apostas=aposta.apostas,
+            pre_datar=aposta.pre_datar,
+            data_agendada=aposta.data_agendada
+        )
+        db.session.add(aposta_excluida)
+
+        # Excluir os descarregos vinculados
+        Descarrego.query.filter_by(bilhete=aposta_id).delete()
+
+        # Excluir a aposta original
+        db.session.delete(aposta)
+        db.session.commit()
+
+        return jsonify({"success": True, "message": f"Aposta {aposta_id} movida para exclusão temporária."}), 200
+
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"success": False, "message": f"Erro ao excluir aposta: {str(e)}"}), 500

@@ -1,4 +1,5 @@
 from db_config import db
+from datetime import datetime
 
 class ComissaoArea(db.Model):
     __tablename__ = 'tb_comissaoArea'
@@ -8,6 +9,22 @@ class ComissaoArea(db.Model):
     modalidade = db.Column(db.String, nullable=False)
     comissao = db.Column(db.Float, nullable=False)
     ativar = db.Column(db.String, nullable=False)
+
+class ApostaExcluida(db.Model):
+    __tablename__ = 'tb_apostas_excluidas'
+
+    id = db.Column(db.Integer, primary_key=True)
+    aposta_id_original = db.Column(db.Integer, nullable=False)
+    area = db.Column(db.String(50))
+    vendedor = db.Column(db.String(50))
+    data_atual = db.Column(db.Date)
+    hora_atual = db.Column(db.Time)
+    valor_total = db.Column(db.Float)
+    extracao = db.Column(db.String(50))
+    apostas = db.Column(db.Text)
+    pre_datar = db.Column(db.Boolean)
+    data_agendada = db.Column(db.Date, nullable=True)
+    data_exclusao = db.Column(db.DateTime, default=datetime.now)
 
 class Aposta(db.Model):
     __tablename__ = 'tb_apostas'
