@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <title>Consulta de Aposta</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body class="bg-light py-4">
+
+<div class="container">
+    <h2 class="mb-4">Consulta de Aposta</h2>
+
+    <!-- Formulário de Consulta -->
+    <form method="GET" action="/aposta/consultar" class="row g-2 mb-4">
+        <div class="col-auto">
+            <input type="text" class="form-control" id="aposta_id" name="aposta_id" placeholder="Número da Aposta" required>
+        </div>
+        <div class="col-auto">
+            <button type="submit" class="btn btn-primary">Consultar</button>
+        </div>
+    </form>
+
+    {% if aposta %}
+    <!-- Cartão com os dados da aposta -->
+    <div class="card shadow-sm mb-3">
+        <div class="card-header">
+            <h5 class="mb-0">Bilhete #{{ aposta.id }}</h5>
+        </div>
+        <div class="card-body">
+            <p><strong>Vendedor:</strong> {{ aposta.vendedor }}</p>
+            <p><strong>Área:</strong> {{ aposta.area }}</p>
+            <p><strong>Data:</strong> {{ aposta.data_atual.strftime('%d/%m/%Y') }}</p>
+            <p><strong>Hora:</strong> {{ aposta.hora_atual.strftime('%H:%M') }}</p>
+            <p><strong>Extração:</strong> {{ aposta.extracao }}</p>
+            <p><strong>Valor Total:</strong> R$ {{ '{:.2f}'.format(aposta.valor_total) }}</p>
+            <p><strong>Pré-datada?</strong> {{ 'Sim' if aposta.pre_datar else 'Não' }}</p>
+
+            {% if aposta.pre_datar and aposta.data_agendada %}
+            <p><strong>Data Agendada:</strong> {{ aposta.data_agendada.strftime('%d/%m/%Y') }}</p>
+            {% endif %}
+
+            <p><strong>Detalhes das Apostas:</strong></p>
+            <pre class="bg-light border p-2 rounded">{{ aposta.apostas | safe }}</pre>
+        </div>
+        <div class="card-footer text-end">
+            <form method="POST" action="/aposta/{{ aposta.id }}/excluir" onsubmit="return confirm('Tem certeza que deseja excluir esta aposta?');">
+                <button type="submit" class="btn btn-danger">Excluir Aposta</button>
+            </form>
+        </div>
+    </div>
+    
+    {% elif consulta_feita %}
+    <div class="alert alert-danger" role="alert">
+        Aposta não encontrada.
+    </div>
+    {% endif %}
+</div>
+
+</body>
+</html>

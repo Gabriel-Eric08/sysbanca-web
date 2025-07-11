@@ -128,27 +128,7 @@
               <li><a class="dropdown-item" href="{{ url_for('Vendedores.vendedores_page') }}">Vendedor/Operador</a></li>
               <li><a class="dropdown-item" href="{{ url_for('CadastroDescarrego.cadastro_page') }}">Descarrego</a></li>
             </ul>
-          </li>
-
-          <!-- Financeiro Dropdown -->
-          <li class="nav-item dropdown">
-            <a
-              class="nav-link dropdown-toggle"
-              href="#"
-              id="financeiroDropdown"
-              role="button"
-              data-bs-toggle="dropdown"
-              aria-expanded="false"
-            >
-              Financeiro
-            </a>
-            <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="financeiroDropdown">
-              <li><a class="dropdown-item" href="#">Vendas Diárias do Operador</a></li>
-              <li><a class="dropdown-item" href="#">Vendas por Período do Operador</a></li>
-              <li><a class="dropdown-item" href="#">Relatório Geral de Vendas</a></li>
-              <li><a class="dropdown-item" href="#">Relatório Geral de Vendas/Área</a></li>
-            </ul>
-          </li>
+          </li>    
 
           <!-- Administração Dropdown -->
           <li class="nav-item dropdown">
@@ -187,6 +167,7 @@
               <li><a class="dropdown-item" href="#">Números Cotados</a></li>
               <li><a class="dropdown-item" href=" {{ url_for('Relatorio.relatorio_page') }} ">Relatório ações</a></li>
               <li><a class="dropdown-item" href=" {{ url_for('Relatorio.relatorio_page1') }} ">Relatório vendas</a></li>
+              <li><a class="dropdown-item" href=" {{ url_for('Aposta.consultar_aposta') }} ">Consulta venda</a></li>
             </ul>
           </li>
 
