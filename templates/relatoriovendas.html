@@ -98,6 +98,7 @@
           <th>Extração</th>
           <th>Área</th>
           <th>Valor Total</th>
+          <th>Ações</th>  <!-- Coluna nova -->
         </tr>
       </thead>
       <tbody>
@@ -110,10 +111,14 @@
             <td>{{ a.extracao }}</td>
             <td>{{ a.area }}</td>
             <td>R$ {{ '%.2f'|format(a.valor_total) }}</td>
+            <td>
+              <a href="{{ url_for('Aposta.consultar_aposta', aposta_id=a.id) }}" class="btn btn-sm btn-info me-1" title="Consultar">Consultar</a>
+              <button class="btn btn-sm btn-danger" title="Excluir"onclick="excluirAposta({{ a.id }})">Excluir</button>
+            </td>
           </tr>
           {% endfor %}
         {% else %}
-          <tr><td colspan="6" class="text-center">Nenhuma aposta encontrada.</td></tr>
+          <tr><td colspan="7" class="text-center">Nenhuma aposta encontrada.</td></tr>
         {% endif %}
       </tbody>
     </table>
@@ -276,5 +281,34 @@
   window.aplicarFiltros = aplicarFiltros;
   window.gerarPDF = gerarPDF;
   </script>
+  <script>
+  async function excluirAposta(apostaId) {
+    if (!confirm('Tem certeza que deseja excluir esta aposta?')) {
+      return;
+    }
+
+    try {
+      const response = await fetch(`/aposta/${apostaId}/excluir_ajax`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Requested-With': 'XMLHttpRequest'
+        }
+      });
+
+      const data = await response.json();
+
+      if (response.ok && data.success) {
+        alert(data.message);
+        location.reload();  // Atualiza a página para refletir a exclusão
+      } else {
+        alert('Erro ao excluir: ' + (data.message || 'Erro desconhecido'));
+      }
+
+    } catch (error) {
+      alert('Erro ao conectar com o servidor: ' + error.message);
+    }
+  }
+</script>a
 </body>
 </html>

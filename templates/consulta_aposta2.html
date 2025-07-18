@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <title>Visualização de Aposta</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        @media print {
+            .nao-imprimir {
+                display: none !important;
+            }
+        }
+    </style>
+</head>
+<body class="bg-light py-4">
+
+<div class="container">
+    <h2 class="mb-4">Visualização de Aposta</h2>
+
+    <!-- Botões de Ação -->
+    <div class="mb-4">
+        <button type="button" onclick="history.back()" class="btn btn-secondary me-2">
+            Voltar
+        </button>
+
+        {% if aposta %}
+        <button type="button" onclick="imprimirBilhete()" class="btn btn-success">
+            Imprimir
+        </button>
+        {% endif %}
+    </div>
+
+    {% if aposta %}
+    <!-- Conteúdo a ser convertido em PDF -->
+    <div id="bilhete-pdf" class="card shadow-sm mb-3">
+        <div class="card-header">
+            <h5 class="mb-0">Bilhete #{{ aposta.id }}</h5>
+        </div>
+        <div class="card-body">
+            <p><strong>Vendedor:</strong> {{ aposta.vendedor }}</p>
+            <p><strong>Área:</strong> {{ aposta.area }}</p>
+            <p><strong>Data:</strong> {{ aposta.data_atual.strftime('%d/%m/%Y') }}</p>
+            <p><strong>Hora:</strong> {{ aposta.hora_atual.strftime('%H:%M') }}</p>
+            <p><strong>Extração:</strong> {{ aposta.extracao }}</p>
+            <p><strong>Valor Total:</strong> R$ {{ '{:.2f}'.format(aposta.valor_total) }}</p>
+            <p><strong>Pré-datada?</strong> {{ 'Sim' if aposta.pre_datar else 'Não' }}</p>
+
+            {% if aposta.pre_datar and aposta.data_agendada %}
+            <p><strong>Data Agendada:</strong> {{ aposta.data_agendada.strftime('%d/%m/%Y') }}</p>
+            {% endif %}
+
+            <p><strong>Detalhes das Apostas:</strong></p>
+            <div class="bg-light border p-3 rounded">
+                {% for detalhe in apostas_detalhadas %}
+                    <div class="mb-3">
+                        <p><strong>Nome da Aposta:</strong> {{ detalhe[0] }}</p>
+                        <p><strong>Números:</strong> {{ detalhe[1] | join(', ') }}</p>
+                        <p><strong>Modalidade:</strong> {{ detalhe[2] }}</p>
+                        <p><strong>Tipo de Aposta:</strong> {{ detalhe[3] }}</p>
+                        <p><strong>Valor Total Apostado:</strong> R$ {{ '{:.2f}'.format(detalhe[4]) }}</p>
+                        <p><strong>Valor por Unidade:</strong> R$ {{ '{:.2f}'.format(detalhe[5]) }}</p>
+                        <hr>
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
+    {% elif consulta_feita %}
+    <div class="alert alert-danger" role="alert">
+        Aposta não encontrada.
+    </div>
+    {% endif %}
+</div>
+
+<!-- Script html2pdf -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+
+<script>
+    function imprimirBilhete() {
+        const elemento = document.getElementById('bilhete-pdf');
+        const opt = {
+            margin:       0.3,
+            filename:     `bilhete_{{ aposta.id }}.pdf`,
+            image:        { type: 'jpeg', quality: 0.98 },
+            html2canvas:  { scale: 2 },
+            jsPDF:        { unit: 'in', format: 'a4', orientation: 'portrait' }
+        };
+        html2pdf().set(opt).from(elemento).save();
+    }
+</script>
+
+</body>
+</html>
