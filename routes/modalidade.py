@@ -8,15 +8,13 @@ modalidade_route = Blueprint('Modalidade', __name__)
 
 @modalidade_route.route('/')
 def modalidade_page():
-
     check_result = checkCreds()
-    
 
     if not check_result['success']:
         return check_result['message'], 401
-    
+
     user = check_result['user']
-    
+
     try:
         if int(user.acesso_modalidade) != 1:
             return "Usuário não autorizado", 403
@@ -25,8 +23,7 @@ def modalidade_page():
 
     modalidades = Modalidade.query.all()
 
-    return render_template('cadastroModalidade.html', 
-                         modalidades=modalidades)
+    return render_template('cadastroModalidade.html', modalidades=modalidades)
 
 @modalidade_route.route('/', methods=['POST'])
 def adicionar_modalidades():
@@ -34,6 +31,7 @@ def adicionar_modalidades():
     cotacoes = request.form.getlist('cotacao[]')
     unidades = request.form.getlist('unidade[]')
     limites_aposta = request.form.getlist('LimitePorAposta[]')
+    limites_descarrego = request.form.getlist('LimiteDescarrego[]')
     ativacoes = request.form.getlist('AtivarAreaCotacao[]')
 
     usuario = request.cookies.get('username', 'Desconhecido')
@@ -45,9 +43,10 @@ def adicionar_modalidades():
 
         nova = Modalidade(
             modalidade=modalidades[i],
-            cotacao=cotacoes[i],
-            unidade=unidades[i],
-            limite_por_aposta=limites_aposta[i],
+            cotacao=float(cotacoes[i]),
+            unidade=int(unidades[i]),
+            limite_por_aposta=int(limites_aposta[i]),
+            limite_descarrego=float(limites_descarrego[i]),
             ativar_area=1 if str(ativacoes[i]).strip().lower() in ['sim', '1'] else 0
         )
         db.session.add(nova)
@@ -63,6 +62,7 @@ def adicionar_modalidades():
                 "cotacao": cotacoes[i],
                 "unidade": unidades[i],
                 "limite_por_aposta": limites_aposta[i],
+                "limite_descarrego": limites_descarrego[i],
                 "ativar_area": ativacoes[i]
             }),
             data=datetime.now().date(),
@@ -83,6 +83,7 @@ def json_modalidades():
             m.cotacao,
             m.unidade,
             m.limite_por_aposta,
+            m.limite_descarrego,
             m.ativar_area
         ]
         resultado.append(linha)
@@ -113,6 +114,7 @@ def excluir_modalidades():
                 "cotacao": modalidade.cotacao,
                 "unidade": modalidade.unidade,
                 "limite_por_aposta": modalidade.limite_por_aposta,
+                "limite_descarrego": modalidade.limite_descarrego,
                 "ativar_area": modalidade.ativar_area
             }),
             data=datetime.now().date(),
@@ -138,11 +140,44 @@ def editar_modalidade():
         m = Modalidade.query.filter_by(modalidade=modalidade_nome).first()
         if not m:
             return jsonify({"success": False, "message": "Modalidade não encontrada"}), 404
+        
+        # Guardar valores originais para o relatório (opcional, mas bom para debug)
+        original_data = {
+            "modalidade": m.modalidade,
+            "cotacao": m.cotacao,
+            "unidade": m.unidade,
+            "limite_por_aposta": m.limite_por_aposta,
+            "limite_descarrego": m.limite_descarrego,
+            "ativar_area": m.ativar_area
+        }
 
+        # Atualizar os campos com os novos dados
         m.cotacao = float(data.get("cotacao"))
         m.unidade = int(data.get("unidade"))
         m.limite_por_aposta = int(data.get("limite_por_aposta"))
+        m.limite_descarrego = float(data.get("limite_descarrego"))
         m.ativar_area = 1 if str(data.get("ativar_area")).strip().lower() in ['sim', '1'] else 0
+
+        # Gerar o relatório de edição
+        usuario = request.cookies.get('username', 'Desconhecido')
+        relatorio = Relatorio(
+            usuario=usuario,
+            tabela="tb_Modalidade",
+            acao="Edição",
+            id_linha=m.id,
+            # Campo 'linha' foi ajustado para refletir o novo estado após a edição
+            linha=str({
+                "modalidade": m.modalidade,
+                "cotacao": m.cotacao,
+                "unidade": m.unidade,
+                "limite_por_aposta": m.limite_por_aposta,
+                "limite_descarrego": m.limite_descarrego,
+                "ativar_area": m.ativar_area
+            }),
+            data=datetime.now().date(),
+            horario=datetime.now().time()
+        )
+        db.session.add(relatorio)
 
         db.session.commit()
         return jsonify({"success": True, "message": "Modalidade atualizada com sucesso!"})

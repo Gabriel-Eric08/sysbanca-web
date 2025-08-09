@@ -3,6 +3,8 @@ from models.models import Modalidade, Extracao, Area, CadastroDescarrego, User
 from util.checkCreds import checkCreds
 from db_config import db
 
+
+
 cadastro_descarrego_route = Blueprint('CadastroDescarrego', __name__)
 
 @cadastro_descarrego_route.route('/')

@@ -1,251 +1,277 @@
 <!DOCTYPE html>
 <html lang="pt-br">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Cadastro de Operadores</title>
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
-  <style>
-    .botao-estiloso, .botao-voltar, .botao-salvar {
-      font-size: 16px;
-      color: white;
-      border-radius: 8px;
-      padding: 6px 16px;
-      border: none;
-      cursor: pointer;
-    }
-    .botao-estiloso { background-color: #072749; }
-    .botao-voltar { background-color: #1fa53c; }
-    .botao-salvar { background-color: #be0d0d; }
-    .botao-estiloso:hover { background-color: #0056b3; }
-    .botao-voltar:hover { background-color: #128d2e; }
-    .botao-salvar:hover { background-color: #ec5050; }
-  </style>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Cadastro de Operadores</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
+    <style>
+        .botao-estiloso, .botao-voltar, .botao-salvar {
+            font-size: 16px;
+            color: white;
+            border-radius: 8px;
+            padding: 6px 16px;
+            border: none;
+            cursor: pointer;
+        }
+        .botao-estiloso { background-color: #072749; }
+        .botao-voltar { background-color: #1fa53c; }
+        .botao-salvar { background-color: #be0d0d; }
+        .botao-estiloso:hover { background-color: #0056b3; }
+        .botao-voltar:hover { background-color: #128d2e; }
+        .botao-salvar:hover { background-color: #ec5050; }
+    </style>
 </head>
 <body class="bg-light p-4">
 <div class="container">
-  <h2 class="mb-4">Cadastro de Operadores</h2>
+    <h2 class="mb-4">Cadastro de Operadores</h2>
 
-  <form id="formCadastroOperador" action="/vendedor/" method="POST">
-    <div class="row g-2">
-      <div class="col"><input type="text" class="form-control" placeholder="Nome" id="nome"></div>
-      <div class="col">
-        <select class="form-control" id="regiao">
-          <option disabled selected>Selecione a Região</option>
-          {% for r in regioes %}
-            <option value="{{ r.regiao }}">{{ r.regiao }}</option>
-          {% endfor %}
-        </select>
-      </div>
-      <div class="col">
-        <select class="form-control" id="ativo">
-          <option disabled selected>Ativo</option>
-          <option value="sim">Sim </option>
-          <option value="não">Não</option>
-        </select>
-      </div>
-      <div class="col">
-        <select class="form-control" id="area">
-          <option disabled selected>Selecione a Área</option>
-          {% for a in areas %}
-            <option value="{{ a.regiao_area }}">{{ a.regiao_area }}</option>
-          {% endfor %}
-        </select>
-      </div>
-      <div class="col"><input type="text" class="form-control" placeholder="Login" id="login"></div>
-      <div class="col"><input type="text" class="form-control" placeholder="Senha" id="senha"></div>
-    </div>
-    <div class="row g-2 mt-2">
-      <div class="col"><input type="text" class="form-control" placeholder="Comissão" id="comissao"></div>
-      <div class="col">
-        <select class="form-control" id="cancelar_poule">
-          <option disabled selected>Cancelar poule</option>
-          <option value="sim">Sim </option>
-          <option value="não">Não</option>
-        </select>
-      </div>
-      <div class="col"><input type="text" class="form-control" placeholder="Exibe Comissão" id="exibe_comissao"></div>
-      <div class="col"><input type="text" class="form-control" placeholder="Limite Venda" id="limite_venda"></div>
-      <div class="col">
-        <select class="form-control" id="tipo_limite">
-          <option disabled selected>Selecione o tipo limite</option>
-          <option value="Por dia">Por dia</option>
-          <option value="Acumulado">Acumulado</option>
-          <option value="Acumulado + Crédito">Acumulado + Crédito</option>
-        </select>
-      </div>
-      <div class="col"><input type="text" class="form-control" placeholder="Grade" id="grade"></div>
-    </div>
-    <div class="row g-2 mt-2">
-      <div class="col"><input type="text" class="form-control" placeholder="Teste" id="teste"></div>
-      <div class="col"><input type="text" class="form-control" placeholder="Comissão Retida" id="comissao_retida"></div>
-      <div class="col"><input type="text" class="form-control" placeholder="Serial Máquina" id="serial_maquina"></div>
-      <div class="col">
-        <button type="button" class="botao-estiloso w-100" onclick="adicionarLinhaOperador()">➕ Adicionar</button>
-      </div>
-      <div class="col">
-        <button type="submit" class="botao-voltar w-100">💾 Salvar</button>
-      </div>
-      <div class="col">
-        <a href="{{ url_for('Home.home') }}" class="botao-salvar w-100">❌ Sair</a>
-      </div>
-    </div>
+    <form id="formCadastroOperador" action="/vendedor/" method="POST">
+        <div class="row g-2 mb-2">
+            <div class="col-12 col-md"><input type="text" class="form-control" placeholder="Nome" id="nome"></div>
+            <div class="col-12 col-md">
+                <select class="form-control" id="regiao">
+                    <option disabled selected>Selecione a Região</option>
+                    {% for r in regioes %}
+                        <option value="{{ r.regiao }}">{{ r.regiao }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-12 col-md">
+                <select class="form-control" id="ativo">
+                    <option disabled selected>Ativo</option>
+                    <option value="sim">Sim</option>
+                    <option value="nao">Não</option>
+                </select>
+            </div>
+        </div>
+        <div class="row g-2 mb-2">
+            <div class="col-12 col-md">
+                <select class="form-control" id="area">
+                    <option disabled selected>Selecione a Área</option>
+                    {% for a in areas %}
+                        <option value="{{ a.regiao_area }}">{{ a.regiao_area }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-12 col-md"><input type="text" class="form-control" placeholder="Login" id="login"></div>
+            <div class="col-12 col-md"><input type="text" class="form-control" placeholder="Senha" id="senha"></div>
+        </div>
+        <div class="row g-2 mb-2">
+            <div class="col-12 col-md"><input type="text" class="form-control" placeholder="Comissão" id="comissao"></div>
+            <div class="col-12 col-md">
+                <select class="form-control" id="cancelar_poule">
+                    <option disabled selected>Cancelar poule</option>
+                    <option value="sim">Sim</option>
+                    <option value="nao">Não</option>
+                </select>
+            </div>
+            <div class="col-12 col-md">
+                <select class="form-control" id="exibe_comissao">
+                    <option disabled selected>Exibe Comissão</option>
+                    <option value="sim">Sim</option>
+                    <option value="nao">Não</option>
+                </select>
+            </div>
+        </div>
+        <div class="row g-2 mb-2">
+            <div class="col-12 col-md"><input type="text" class="form-control" placeholder="Limite Venda" id="limite_venda"></div>
+            <div class="col-12 col-md">
+                <select class="form-control" id="tipo_limite">
+                    <option disabled selected>Selecione o tipo limite</option>
+                    <option value="Por dia">Por dia</option>
+                    <option value="Acumulado">Acumulado</option>
+                    <option value="Acumulado + Crédito">Acumulado + Crédito</option>
+                </select>
+            </div>
+            <div class="col-12 col-md"><input type="text" class="form-control" placeholder="Grade" id="grade"></div>
+        </div>
+        <div class="row g-2 mt-2">
+            <div class="col-12 col-md-3"><input type="text" class="form-control" placeholder="Teste" id="teste"></div>
+            <div class="col-12 col-md-3"><input type="text" class="form-control" placeholder="Comissão Retida" id="comissao_retida"></div>
+            <div class="col-12 col-md-3"><input type="text" class="form-control" placeholder="Serial Máquina" id="serial_maquina"></div>
+            <div class="col-12 col-md-3 d-flex flex-column flex-md-row justify-content-between align-items-stretch">
+                <button type="button" class="botao-estiloso w-100 mb-2 mb-md-0" onclick="adicionarLinhaOperador()">➕ Adicionar</button>
+            </div>
+        </div>
+        <div class="row g-2 mt-2">
+            <div class="col-12 col-md-6 d-flex flex-column flex-md-row justify-content-between align-items-stretch">
+                <button type="submit" class="botao-voltar w-100 mb-2 mb-md-0">💾 Salvar</button>
+            </div>
+            <div class="col-12 col-md-6 d-flex flex-column flex-md-row justify-content-between align-items-stretch">
+                <a href="{{ url_for('Home.home') }}" class="botao-salvar w-100 text-center text-decoration-none">❌ Sair</a>
+            </div>
+        </div>
+        
+        <div class="table-responsive">
+            <table class="table table-bordered table-hover bg-white mt-4" id="tabelaOperador">
+                <thead class="table-success">
+                    <tr>
+                        <th>Nome</th>
+                        <th>Região</th>
+                        <th>Ativo</th>
+                        <th>Área</th>
+                        <th>Login</th>
+                        <th>Senha</th>
+                        <th>Comissão</th>
+                        <th>Cancelar Poule</th>
+                        <th>Exibe Comissão</th>
+                        <th>Limite Venda</th>
+                        <th>Tipo Limite</th>
+                        <th>Grade</th>
+                        <th>Teste</th>
+                        <th>Comissão Retida</th>
+                        <th>Serial Máquina</th>
+                        <th>Ações</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for v in vendedores %}
+                        <tr>
+                            <td>{{ v.nome }}</td>
+                            <td>{{ v.regiao }}</td>
+                            <td>{{ v.ativo }}</td>
+                            <td>{{ v.area }}</td>
+                            <td>{{ v.username }}</td>
+                            <td>{{ v.senha }}</td>
+                            <td>{{ v.comissao or '' }}</td>
+                            <td>{{ v.cancelar_poule or '' }}</td>
+                            <td>{{ v.exibe_comissao or '' }}</td>
+                            <td>{{ v.limite_venda or '' }}</td>
+                            <td>{{ v.tipo_limite or '' }}</td>
+                            <td>{{ v.grade or '' }}</td>
+                            <td>{{ v.teste or '' }}</td>
+                            <td>{{ v.comissao_retida or '' }}</td>
+                            <td>{{ v.serial or '' }}</td>
+                            <td>
+                                <button type="button" class="botao-estiloso" onclick="editarLinha(this)">✏️ Editar</button>
+                                <button type="button" class="botao-salvar" onclick="excluirOperador(this, '{{ v.username }}')">🗑️ Excluir</button>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
 
-    <table class="table table-bordered table-hover bg-white mt-4" id="tabelaOperador">
-      <thead class="table-success">
-        <tr>
-          <th>Nome</th><th>Região</th><th>Ativo</th><th>Área</th><th>Login</th><th>Senha</th>
-          <th>Comissão</th><th>Cancelar Poule</th><th>Exibe Comissão</th><th>Limite Venda</th>
-          <th>Tipo Limite</th><th>Grade</th><th>Teste</th><th>Comissão Retida</th><th>Serial Máquina</th><th>Ações</th>
-        </tr>
-      </thead>
-      <tbody>
-        {% for v in vendedores %}
-        <tr>
-          <td>{{ v.nome }}</td>
-          <td>{{ v.regiao }}</td>
-          <td>{{ v.ativo }}</td>
-          <td>{{ v.area }}</td>
-          <td>{{ v.username }}</td>
-          <td>{{ v.senha }}</td>
-          <td>{{ v.comissao or '' }}</td>
-          <td>{{ v.cancelar_poule or '' }}</td>
-          <td>{{ v.exibe_comissao or '' }}</td>
-          <td>{{ v.limite_venda or '' }}</td>
-          <td>{{ v.tipo_limite or '' }}</td>
-          <td>{{ v.grade or '' }}</td>
-          <td>{{ v.teste or '' }}</td>
-          <td>{{ v.comissao_retida or '' }}</td>
-          <td>{{ v.serial or '' }}</td>
-          <td>
-            <button type="button" class="botao-estiloso" onclick="editarLinha(this)">✏️ Editar</button>
-            <button type="button" class="botao-salvar" onclick="excluirOperador(this, '{{ v.username }}')">🗑️ Excluir</button>
-          </td>
-        </tr>
-        {% endfor %}
-      </tbody>
-    </table>
-
-    <div id="hiddenFieldsOperador"></div>
-  </form>
+        <div id="hiddenFieldsOperador"></div>
+    </form>
 </div>
 
 <script>
-function adicionarLinhaOperador() {
-  const campos = [
-    "nome", "regiao", "ativo", "area", "login", "senha",
-    "comissao", "cancelar_poule", "exibe_comissao", "limite_venda",
-    "tipo_limite", "grade", "teste", "comissao_retida", "serial_maquina"
-  ];
+    function adicionarLinhaOperador() {
+        const campos = [
+            "nome", "regiao", "ativo", "area", "login", "senha",
+            "comissao", "cancelar_poule", "exibe_comissao", "limite_venda",
+            "tipo_limite", "grade", "teste", "comissao_retida", "serial_maquina"
+        ];
+        const valores = campos.map(id => document.getElementById(id).value);
 
-  const valores = campos.map(id => document.getElementById(id).value);
+        if (valores.some(v => v.trim() === "")) {
+            alert("Preencha todos os campos antes de adicionar.");
+            return;
+        }
 
-  if (valores.some(v => v.trim() === "")) {
-    alert("Preencha todos os campos antes de adicionar.");
-    return;
-  }
+        const tbody = document.querySelector("#tabelaOperador tbody");
+        const tr = document.createElement("tr");
 
-  const tbody = document.querySelector("#tabelaOperador tbody");
-  const tr = document.createElement("tr");
+        valores.forEach(v => {
+            const td = document.createElement("td");
+            td.textContent = v;
+            tr.appendChild(td);
+        });
 
-  valores.forEach(v => {
-    const td = document.createElement("td");
-    td.textContent = v;
-    tr.appendChild(td);
-  });
+        const tdAcoes = document.createElement("td");
+        tdAcoes.innerHTML = `
+            <button type="button" class="botao-estiloso" onclick="editarLinha(this)">✏️ Editar</button>
+            <button type="button" class="botao-salvar" onclick="this.closest('tr').remove()">🗑️ Excluir</button>
+        `;
+        tr.appendChild(tdAcoes);
+        tbody.appendChild(tr);
 
-  const tdAcoes = document.createElement("td");
-  tdAcoes.innerHTML = `
-    <button type="button" class="botao-estiloso" onclick="editarLinha(this)">✏️ Editar</button>
-    <button type="button" class="botao-salvar" onclick="this.closest('tr').remove()">🗑️ Excluir</button>
-  `;
-  tr.appendChild(tdAcoes);
-  tbody.appendChild(tr);
+        const hidden = document.getElementById("hiddenFieldsOperador");
+        valores.forEach((v, i) => {
+            const input = document.createElement("input");
+            input.type = "hidden";
+            input.name = campos[i] + "[]";
+            input.value = v;
+            hidden.appendChild(input);
+        });
 
-  const hidden = document.getElementById("hiddenFieldsOperador");
-  valores.forEach((v, i) => {
-    const input = document.createElement("input");
-    input.type = "hidden";
-    input.name = campos[i] + "[]";
-    input.value = v;
-    hidden.appendChild(input);
-  });
-
-  campos.forEach(id => document.getElementById(id).value = "");
-}
-
-function editarLinha(botao) {
-  const linha = botao.closest("tr");
-  const valores = [];
-
-  for (let i = 0; i < 15; i++) {
-    const valor = linha.cells[i].textContent;
-    valores.push(valor);
-    linha.cells[i].innerHTML = `<input class="form-control" value="${valor}">`;
-  }
-
-  linha.cells[15].innerHTML = `
-    <button class="botao-voltar" onclick="salvarEdicao(this)">💾 Salvar</button>
-    <button class="botao-salvar" onclick='cancelarEdicao(this, ${JSON.stringify(valores)})'>❌ Cancelar</button>
-  `;
-}
-
-function salvarEdicao(botao) {
-  const linha = botao.closest("tr");
-  const inputs = linha.querySelectorAll("input");
-
-  const dados = {};
-  const campos = [
-    "nome", "regiao", "ativo", "area", "username", "senha", "comissao",
-    "cancelar_poule", "exibe_comissao", "limite_venda", "tipo_limite",
-    "grade", "teste", "comissao_retida", "serial"
-  ];
-
-  campos.forEach((c, i) => dados[c] = inputs[i].value);
-
-  fetch('/vendedor/editar', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(dados)
-  })
-  .then(r => r.json())
-  .then(data => {
-    if (data.success) {
-      inputs.forEach((input, i) => linha.cells[i].textContent = input.value);
-      linha.cells[15].innerHTML = `
-        <button type="button" class="botao-estiloso" onclick="editarLinha(this)">✏️ Editar</button>
-        <button type="button" class="botao-salvar" onclick="excluirOperador(this, '${dados.username}')">🗑️ Excluir</button>
-      `;
-    } else {
-      alert(data.message);
+        campos.forEach(id => document.getElementById(id).value = "");
     }
-  });
-}
 
-function cancelarEdicao(botao, valores) {
-  const linha = botao.closest("tr");
-  for (let i = 0; i < 15; i++) {
-    linha.cells[i].textContent = valores[i];
-  }
-  linha.cells[15].innerHTML = `
-    <button type="button" class="botao-estiloso" onclick="editarLinha(this)">✏️ Editar</button>
-    <button type="button" class="botao-salvar" onclick="excluirOperador(this, '${valores[4]}')">🗑️ Excluir</button>
-  `;
-}
+    function editarLinha(botao) {
+        const linha = botao.closest("tr");
+        const valores = [];
 
-function excluirOperador(botao, username) {
-  if (!confirm("Deseja realmente excluir?")) return;
-  fetch("/vendedor/", {
-    method: "DELETE",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ username })
-  })
-  .then(r => r.json())
-  .then(data => {
-    alert(data.message);
-    if (data.success) botao.closest("tr").remove();
-  });
-}
+        for (let i = 0; i < 15; i++) {
+            const valor = linha.cells[i].textContent;
+            valores.push(valor);
+            linha.cells[i].innerHTML = `<input class="form-control" value="${valor}">`;
+        }
+
+        linha.cells[15].innerHTML = `
+            <button class="botao-voltar" onclick="salvarEdicao(this)">💾 Salvar</button>
+            <button class="botao-salvar" onclick='cancelarEdicao(this, ${JSON.stringify(valores)})'>❌ Cancelar</button>
+        `;
+    }
+
+    function salvarEdicao(botao) {
+        const linha = botao.closest("tr");
+        const inputs = linha.querySelectorAll("input");
+
+        const dados = {};
+        const campos = [
+            "nome", "regiao", "ativo", "area", "username", "senha", "comissao",
+            "cancelar_poule", "exibe_comissao", "limite_venda", "tipo_limite",
+            "grade", "teste", "comissao_retida", "serial"
+        ];
+
+        campos.forEach((c, i) => dados[c] = inputs[i].value);
+
+        fetch('/vendedor/editar', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(dados)
+        })
+        .then(r => r.json())
+        .then(data => {
+            if (data.success) {
+                inputs.forEach((input, i) => linha.cells[i].textContent = input.value);
+                linha.cells[15].innerHTML = `
+                    <button type="button" class="botao-estiloso" onclick="editarLinha(this)">✏️ Editar</button>
+                    <button type="button" class="botao-salvar" onclick="excluirOperador(this, '${dados.username}')">🗑️ Excluir</button>
+                `;
+            } else {
+                alert(data.message);
+            }
+        });
+    }
+
+    function cancelarEdicao(botao, valores) {
+        const linha = botao.closest("tr");
+        for (let i = 0; i < 15; i++) {
+            linha.cells[i].textContent = valores[i];
+        }
+        linha.cells[15].innerHTML = `
+            <button type="button" class="botao-estiloso" onclick="editarLinha(this)">✏️ Editar</button>
+            <button type="button" class="botao-salvar" onclick="excluirOperador(this, '${valores[4]}')">🗑️ Excluir</button>
+        `;
+    }
+
+    function excluirOperador(botao, username) {
+        if (!confirm("Deseja realmente excluir?")) return;
+        fetch("/vendedor/", {
+            method: "DELETE",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ username })
+        })
+        .then(r => r.json())
+        .then(data => {
+            alert(data.message);
+            if (data.success) botao.closest("tr").remove();
+        });
+    }
 </script>
 </body>
 </html>

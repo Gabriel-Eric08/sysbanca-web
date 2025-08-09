@@ -1,216 +1,250 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Dados dos Descarregos</title>
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" />
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
-  <style>
-    body { font-family: Arial, sans-serif; padding: 20px; }
-    tbody > tr:nth-child(odd) { background-color: #cfd8dd; }
-    .form-label { font-weight: bold; }
-    .botao-padrao {
-      font-size: 18px;
-      color: white;
-      border-radius: 8px;
-      box-shadow: 0 5px 15px rgba(0,0,0,0.2);
-      transition: all 0.3s ease;
-      border: none;
-      padding: 6px 20px;
-      cursor: pointer;
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-    }
-    .botao-consultar { background-color: #072749; }
-    .botao-consultar:hover { background-color: #0056b3; }
-  </style>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Dados dos Descarregos</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; }
+        tbody > tr:nth-child(odd) { background-color: #cfd8dd; }
+        .form-label { font-weight: bold; }
+        .botao-padrao {
+            font-size: 18px;
+            color: white;
+            border-radius: 8px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+            transition: all 0.3s ease;
+            border: none;
+            padding: 6px 20px;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .botao-consultar { background-color: #072749; }
+        .botao-consultar:hover { background-color: #0056b3; }
+        .botao-imprimir { background-color: #6c757d; }
+        .botao-imprimir:hover { background-color: #5a6268; }
+    </style>
 </head>
 <body>
-  <div class="container">
-    <h2 class="mb-4">Dados do Descarrego</h2>
+    <div class="container">
+        <h2 class="mb-4">Dados do Descarrego</h2>
 
-    <!-- Filtros por Período -->
-    <h4 class="mb-3">Consultar por Período</h4>
-    <div class="row g-3 align-items-end mb-4">
-      <div class="col-md-4">
-        <label for="dataInicio" class="form-label">Data Inicial</label>
-        <input type="date" id="dataInicio" class="form-control">
-      </div>
-      <div class="col-md-4">
-        <label for="dataFim" class="form-label">Data Final</label>
-        <input type="date" id="dataFim" class="form-control">
-      </div>
-      <div class="col-md-4 mt-2 mt-md-0">
-        <button class="botao-padrao botao-consultar w-100" onclick="consultarPorPeriodo()">📄 Consultar</button>
-      </div>
+        <h4 class="mb-3">Consultar por Período</h4>
+        <div class="row g-3 align-items-end mb-4">
+            <div class="col-md-4">
+                <label for="dataInicio" class="form-label">Data Inicial</label>
+                <input type="date" id="dataInicio" class="form-control">
+            </div>
+            <div class="col-md-4">
+                <label for="dataFim" class="form-label">Data Final</label>
+                <input type="date" id="dataFim" class="form-control">
+            </div>
+            <div class="col-md-4 mt-2 mt-md-0">
+                <button class="botao-padrao botao-consultar w-100" onclick="consultarPorPeriodo()">📄 Consultar</button>
+            </div>
+        </div>
+
+        <div class="d-flex justify-content-between align-items-center mt-4">
+            <h4 class="mb-0">Histórico de Apostas com Excedente</h4>
+            <button class="botao-padrao botao-imprimir" onclick="imprimirRelatorio()">🖨️ Imprimir</button>
+        </div>
+
+        <p id="totalExcedenteTexto" class="fw-bold text-danger mb-0">Valor total de excedentes em descarregos: R$ 0,00</p>
+        
+        <table class="table table-bordered table-striped mt-3">
+            <thead class="table-primary">
+                <tr>
+                    <th>Bilhete</th>
+                    <th>Extração</th>
+                    <th>Modalidade</th>
+                    <th>Valor Apostado</th>
+                    <th>Excedente</th>
+                    <th>Números</th>
+                    <th>Tipo Prêmio</th>
+                    <th>Data</th>
+                    <th>Ações</th>
+                </tr>
+            </thead>
+            <tbody id="tabelaExcedentes">
+                {% for d in descarregos %}
+                    <tr>
+                        <td>{{ d.bilhete }}</td>
+                        <td>{{ d.extracao }}</td>
+                        <td>{{ d.modalidade }}</td>
+                        <td>R$ {{ '{:,.2f}'.format(d.valor_apostado).replace(',', 'X').replace('.', ',').replace('X', '.') }}</td>
+                        <td>R$ {{ '%.2f'|format(d.valor_excedente) }}</td>
+                        <td>{{ d.numeros }}</td>
+                        <td>{{ d.tipo_premio }}</td> 
+                        <td>{{ d.data.strftime('%d-%m-%Y %H:%M:%S') }}</td>
+                        <td>
+                            <a href="{{ url_for('Aposta.consultar_aposta2', aposta_id=d.bilhete) }}" class="btn btn-sm btn-primary">
+                                Consultar
+                            </a>
+                        </td>
+                    </tr>
+                {% else %}
+                    <tr><td colspan="9" class="text-center">Nenhum descarrego encontrado</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
     </div>
 
-    <!-- Tabela -->
-    <h4 class="mt-4">Histórico de Apostas com Excedente</h4>
-    <p id="totalExcedenteTexto" class="fw-bold text-danger mb-0">Valor total de excedentes em descarregos: R$ 0,00</p>
-    <table class="table table-bordered table-striped mt-3">
-      <thead class="table-primary">
-        <tr>
-          <th>Bilhete</th>
-          <th>Extração</th>
-          <th>Valor Apostado</th>
-          <th>Excedente</th>
-          <th>Números</th>
-          <th>Data</th>
-          <th>Ações</th>
-        </tr>
-      </thead>
-      <tbody id="tabelaExcedentes">
-        {% for d in descarregos %}
-          <tr>
-            <td>{{ d.bilhete }}</td>
-            <td>{{ d.extracao }}</td>
-            <td>R$ {{ '%.2f'|format(d.valor_apostado) }}</td>
-            <td>R$ {{ '%.2f'|format(d.valor_excedente) }}</td>
-            <td>{{ d.numeros }}</td>
-            <td>{{ d.data.strftime('%d-%m-%Y %H:%M:%S') }}</td>
-            <td>
-              <a href="{{ url_for('Aposta.consultar_aposta2', aposta_id=d.bilhete) }}" class="btn btn-sm btn-primary">
-                Consultar
-              </a>
-            </td>
-          </tr>
-        {% else %}
-          <tr><td colspan="7" class="text-center">Nenhum descarrego encontrado</td></tr>
-        {% endfor %}
-      </tbody>
-    </table>
-  </div>
-
 <script>
-  document.getElementById("dataInicio").addEventListener("input", filtrarTabelaPorPeriodo);
-  document.getElementById("dataFim").addEventListener("input", filtrarTabelaPorPeriodo);
-
-  function parseValorReal(valorStr) {
-    if (!valorStr) return 0;
-    valorStr = valorStr.replace("R$", "").trim();
-    valorStr = valorStr.replace(/\.(?=\d{3})/g, "");
-    valorStr = valorStr.replace(",", ".");
-    return parseFloat(valorStr) || 0;
-  }
-
-  function filtrarTabelaPorPeriodo() {
-    const inicio = document.getElementById("dataInicio").value;
-    const fim = document.getElementById("dataFim").value;
-    const linhas = [...document.querySelectorAll("#tabelaExcedentes tr")];
-    let totalExcedente = 0;
-    let linhasVisiveis = 0;
-
-    linhas.forEach(tr => {
-      const dataStr = tr.cells[5]?.textContent;
-      if (!dataStr) {
-        tr.style.display = "none";
-        return;
-      }
-
-      const partes = dataStr.split(" ");
-      const dataPartes = partes[0].split("-");
-      const horaPartes = partes[1].split(":");
-
-      const dataObj = new Date(
-        parseInt(dataPartes[2]),
-        parseInt(dataPartes[1]) - 1,
-        parseInt(dataPartes[0]),
-        parseInt(horaPartes[0]),
-        parseInt(horaPartes[1]),
-        parseInt(horaPartes[2])
-      );
-
-      const dataInicio = inicio ? new Date(inicio) : null;
-      const dataFim = fim ? new Date(fim + "T23:59:59") : null;
-
-      const dentroDoPeriodo =
-        (!dataInicio || dataObj >= dataInicio) &&
-        (!dataFim || dataObj <= dataFim);
-
-      if (dentroDoPeriodo) {
-        tr.style.display = "";
-        const excedente = parseValorReal(tr.cells[3].textContent);
-        totalExcedente += excedente;
-        linhasVisiveis++;
-      } else {
-        tr.style.display = "none";
-      }
+    document.addEventListener("DOMContentLoaded", () => {
+        document.getElementById("dataInicio").addEventListener("input", filtrarTabelaPorPeriodo);
+        document.getElementById("dataFim").addEventListener("input", filtrarTabelaPorPeriodo);
+        // Chame a função inicialmente para calcular o total da tabela completa
+        filtrarTabelaPorPeriodo();
     });
 
-    const textoTotal = linhasVisiveis > 0
-      ? `Valor total de excedentes em descarregos: R$ ${totalExcedente.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
-      : "Valor total de excedentes em descarregos: R$ 0,00";
-
-    document.getElementById("totalExcedenteTexto").innerText = textoTotal;
-  }
-
-  function consultarPorPeriodo() {
-    const { jsPDF } = window.jspdf;
-    const doc = new jsPDF();
-
-    const inicio = document.getElementById("dataInicio").value;
-    const fim = document.getElementById("dataFim").value;
-
-    if (!inicio || !fim) {
-      alert("Selecione as duas datas.");
-      return;
+    function parseValorReal(valorStr) {
+        if (!valorStr) return 0;
+        valorStr = valorStr.replace("R$", "").trim();
+        if (valorStr.includes(",")) {
+            valorStr = valorStr.replace(/\./g, "");
+            valorStr = valorStr.replace(",", ".");
+        } else if (valorStr.includes(".")) {
+             const partes = valorStr.split('.');
+             if (partes.length > 2) {
+                 valorStr = valorStr.replace(/\./g, '');
+             }
+        }
+        return parseFloat(valorStr) || 0;
     }
 
-    const linhas = [...document.querySelectorAll("#tabelaExcedentes tr")];
-    const linhasFiltradas = linhas.filter(tr => tr.style.display !== "none");
+    function filtrarTabelaPorPeriodo() {
+        const inicio = document.getElementById("dataInicio").value;
+        const fim = document.getElementById("dataFim").value;
+        const tabelaExcedentes = document.getElementById("tabelaExcedentes");
+        const linhas = tabelaExcedentes.querySelectorAll("tr"); // Captura todas as linhas
 
-    if (linhasFiltradas.length === 0) {
-      alert("Nenhum dado encontrado no período informado.");
-      return;
+        if (!linhas || linhas.length === 0) {
+            document.getElementById("totalExcedenteTexto").innerText = "Valor total de excedentes em descarregos: R$ 0,00";
+            return;
+        }
+
+        let totalExcedente = 0;
+        let linhasVisiveis = 0;
+
+        linhas.forEach(tr => {
+            const dataStr = tr.cells[7]?.textContent;
+
+            // Ignora a linha de "Nenhum descarrego..."
+            if (tr.cells.length <= 1) {
+                tr.style.display = "";
+                return;
+            }
+
+            if (!dataStr) {
+                tr.style.display = "none";
+                return;
+            }
+
+            const [data, hora] = dataStr.split(" ");
+            const [dia, mes, ano] = data.split("-");
+
+            const dataObj = new Date(ano, mes - 1, dia);
+            const dataInicio = inicio ? new Date(inicio) : null;
+            const dataFim = fim ? new Date(fim) : null;
+
+            const dentroDoPeriodo =
+                (!dataInicio || dataObj >= dataInicio) &&
+                (!dataFim || dataObj <= dataFim);
+            
+            if (dentroDoPeriodo) {
+                tr.style.display = "";
+                const valorExcedente = parseValorReal(tr.cells[4].textContent);
+                totalExcedente += valorExcedente;
+                linhasVisiveis++;
+            } else {
+                tr.style.display = "none";
+            }
+        });
+
+        const textoTotalExcedente = linhasVisiveis > 0
+            ? `Valor total de excedentes em descarregos: R$ ${totalExcedente.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+            : "Valor total de excedentes em descarregos: R$ 0,00";
+        document.getElementById("totalExcedenteTexto").innerText = textoTotalExcedente;
     }
 
-    let totalExcedente = 0;
-    const dadosPDF = linhasFiltradas.map(tr => {
-      const excedente = parseValorReal(tr.cells[3].textContent);
-      totalExcedente += excedente;
-      return [
-        tr.cells[0].textContent,
-        tr.cells[1].textContent,
-        tr.cells[2].textContent,
-        tr.cells[3].textContent,
-        tr.cells[4].textContent,
-        tr.cells[5].textContent
-      ];
-    });
+    function consultarPorPeriodo() {
+        filtrarTabelaPorPeriodo();
+    }
+    
+    function imprimirRelatorio() {
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF();
+        
+        const inicio = document.getElementById("dataInicio").value;
+        const fim = document.getElementById("dataFim").value;
+        
+        const tabelaExcedentes = document.getElementById("tabelaExcedentes");
+        const linhasFiltradas = [...tabelaExcedentes.querySelectorAll("tr")].filter(tr => tr.style.display !== "none" && tr.cells.length > 1);
+        
+        if (linhasFiltradas.length === 0) {
+            alert("Nenhum dado encontrado no período selecionado para gerar o PDF.");
+            return;
+        }
 
-    doc.setFontSize(16);
-    doc.text("Relatório de Apostas com Descarrego", 14, 20);
-    doc.setFontSize(10);
-    doc.text("Gerado em: " + new Date().toLocaleString("pt-BR"), 14, 28);
+        const totalExcedenteTexto = document.getElementById("totalExcedenteTexto").textContent;
 
-    const formatarData = (dataStr) => {
-      const [ano, mes, dia] = dataStr.split("-");
-      return `${dia}-${mes}-${ano}`;
-    };
+        const dadosPDF = linhasFiltradas.map(tr => {
+            return [
+                tr.cells[0].textContent,
+                tr.cells[1].textContent,
+                tr.cells[2].textContent,
+                tr.cells[3].textContent,
+                tr.cells[4].textContent,
+                tr.cells[5].textContent,
+                tr.cells[6].textContent,
+                tr.cells[7].textContent
+            ];
+        });
 
-    doc.text(`Período: ${formatarData(inicio)} a ${formatarData(fim)}`, 14, 34);
+        doc.setFontSize(16);
+        doc.text("Relatório de Descarrego", 14, 20);
 
-    doc.autoTable({
-      head: [["Bilhete", "Extração", "Valor", "Excedente", "Números", "Data"]],
-      body: dadosPDF,
-      startY: 40
-    });
+        doc.setFontSize(10);
+        doc.text(totalExcedenteTexto, 14, 28);
+        
+        const formatarData = (dataStr) => {
+            if (!dataStr) return "N/A";
+            const [ano, mes, dia] = dataStr.split("-");
+            return `${dia}/${mes}/${ano}`;
+        };
 
-    const posFinalTabela = doc.lastAutoTable.finalY || 40;
-    doc.setFontSize(12);
-    doc.setTextColor(220, 20, 60);
-    doc.text(
-      `Valor total de excedentes em descarregos: R$ ${totalExcedente.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
-      14,
-      posFinalTabela + 10
-    );
+        let periodoTexto = "Período: Todos";
+        if (inicio && fim) {
+            periodoTexto = `Período: ${formatarData(inicio)} a ${formatarData(fim)}`;
+        } else if (inicio) {
+            periodoTexto = `Período: A partir de ${formatarData(inicio)}`;
+        } else if (fim) {
+            periodoTexto = `Período: Até ${formatarData(fim)}`;
+        }
+        doc.text(periodoTexto, 14, 34);
 
-    doc.save("relatorio_excedentes.pdf");
-  }
+        doc.autoTable({
+            head: [["Bilhete", "Extração", "Modalidade", "Valor Apostado", "Excedente", "Números", "Tipo Prêmio", "Data"]],
+            body: dadosPDF,
+            startY: 44,
+            styles: {
+                fillColor: [240, 240, 240]
+            },
+            headStyles: {
+                fillColor: [108, 117, 125]
+            },
+            alternateRowStyles: {
+                fillColor: [255, 255, 255]
+            }
+        });
+
+        doc.save("relatorio_descarrego.pdf");
+    }
 </script>
 </body>
 </html>

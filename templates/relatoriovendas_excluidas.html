@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8" name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>Relatório de Apostas Excluídas</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/choices.js/public/assets/styles/choices.min.css">
+  <style>
+    /* Estilo para linhas ocultas (já existente) */
+    .hidden-row {
+      display: none;
+    }
+    /* Estilos dos botões copiados do segundo HTML */
+    .botao-estiloso, .botao-voltar, .botao-salvar {
+      font-size: 14px; /* Ajuste para caber melhor na célula da tabela */
+      color: white;
+      border-radius: 8px;
+      box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+      transition: all 0.3s ease;
+      position: relative;
+      overflow: hidden;
+      border: none;
+      padding: 6px 10px; /* Ajuste do padding */
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      vertical-align: middle;
+      text-decoration: none; /* Para links, se aplicável */
+    }
+    .botao-estiloso { background-color: #072749; }
+    .botao-estiloso:hover { background-color: #0056b3; }
+    .botao-voltar { background-color: #1fa53c; } /* Cor para Recuperar */
+    .botao-voltar:hover { background-color: #128d2e; }
+    .botao-salvar { background-color: #be0d0d; } /* Exemplo de cor, não usado diretamente aqui */
+    .botao-salvar:hover { background-color: #ec5050; }
+    /* Efeito de brilho ao passar o mouse */
+    .botao-estiloso::after, .botao-voltar::after, .botao-salvar::after {
+      content: "";
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 100%;
+      background: rgba(255, 255, 255, 0.2);
+      transform: skewX(-20deg);
+      transition: left 0.5s ease;
+    }
+    .botao-estiloso:hover::after, .botao-voltar:hover::after, .botao-salvar:hover::after {
+      left: 100%;
+    }
+  </style>
+</head>
+<body class="bg-light p-4">
+  <div class="container mt-4">
+    <h3 class="mb-4">Apostas Excluídas</h3>
+
+    <div class="mb-3">
+      <input type="text" id="searchInput" class="form-control" placeholder="Buscar por número da poule" onkeyup="filterTable()">
+    </div>
+
+    <table class="table table-bordered table-hover bg-white">
+      <thead class="table-success">
+        <tr>
+          <th>Poule</th>          <th>Data</th>           <th>Vendedor</th>       <th>Extração</th>       <th>Área</th>           <th>Valor Total</th>    <th>Ações</th>          </tr>
+      </thead>
+      <tbody id="apostasTableBody">
+        {% for aposta in apostas %}
+        <tr>
+          <td>#{{ aposta.aposta_id_original }}</td>
+          <td>{{ aposta.data_atual.strftime('%d/%m/%Y') }}</td>
+          <td>{{ aposta.vendedor }}</td>
+          <td>{{ aposta.extracao }}</td>
+          <td>{{ aposta.area }}</td>
+          <td>R$ {{ '%.2f'|format(aposta.valor_total) }}</td>
+          <td>
+            <button class="btn btn-sm botao-voltar me-1" data-id="{{ aposta.aposta_id_original }}" onclick="recuperarAposta(this)">
+              Recuperar
+            </button>
+            <a href="{{ url_for('Aposta.consultar_aposta_excluida', aposta_excluida_id=aposta.aposta_id_original) }}" class="btn btn-sm botao-estiloso" title="Consultar">
+              Consultar
+            </a>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  <script>
+    function recuperarAposta(button) {
+      const apostaId = button.dataset.id;
+
+      fetch(`/aposta/${apostaId}/recuperar`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      })
+      .then(response => {
+        if (response.ok) {
+          alert('Aposta recuperada com sucesso!');
+          location.reload();
+        } else {
+          response.json().then(data => {
+            alert('Erro ao recuperar a aposta: ' + (data.mensagem || data.erro || 'Desconhecido'));
+          }).catch(() => {
+            alert('Erro ao recuperar a aposta.');
+          });
+        }
+      })
+      .catch(error => {
+        console.error('Erro:', error);
+        alert('Erro ao recuperar a aposta.');
+      });
+    }
+
+    function filterTable() {
+      const input = document.getElementById('searchInput');
+      const filter = input.value.toUpperCase();
+      const tableBody = document.getElementById('apostasTableBody');
+      const tr = tableBody.getElementsByTagName('tr');
+
+      for (let i = 0; i < tr.length; i++) {
+        const td = tr[i].getElementsByTagName('td')[0]; // Pega a primeira célula (coluna Poule)
+        if (td) {
+          const idValue = td.textContent.replace('#', '') || td.innerText.replace('#', ''); // Remove '#' antes de comparar
+          if (idValue.toUpperCase().indexOf(filter) > -1) {
+            tr[i].classList.remove('hidden-row');
+          } else {
+            tr[i].classList.add('hidden-row');
+          }
+        }
+      }
+    }
+  </script>
+</body>
+</html>

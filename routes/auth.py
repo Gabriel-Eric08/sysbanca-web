@@ -103,5 +103,11 @@ def validate_credentials():
 
     return {
         "message": "success!",
-        "Validate": True
+        "Validate": True,
+        "Nome":user.nome,
+        "Comissao":user.comissao,
+        "Nome_banca": "CL ESPERANCA",
+        "cancelar_poule": user.cancelar_poule,
+        "area": user.area
+
     }, 200

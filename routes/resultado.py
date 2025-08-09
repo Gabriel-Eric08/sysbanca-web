@@ -9,10 +9,8 @@ resultado_route = Blueprint('Resultado', __name__)
 
 @resultado_route.route('/')
 def resultado_page():
-
     check_result = checkCreds()
     
-
     if not check_result['success']:
         return check_result['message'], 401
     
@@ -25,7 +23,12 @@ def resultado_page():
         return "Configuração de permissão inválida", 500
 
     extracoes = Extracao.query.all()
-    return render_template('programacaoResultados.html', extracoes=extracoes)
+    return render_template('resultados.html', 
+                           extracoes=extracoes, 
+                           resultado=None,
+                           extracao_selecionada=None, 
+                           data_selecionada=None,
+                           pode_salvar=True)
     
     
 @resultado_route.route('/json')
@@ -55,7 +58,7 @@ def json_resultados():
     return jsonify(resultado)
 
 @resultado_route.route('/salvar', methods=['POST'])
-def salvar_resultado():
+def salvar():
     data = request.get_json()
 
     extracao = data.get('extracao')
@@ -91,3 +94,30 @@ def salvar_resultado():
     except Exception as e:
         db.session.rollback()
         return jsonify({'message': f'Erro ao salvar: {str(e)}'}), 500
+    
+@resultado_route.route('consultar_json/<extracao>/<data>/', methods=['GET'])
+def consultar_resultado_json(extracao, data):
+    try:
+        data_formatada = datetime.strptime(data, '%Y-%m-%d').date()
+        resultado = Resultado.query.filter_by(extracao=extracao).filter(
+            db.func.date(Resultado.data) == data_formatada
+        ).first()
+
+        if resultado:
+            premios = {
+                'premio_1': resultado.premio_1,
+                'premio_2': resultado.premio_2,
+                'premio_3': resultado.premio_3,
+                'premio_4': resultado.premio_4,
+                'premio_5': resultado.premio_5,
+                'premio_6': resultado.premio_6,
+                'premio_7': resultado.premio_7,
+                'premio_8': resultado.premio_8,
+                'premio_9': resultado.premio_9,
+                'premio_10': resultado.premio_10,
+            }
+            return jsonify(premios)
+        else:
+            return jsonify({'message': 'Nenhum resultado encontrado'}), 404
+    except Exception as e:
+        return jsonify({'message': f"Erro: {str(e)}"}), 500

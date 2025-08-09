@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Cadastro Comissão por Área</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/choices.js/public/assets/styles/choices.min.css" />
   <style>
     tbody > tr:nth-child(odd) { background-color: #cfd8dd; }
     .botao-estiloso, .botao-voltar, .botao-salvar {
@@ -42,8 +43,7 @@
       </div>
       <div class="col-md-3">
         <label for="modalidade" class="form-label">Modalidade</label>
-        <select id="modalidade" class="form-select">
-          <option value="">Selecione</option>
+        <select id="modalidade" class="form-select" multiple>
           {% for m in modalidades %}<option value="{{ m.modalidade }}">{{ m.modalidade }}</option>{% endfor %}
         </select>
       </div>
@@ -57,6 +57,20 @@
           <option value=""></option>
           <option value="sim">Sim</option>
           <option value="nao">Não</option>
+        </select>
+      </div>
+      <div class="col-md-2">
+        <label for="vendedor" class="form-label">Vendedor</label>
+        <select id="vendedor" class="form-select">
+          <option value="">Selecione</option>
+          {% for v in vendedores %}<option value="{{ v.nome }}">{{ v.nome }}</option>{% endfor %}
+        </select>
+      </div>
+      <div class="col-md-2">
+        <label for="extracao" class="form-label">Extração</label>
+        <select id="extracao" class="form-select">
+          <option value="">Selecione</option>
+          {% for e in extracoes %}<option value="{{ e.extracao }}">{{ e.extracao }}</option>{% endfor %}
         </select>
       </div>
       <div class="col-md-2">
@@ -83,6 +97,8 @@
         <th>Modalidade</th>
         <th>Comissão</th>
         <th>Ativar</th>
+        <th>Vendedor</th> {# New column header #}
+        <th>Extração</th> {# New column header #}
         <th>Ações</th>
       </tr>
     </thead>
@@ -94,6 +110,8 @@
           <td>{{ c.modalidade }}</td>
           <td>{{ c.comissao }}</td>
           <td>{{ c.ativar }}</td>
+          <td>{{ c.vendedor if c.vendedor is not none else '' }}</td> {# Display vendedor, handle None #}
+          <td>{{ c.extracao if c.extracao is not none else '' }}</td> {# Display extracao, handle None #}
           <td>
             <button type="button" class="botao-estiloso" onclick="editarLinha(this)">✏️ Editar</button>
             <button type="button" class="botao-salvar" onclick="excluirLinha(this)">🗑️ Excluir</button>
@@ -103,19 +121,34 @@
     </tbody>
   </table>
 
+  <script src="https://cdn.jsdelivr.net/npm/choices.js/public/assets/scripts/choices.min.js"></script>
+
   <script>
     const AREAS = {{ areas|map(attribute='regiao_area')|list|tojson|safe }};
     const MODALIDADES = {{ modalidades|map(attribute='modalidade')|list|tojson|safe }};
+    const VENDEDORES = {{ vendedores|map(attribute='nome')|list|tojson|safe }}; // Pass sellers to JS
+    const EXTRACOES = {{ extracoes|map(attribute='extracao')|list|tojson|safe }}; // Pass extractions to JS
     let contador = parseInt("{{ comissao_area|length + 1 }}");
+
+    // Inicializa o Choice.js no select de modalidades do formulário
+    const modalidadeSelect = document.getElementById('modalidade');
+    const escolhaModalidade = new Choices(modalidadeSelect, {
+      removeItemButton: true,
+      searchEnabled: false,
+      shouldSort: false
+    });
 
     function adicionarLinha() {
       const area = document.getElementById('area').value;
-      const modalidade = document.getElementById('modalidade').value;
+      const modalidadesSelecionadas = escolhaModalidade.getValue(true);
+      const modalidadeTexto = modalidadesSelecionadas.join(', ');
       const comissao = document.getElementById('comissao').value;
       const ativar = document.getElementById('ativar').value;
+      const vendedor = document.getElementById('vendedor').value; // Get new field
+      const extracao = document.getElementById('extracao').value; // Get new field
 
-      if (!area || !modalidade || !comissao || !ativar) {
-        alert('Preencha todos os campos!');
+      if (!area || modalidadesSelecionadas.length === 0 || !comissao || !ativar) {
+        alert('Preencha os campos obrigatórios (Área, Modalidade, Comissão, Ativar)!');
         return;
       }
 
@@ -124,9 +157,11 @@
       tr.innerHTML = `
         <td>${contador}</td>
         <td>${area}</td>
-        <td>${modalidade}</td>
+        <td>${modalidadeTexto}</td>
         <td>${comissao}</td>
         <td>${ativar}</td>
+        <td>${vendedor}</td>
+        <td>${extracao}</td>
         <td>
           <button type="button" class="botao-estiloso" onclick="editarLinha(this)">✏️ Editar</button>
           <button type="button" class="botao-salvar" onclick="excluirLinha(this)">🗑️ Excluir</button>
@@ -135,10 +170,13 @@
       tbody.appendChild(tr);
       contador++;
 
+      // Limpa os campos do formulário e reseta o multiselect
       document.getElementById('area').value = '';
-      document.getElementById('modalidade').value = '';
+      escolhaModalidade.clearStore();
       document.getElementById('comissao').value = '';
       document.getElementById('ativar').value = '';
+      document.getElementById('vendedor').value = ''; // Clear new field
+      document.getElementById('extracao').value = ''; // Clear new field
     }
 
     function editarLinha(btn) {
@@ -148,7 +186,20 @@
       const modalidadeAtual = tds[2].textContent.trim();
       const comissaoAtual = tds[3].textContent.trim();
       const ativarAtual = tds[4].textContent.trim();
+      const vendedorAtual = tds[5].textContent.trim(); // Get new field
+      const extracaoAtual = tds[6].textContent.trim(); // Get new field
 
+      // Store original values for cancellation
+      tr.dataset.original = JSON.stringify({ 
+        area: areaAtual, 
+        modalidade: modalidadeAtual, 
+        comissao: comissaoAtual, 
+        ativar: ativarAtual,
+        vendedor: vendedorAtual, // Store new field
+        extracao: extracaoAtual  // Store new field
+      });
+
+      // Área (select simples)
       const selectArea = document.createElement('select');
       selectArea.className = 'form-select';
       AREAS.forEach(a => {
@@ -158,17 +209,23 @@
       tds[1].innerHTML = '';
       tds[1].appendChild(selectArea);
 
+      // Modalidade (multiselect com Choice.js)
       const selectMod = document.createElement('select');
       selectMod.className = 'form-select';
+      selectMod.setAttribute('multiple', 'multiple');
       MODALIDADES.forEach(m => {
-        const opt = new Option(m, m, false, m === modalidadeAtual);
+        const selected = modalidadeAtual.split(', ').includes(m);
+        const opt = new Option(m, m, selected, selected);
         selectMod.appendChild(opt);
       });
       tds[2].innerHTML = '';
       tds[2].appendChild(selectMod);
+      new Choices(selectMod, { removeItemButton: true, searchEnabled: false });
 
+      // Comissão (input number)
       tds[3].innerHTML = `<input type="number" class="form-control" value="${comissaoAtual}"/>`;
 
+      // Ativar (select simples)
       const selectAtivar = document.createElement('select');
       selectAtivar.className = 'form-select';
       selectAtivar.innerHTML = `
@@ -177,25 +234,54 @@
       tds[4].innerHTML = '';
       tds[4].appendChild(selectAtivar);
 
-      tds[5].innerHTML = `
+      // Vendedor (select simples)
+      const selectVendedor = document.createElement('select');
+      selectVendedor.className = 'form-select';
+      selectVendedor.innerHTML = '<option value="">Selecione</option>';
+      VENDEDORES.forEach(v => {
+        const opt = new Option(v, v, false, v === vendedorAtual);
+        selectVendedor.appendChild(opt);
+      });
+      tds[5].innerHTML = '';
+      tds[5].appendChild(selectVendedor);
+
+      // Extração (select simples)
+      const selectExtracao = document.createElement('select');
+      selectExtracao.className = 'form-select';
+      selectExtracao.innerHTML = '<option value="">Selecione</option>';
+      EXTRACOES.forEach(e => {
+        const opt = new Option(e, e, false, e === extracaoAtual);
+        selectExtracao.appendChild(opt);
+      });
+      tds[6].innerHTML = '';
+      tds[6].appendChild(selectExtracao);
+
+
+      // Botões salvar e cancelar
+      tds[7].innerHTML = `
         <button type="button" class="botao-voltar" onclick="salvarEdicao(this)">💾 Salvar</button>
         <button type="button" class="botao-salvar" onclick="cancelarEdicao(this)">❌ Cancelar</button>`;
-
-      tr.dataset.original = JSON.stringify({ area: areaAtual, modalidade: modalidadeAtual, comissao: comissaoAtual, ativar: ativarAtual });
     }
 
     function salvarEdicao(btn) {
       const tr = btn.closest('tr');
       const tds = tr.querySelectorAll('td');
       const area = tds[1].querySelector('select').value;
-      const modalidade = tds[2].querySelector('select').value;
+
+      const modalidadeSelect = tds[2].querySelector('select');
+      const escolhas = new Choices(modalidadeSelect, { silent: true });
+      const modalidadesSelecionadas = Array.from(modalidadeSelect.selectedOptions).map(opt => opt.value);
+      const modalidade = modalidadesSelecionadas.join(', ');
+
       const comissao = tds[3].querySelector('input').value;
       const ativar = tds[4].querySelector('select').value;
+      const vendedor = tds[5].querySelector('select').value; // Get new field
+      const extracao = tds[6].querySelector('select').value; // Get new field
 
       fetch('/area-comissao/editar', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ area, modalidade, comissao, ativar })
+        body: JSON.stringify({ area, modalidade, comissao, ativar, vendedor, extracao }) // Send new fields
       })
       .then(res => res.json())
       .then(data => {
@@ -204,14 +290,19 @@
           tds[2].textContent = modalidade;
           tds[3].textContent = comissao;
           tds[4].textContent = ativar;
-          tds[5].innerHTML = `
+          tds[5].textContent = vendedor; // Update new field
+          tds[6].textContent = extracao; // Update new field
+          tds[7].innerHTML = `
             <button type="button" class="botao-estiloso" onclick="editarLinha(this)">✏️ Editar</button>
             <button type="button" class="botao-salvar" onclick="excluirLinha(this)">🗑️ Excluir</button>`;
         } else {
           alert(data.message || 'Erro ao salvar');
         }
       })
-      .catch(() => alert('Erro ao salvar edição'));
+      .catch((error) => {
+          console.error('Error:', error);
+          alert('Erro ao salvar edição.');
+      });
     }
 
     function cancelarEdicao(btn) {
@@ -222,7 +313,9 @@
       tds[2].textContent = original.modalidade;
       tds[3].textContent = original.comissao;
       tds[4].textContent = original.ativar;
-      tds[5].innerHTML = `
+      tds[5].textContent = original.vendedor; // Revert new field
+      tds[6].textContent = original.extracao; // Revert new field
+      tds[7].innerHTML = `
         <button type="button" class="botao-estiloso" onclick="editarLinha(this)">✏️ Editar</button>
         <button type="button" class="botao-salvar" onclick="excluirLinha(this)">🗑️ Excluir</button>`;
     }
@@ -257,7 +350,9 @@
           area: tds[1].textContent,
           modalidade: tds[2].textContent,
           comissao: tds[3].textContent,
-          ativar: tds[4].textContent
+          ativar: tds[4].textContent,
+          vendedor: tds[5].textContent, // Get new field
+          extracao: tds[6].textContent  // Get new field
         });
       });
 
@@ -268,7 +363,23 @@
       })
       .then(res => res.json())
       .then(data => alert(data.message || 'Salvo com sucesso'))
-      .catch(() => alert('Erro ao salvar'));
+      .catch((error) => {
+          console.error('Error:', error);
+          alert('Erro ao salvar.');
+      });
+    });
+
+    // Filtering logic (from your original HTML, not directly related to new fields but good to keep)
+    document.getElementById('buscaNome').addEventListener('keyup', function() {
+        const filter = this.value.toLowerCase();
+        const rows = document.querySelectorAll('#tabela tbody tr');
+        rows.forEach(row => {
+            const areaCell = row.querySelectorAll('td')[1]; // Area is in the second column (index 1)
+            if (areaCell) {
+                const areaText = areaCell.textContent.toLowerCase();
+                row.style.display = areaText.includes(filter) ? '' : 'none';
+            }
+        });
     });
   </script>
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>

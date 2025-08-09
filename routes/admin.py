@@ -5,6 +5,11 @@ from util.checkCreds import checkCreds
 
 admin_route = Blueprint('Admin', __name__)
 
+
+@admin_route.route('/1')
+def admin_page1():
+    return "TESTANDO 1"
+
 @admin_route.route('/')
 def admin_page():
     check_result = checkCreds()

@@ -1,7 +1,8 @@
 from flask import Blueprint, render_template, request, redirect, url_for, jsonify
 from util.checkCreds import checkCreds
-from models.models import Area, Modalidade, Coletor
+from models.models import Area, Modalidade, Coletor, Coleta
 from db_config import db
+from datetime import datetime
 
 coletor_route = Blueprint('Coletor', __name__)
 
@@ -108,3 +109,65 @@ def editar_coletor():
 
     except Exception as e:
         return jsonify({"success": False, "message": str(e)}), 400
+    
+@coletor_route.route('/salvar-coleta', methods=['POST'])
+def salvar_coleta():
+    data_json = request.get_json()
+
+    # 1. Validação inicial dos campos necessários, incluindo "Debito_atual" (corrigido)
+    if not data_json or 'Coletor' not in data_json or 'Valor_coletado' not in data_json or 'Debito_atual' not in data_json or 'Data' not in data_json or 'Senha' not in data_json or 'Vendedor' not in data_json:
+        return jsonify({"message": "Dados incompletos na requisição. Verifique todos os campos."}), 400
+
+    coletor_nome = data_json['Coletor']
+    senha_enviada = data_json['Senha']
+    vendedor_nome = data_json['Vendedor'] 
+    
+    # 2. Buscar o coletor no banco de dados usando o nome e a senha
+    coletor_existente = Coletor.query.filter_by(login=coletor_nome, senha=senha_enviada).first()
+
+    # 3. Se o coletor não for encontrado, retornar um erro de autenticação
+    if not coletor_existente:
+        return jsonify({"message": "Coletor ou senha incorretos."}), 401
+
+    try:
+        # 4. Processar a data e criar a nova coleta
+        data_coleta = datetime.strptime(data_json['Data'], '%d/%m/%Y').date()
+        
+        nova_coleta = Coleta(
+            coletor=coletor_nome,
+            data=data_coleta,
+            valor_coleta=data_json['Valor_coletado'],
+            valor_debito=data_json['Debito_atual'], # Corrigido aqui também
+            vendedor=vendedor_nome
+        )
+
+        db.session.add(nova_coleta)
+        db.session.commit()
+
+        return jsonify({"message": "Coleta salva com sucesso!", "id": nova_coleta.id}), 201
+
+    except ValueError:
+        return jsonify({"message": "Formato de data inválido. Use 'dd/mm/aaaa'."}), 400
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"message": f"Ocorreu um erro ao salvar a coleta: {str(e)}"}), 500
+    
+@coletor_route.route('/ultimo-debito', methods=['GET'])
+def get_ultimo_debito():
+    try:
+        # Busca o último registro da tabela Coletas ordenando por ID de forma decrescente
+        ultima_coleta = Coleta.query.order_by(Coleta.id.desc()).first()
+
+        # Verifica se alguma coleta foi encontrada
+        if not ultima_coleta:
+            return jsonify({"message": "Nenhum registro de coleta encontrado."}), 404
+
+        # Calcula o débito anterior
+        debito_anterior = ultima_coleta.valor_debito - ultima_coleta.valor_coleta
+
+        # Retorna o resultado em formato JSON
+        return jsonify({"Debito_anterior": debito_anterior}), 200
+        
+    except Exception as e:
+        # Lida com possíveis erros de banco de dados
+        return jsonify({"message": f"Ocorreu um erro: {str(e)}"}), 500

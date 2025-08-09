@@ -17,7 +17,6 @@
 <div class="container">
     <h2 class="mb-4">Consulta de Aposta</h2>
 
-    <!-- Formulário de Consulta -->
     <form onsubmit="consultarAposta(event)" class="row g-2 mb-4">
         <div class="col-auto">
             <input type="text" class="form-control" id="aposta_id" placeholder="Número da Aposta" required>
@@ -42,7 +41,6 @@
     </form>
 
     {% if aposta %}
-    <!-- Conteúdo a ser convertido em PDF -->
     <div id="bilhete-pdf" class="card shadow-sm mb-3">
         <div class="card-header">
             <h5 class="mb-0">Bilhete #{{ aposta.id }}</h5>
@@ -63,17 +61,41 @@
             <p><strong>Detalhes das Apostas:</strong></p>
             <div class="bg-light border p-3 rounded">
                 {% for detalhe in apostas_detalhadas %}
-                    <div class="mb-3">
-                        <p><strong>Nome da Aposta:</strong> {{ detalhe[0] }}</p>
-                        <p><strong>Números:</strong> {{ detalhe[1] | join(', ') }}</p>
-                        <p><strong>Modalidade:</strong> {{ detalhe[2] }}</p>
-                        <p><strong>Tipo de Aposta:</strong> {{ detalhe[3] }}</p>
-                        <p><strong>Valor Total Apostado:</strong> R$ {{ '{:.2f}'.format(detalhe[4]) }}</p>
-                        <p><strong>Valor por Unidade:</strong> R$ {{ '{:.2f}'.format(detalhe[5]) }}</p>
-                        <hr>
-                    </div>
+                <div class="mb-3">
+                    <p><strong>Nome da Aposta:</strong> {{ detalhe[0] }}</p>
+                    <p><strong>Números:</strong> {{ detalhe[1] | join(', ') }}</p>
+                    <p><strong>Modalidade:</strong> {{ detalhe[2] }}</p>
+                    <p><strong>Tipo de Aposta:</strong> {{ detalhe[3] }}</p>
+                    <p><strong>Valor Total Apostado:</strong> R$ {{ '{:.2f}'.format(detalhe[4]) }}</p>
+                    <p><strong>Valor por Unidade:</strong> R$ {{ '{:.2f}'.format(detalhe[5]) }}</p>
+                    <hr>
+                </div>
                 {% endfor %}
             </div>
+            
+            {% if aposta_premiada %}
+            <p class="mt-4"><strong>Premiada:</strong> Sim</p>
+            <p><strong>Detalhes da Premiação:</strong></p>
+            <div class="bg-success text-white p-3 rounded">
+                <p class="mb-0"><strong>Valor do Prêmio:</strong> R$ {{ '{:.2f}'.format(aposta_premiada.valor_premio | float) }}</p>
+                {% if aposta_premiada.pago == 1 %}
+                <p class="mb-0"><strong>Status do Pagamento:</strong> Pago</p>
+                {% else %}
+                <p class="mb-0"><strong>Status do Pagamento:</strong> Não Pago</p>
+                {% endif %}
+                
+                <p class="mt-3 mb-0"><strong>Números Premiados:</strong></p>
+                <ul class="list-unstyled">
+                    {% for detalhe_premio in aposta_premiada.apostas | from_json %}
+                        {% if detalhe_premio.numeros %}
+                            <li>Modalidade {{ detalhe_premio.modalidade }}: {{ detalhe_premio.numeros | join(', ') }}</li>
+                        {% endif %}
+                    {% endfor %}
+                </ul>
+                </div>
+            {% else %}
+            <p class="mt-4"><strong>Premiada:</strong> Não</p>
+            {% endif %}
         </div>
         <div class="card-footer text-end nao-imprimir">
             <form method="POST" action="/aposta/{{ aposta.id }}/excluir" onsubmit="return confirm('Tem certeza que deseja excluir esta aposta?');">
@@ -89,9 +111,12 @@
     {% endif %}
 </div>
 
-<!-- Script html2pdf -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
-
+<script>
+    function fromJson(value) {
+        return JSON.parse(value);
+    }
+</script>
 <script>
     function consultarAposta(event) {
         event.preventDefault();

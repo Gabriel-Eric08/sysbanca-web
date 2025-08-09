@@ -1,305 +1,307 @@
 <!DOCTYPE html>
 <html lang="pt-br">
 <head>
-  <meta charset="UTF-8" name="viewport" content="width=device-width, initial-scale=1"/>
-  <title>Cadastro Cotações das Modalidades</title>
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-  <style>
-    .botao-estiloso, .botao-voltar, .botao-salvar {
-      font-size: 18px;
-      color: white;
-      border-radius: 8px;
-      box-shadow: 0 5px 15px rgba(0,0,0,0.2);
-      transition: all 0.3s ease;
-      position: relative;
-      overflow: hidden;
-      border: none;
-      padding: 6px 20px;
-      cursor: pointer;
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      vertical-align: middle;
-    }
-    .botao-estiloso { background-color: #072749; }
-    .botao-estiloso:hover { background-color: #0056b3; }
-    .botao-voltar { background-color: #1fa53c; }
-    .botao-voltar:hover { background-color: #128d2e; }
-    .botao-salvar { background-color: #be0d0d; }
-    .botao-salvar:hover { background-color: #ec5050; }
-    .botao-estiloso::after, .botao-voltar::after, .botao-salvar::after {
-      content: "";
-      position: absolute;
-      top: 0; left: -100%;
-      width: 100%; height: 100%;
-      background: rgba(255, 255, 255, 0.2);
-      transform: skewX(-20deg);
-      transition: left 0.5s ease;
-    }
-    .botao-estiloso:hover::after,
-    .botao-voltar:hover::after,
-    .botao-salvar:hover::after {
-      left: 100%;
-    }
-  </style>
+    <meta charset="UTF-8" name="viewport" content="width=device-width, initial-scale=1"/>
+    <title>Cadastro Cotações das Modalidades</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        .botao-estiloso, .botao-voltar, .botao-salvar {
+            font-size: 18px; color: white; border-radius: 8px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+            transition: all 0.3s ease; position: relative; overflow: hidden;
+            border: none; padding: 6px 20px; cursor: pointer;
+            display: inline-flex; align-items: center; gap: 8px; vertical-align: middle;
+        }
+        .botao-estiloso { background-color: #072749; }
+        .botao-estiloso:hover { background-color: #0056b3; }
+        .botao-voltar { background-color: #1fa53c; }
+        .botao-voltar:hover { background-color: #128d2e; }
+        .botao-salvar { background-color: #be0d0d; }
+        .botao-salvar:hover { background-color: #ec5050; }
+        .botao-estiloso::after, .botao-voltar::after, .botao-salvar::after {
+            content: ""; position: absolute; top: 0; left: -100%;
+            width: 100%; height: 100%;
+            background: rgba(255, 255, 255, 0.2); transform: skewX(-20deg);
+            transition: left 0.5s ease;
+        }
+        .botao-estiloso:hover::after, .botao-voltar:hover::after, .botao-salvar:hover::after {
+            left: 100%;
+        }
+    </style>
 </head>
 <body class="bg-light p-4">
-  {% if mensagem %}
-    <div class="alert alert-success">{{ mensagem }}</div>
-  {% endif %}
-  <div class="container">
-    <h2 class="mb-4">Cadastro Cotações das Modalidades</h2>
+    {% if mensagem %}
+        <div class="alert alert-success">{{ mensagem }}</div>
+    {% endif %}
+    <div class="container">
+        <h2 class="mb-4">Cadastro Cotações das Modalidades</h2>
 
-    <form action="/modalidade/" method="POST" id="formCadastro" onsubmit="prepararEnvio()">
-      <div class="row g-3 align-items-center mb-3">
-        <div class="col-md-2">
-          <label for="modalidade" class="form-label">Modalidade</label>
-          <input type="text" class="form-control" id="modalidade">
-        </div>
-        <div class="col-md-2">
-          <label for="cotacao" class="form-label">Cotação</label>
-          <input type="number" class="form-control" id="cotacao" min="0" step="any">
-        </div>
-        <div class="col-md-2">
-          <label for="unidade" class="form-label">Unidade</label>
-          <input type="number" class="form-control" id="unidade" min="0" step="1">
-        </div>
-        <div class="col-md-3">
-          <label for="LimitePorAposta" class="form-label">Limite Por Aposta</label>
-          <input type="number" class="form-control" id="LimitePorAposta" min="0" step="1">
-        </div>
-      </div>
+        <form action="{{ url_for('Modalidade.adicionar_modalidades') }}" method="POST" id="formCadastro" onsubmit="prepararEnvio()">
+            <div class="row g-3 align-items-center mb-3">
+                <div class="col-md-2">
+                    <label for="modalidade" class="form-label">Modalidade</label>
+                    <input type="text" class="form-control" id="modalidade">
+                </div>
+                <div class="col-md-2">
+                    <label for="cotacao" class="form-label">Cotação</label>
+                    <input type="number" class="form-control" id="cotacao" min="0" step="any">
+                </div>
+                <div class="col-md-2">
+                    <label for="unidade" class="form-label">Unidade</label>
+                    <input type="number" class="form-control" id="unidade" min="0" step="1">
+                </div>
+                <div class="col-md-3">
+                    <label for="LimitePorAposta" class="form-label">Limite Por Aposta</label>
+                    <input type="number" class="form-control" id="LimitePorAposta" min="0" step="1">
+                </div>
+                <div class="col-md-3">
+                    <label for="LimiteDescarrego" class="form-label">Limite Descarrego</label>
+                    <input type="number" class="form-control" id="LimiteDescarrego" min="0" step="any">
+                </div>
+            </div>
 
-      <div class="row mb-4 align-items-center">
-        <div class="col-md-2">
-          <label for="AtivarAreaCotacao" class="form-label">Ativar</label>
-          <select class="form-select" id="AtivarAreaCotacao">
-            <option value=""></option>
-            <option value="sim">Sim</option>
-            <option value="nao">Não</option>
-          </select>
-        </div>
-        <div class="col-md-6">
-          <label for="busca" class="form-label">Buscar Modalidade</label>
-          <input type="text" class="form-control" id="busca" placeholder="🔍Digite a Modalidade" oninput="filtrarTabela()">
-        </div>
-        <div class="col-md-4 d-flex align-items-end gap-2 flex-wrap">
-          <button type="button" class="botao-estiloso" onclick="adicionarLinha()">➕ Adicionar</button>
-          <button type="submit" class="botao-voltar">💾 Salvar</button>
-          <a href="{{ url_for('Home.home') }}" class="btn botao-salvar d-inline-flex align-items-center">❌ Sair</a>
-        </div>
-      </div>
+            <div class="row mb-4 align-items-center">
+                <div class="col-md-2">
+                    <label for="AtivarAreaCotacao" class="form-label">Ativar</label>
+                    <select class="form-select" id="AtivarAreaCotacao">
+                        <option value=""></option>
+                        <option value="sim">Sim</option>
+                        <option value="nao">Não</option>
+                    </select>
+                </div>
+                <div class="col-md-6">
+                    <label for="busca" class="form-label">Buscar Modalidade</label>
+                    <input type="text" class="form-control" id="busca" placeholder="🔍Digite a Modalidade" oninput="filtrarTabela()">
+                </div>
+                <div class="col-md-4 d-flex align-items-end gap-2 flex-wrap">
+                    <button type="button" class="botao-estiloso" onclick="adicionarLinha()">➕ Adicionar</button>
+                    <button type="submit" class="botao-voltar">💾 Salvar</button>
+                    <a href="{{ url_for('Home.home') }}" class="btn botao-salvar d-inline-flex align-items-center">❌ Sair</a>
+                </div>
+            </div>
 
-      <div id="hiddenFields"></div>
-    </form>
+            <div id="hiddenFields"></div>
+        </form>
 
-    <table class="table table-bordered table-hover bg-white" id="tabela">
-      <thead class="table-success">
-        <tr>
-          <th>Modalidade</th>
-          <th>Cotação</th>
-          <th>Unidade</th>
-          <th>Limite Por Aposta</th>
-          <th>Ativar Área</th>
-          <th>Ações</th>
-        </tr>
-      </thead>
-      <tbody>
-        {% if modalidades %}
-          {% for m in modalidades %}
-            <tr>
-              <td>{{ m.modalidade }}</td>
-              <td>{{ m.cotacao }}</td>
-              <td>{{ m.unidade }}</td>
-              <td>{{ m.limite_por_aposta }}</td>
-              <td>{% if m.ativar_area in [1, '1', 'sim', 'Sim', 'SIM'] %}Sim{% else %}Não{% endif %}</td>
-              <td>
-                <button type="button" class="botao-estiloso" onclick="editarLinha(this)">✏️ Editar</button>
-                <button type="button" class="botao-salvar" onclick="excluirModalidade(this, '{{ m.modalidade }}')">🗑️ Excluir</button>
-              </td>
-            </tr>
-          {% endfor %}
-        {% else %}
-          <tr><td colspan="6" class="text-center">Nenhuma modalidade cadastrada.</td></tr>
-        {% endif %}
-      </tbody>
-    </table>
-  </div>
+        <table class="table table-bordered table-hover bg-white" id="tabela">
+            <thead class="table-success">
+                <tr>
+                    <th>Modalidade</th>
+                    <th>Cotação</th>
+                    <th>Unidade</th>
+                    <th>Limite Por Aposta</th>
+                    <th>Limite Descarrego</th>
+                    <th>Ativar Área</th>
+                    <th>Ações</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% if modalidades %}
+                    {% for m in modalidades %}
+                        <tr>
+                            <td>{{ m.modalidade }}</td>
+                            <td>{{ m.cotacao }}</td>
+                            <td>{{ m.unidade }}</td>
+                            <td>{{ m.limite_por_aposta }}</td>
+                            <td>{{ m.limite_descarrego }}</td>
+                            <td>{% if m.ativar_area in [1, '1', 'sim', 'Sim', 'SIM'] %}Sim{% else %}Não{% endif %}</td>
+                            <td>
+                                <button type="button" class="botao-estiloso" onclick="editarLinha(this)">✏️ Editar</button>
+                                <button type="button" class="botao-salvar" onclick="excluirModalidade(this, '{{ m.modalidade }}')">🗑️ Excluir</button>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                {% else %}
+                    <tr><td colspan="7" class="text-center">Nenhuma modalidade cadastrada.</td></tr>
+                {% endif %}
+            </tbody>
+        </table>
+    </div>
 
-  <script>
-  function adicionarLinha() {
-    const modalidade = document.getElementById('modalidade').value.trim();
-    const cotacao = document.getElementById('cotacao').value;
-    const unidade = document.getElementById('unidade').value;
-    const LimitePorAposta = document.getElementById('LimitePorAposta').value;
-    const AtivarAreaCotacao = document.getElementById('AtivarAreaCotacao').value;
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+    function adicionarLinha() {
+        const modalidade = document.getElementById('modalidade').value.trim();
+        const cotacao = document.getElementById('cotacao').value;
+        const unidade = document.getElementById('unidade').value;
+        const limitePorAposta = document.getElementById('LimitePorAposta').value;
+        const limiteDescarrego = document.getElementById('LimiteDescarrego').value; // Novo campo
+        const ativarAreaCotacao = document.getElementById('AtivarAreaCotacao').value;
 
-    if (!modalidade || !cotacao || !unidade || !LimitePorAposta || !AtivarAreaCotacao) {
-      alert('Preencha todos os campos!');
-      return;
-    }
+        if (!modalidade || !cotacao || !unidade || !limitePorAposta || !limiteDescarrego || !ativarAreaCotacao) {
+            alert('Preencha todos os campos!');
+            return;
+        }
 
-    const tabela = document.getElementById('tabela').getElementsByTagName('tbody')[0];
-    const novaLinha = tabela.insertRow();
-    novaLinha.insertCell(0).innerText = modalidade;
-    novaLinha.insertCell(1).innerText = cotacao;
-    novaLinha.insertCell(2).innerText = unidade;
-    novaLinha.insertCell(3).innerText = LimitePorAposta;
-    novaLinha.insertCell(4).innerText = AtivarAreaCotacao;
-    novaLinha.insertCell(5).innerHTML = `
-      <button type="button" class="botao-estiloso" onclick="editarLinha(this)">✏️ Editar</button>
-      <button type="button" class="botao-salvar" onclick="excluirLinha(this)">🗑️ Excluir</button>
-    `;
-
-    document.getElementById('modalidade').value = '';
-    document.getElementById('cotacao').value = '';
-    document.getElementById('unidade').value = '';
-    document.getElementById('LimitePorAposta').value = '';
-    document.getElementById('AtivarAreaCotacao').value = '';
-    document.getElementById('busca').value = '';
-  }
-
-  function filtrarTabela() {
-    const termo = document.getElementById("busca").value.toLowerCase();
-    const linhas = document.querySelectorAll("#tabela tbody tr");
-
-    linhas.forEach(linha => {
-      const modalidade = linha.cells[0].textContent.toLowerCase();
-      linha.style.display = modalidade.includes(termo) ? "" : "none";
-    });
-  }
-
-  function prepararEnvio() {
-    const tbody = document.querySelector("#tabela tbody");
-    const hiddenFieldsDiv = document.getElementById("hiddenFields");
-    hiddenFieldsDiv.innerHTML = "";
-
-    const campos = ['modalidade', 'cotacao', 'unidade', 'LimitePorAposta', 'AtivarAreaCotacao'];
-
-    Array.from(tbody.rows).forEach(row => {
-      campos.forEach((campo, index) => {
-        const input = document.createElement("input");
-        input.type = "hidden";
-        input.name = campo + "[]";
-        input.value = row.cells[index].textContent.trim();
-        hiddenFieldsDiv.appendChild(input);
-      });
-    });
-  }
-
-  function editarLinha(botao) {
-  const linha = botao.closest("tr");
-  const valoresOriginais = [];
-
-  // Salva os valores originais
-  for (let i = 0; i < 5; i++) {
-    valoresOriginais.push(linha.cells[i].textContent.trim());
-  }
-
-  // Modalidade, Cotação, Unidade, LimitePorAposta como input
-  for (let i = 0; i < 4; i++) {
-    const valor = valoresOriginais[i];
-    linha.cells[i].innerHTML = `<input class="form-control" value="${valor}">`;
-  }
-
-  // Campo "Ativar Área" como select
-  const valorAtivar = valoresOriginais[4];
-  linha.cells[4].innerHTML = `
-    <select class="form-select">
-      <option value="sim" ${valorAtivar === "sim" ? "selected" : ""}>Sim</option>
-      <option value="nao" ${valorAtivar === "nao" ? "selected" : ""}>Não</option>
-    </select>
-  `;
-
-  linha.cells[5].innerHTML = `
-    <button class="botao-voltar" onclick="salvarEdicao(this)">💾 Salvar</button>
-    <button class="botao-salvar" onclick='cancelarEdicao(this, ${JSON.stringify(valoresOriginais)})'>❌ Cancelar</button>
-  `;
-}
-
-  function salvarEdicao(botao) {
-    const linha = botao.closest("tr");
-    const inputs = linha.querySelectorAll("input");
-    const selectAtivo = linha.cells[4].querySelector("select");
-
-    const dados = {
-      modalidade: inputs[0].value.trim(),
-      cotacao: parseFloat(inputs[1].value),
-      unidade: parseInt(inputs[2].value),
-      limite_por_aposta: parseInt(inputs[3].value),
-      ativar_area: selectAtivo.value
-    };
-
-    fetch('/modalidade/editar', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(dados)
-    })
-    .then(response => response.json())
-    .then(data => {
-      if (data.success) {
-        linha.cells[0].textContent = dados.modalidade;
-        linha.cells[1].textContent = dados.cotacao.toFixed(2);
-        linha.cells[2].textContent = dados.unidade;
-        linha.cells[3].textContent = dados.limite_por_aposta;
-        linha.cells[4].textContent = dados.ativar_area === "sim" || dados.ativar_area === "1" || dados.ativar_area === 1 ? "Sim" : "Não";
-
-        linha.cells[5].innerHTML = `
-          <button class="botao-estiloso" onclick="editarLinha(this)">✏️ Editar</button>
-          <button class="botao-salvar" onclick="excluirModalidade(this, '${dados.modalidade}')">🗑️ Excluir</button>
+        const tabela = document.getElementById('tabela').getElementsByTagName('tbody')[0];
+        const novaLinha = tabela.insertRow();
+        novaLinha.insertCell(0).innerText = modalidade;
+        novaLinha.insertCell(1).innerText = cotacao;
+        novaLinha.insertCell(2).innerText = unidade;
+        novaLinha.insertCell(3).innerText = limitePorAposta;
+        novaLinha.insertCell(4).innerText = limiteDescarrego; // Nova célula
+        novaLinha.insertCell(5).innerText = ativarAreaCotacao;
+        novaLinha.insertCell(6).innerHTML = `
+            <button type="button" class="botao-estiloso" onclick="editarLinha(this)">✏️ Editar</button>
+            <button type="button" class="botao-salvar" onclick="excluirLinha(this)">🗑️ Excluir</button>
         `;
-      } else {
-        alert(data.message);
-      }
-    })
-    .catch(error => {
-      console.error("Erro ao editar:", error);
-      alert("Erro ao editar modalidade.");
-    });
-  }
 
-  function cancelarEdicao(botao, valoresOriginais) {
-    const linha = botao.closest("tr");
-    for (let i = 0; i < 5; i++) {
-      linha.cells[i].textContent = valoresOriginais[i];
+        document.getElementById('modalidade').value = '';
+        document.getElementById('cotacao').value = '';
+        document.getElementById('unidade').value = '';
+        document.getElementById('LimitePorAposta').value = '';
+        document.getElementById('LimiteDescarrego').value = ''; // Limpa novo campo
+        document.getElementById('AtivarAreaCotacao').value = '';
+        document.getElementById('busca').value = '';
     }
-    linha.cells[5].innerHTML = `
-      <button class="botao-estiloso" onclick="editarLinha(this)">✏️ Editar</button>
-      <button class="botao-salvar" onclick="excluirModalidade(this, '${valoresOriginais[0]}')">🗑️ Excluir</button>
-    `;
-  }
 
-  function excluirLinha(botao) {
-    if (confirm("Tem certeza que deseja excluir esta linha?")) {
-      const linha = botao.closest("tr");
-      linha.remove();
+    function prepararEnvio() {
+        const tbody = document.querySelector("#tabela tbody");
+        const hiddenFieldsDiv = document.getElementById("hiddenFields");
+        hiddenFieldsDiv.innerHTML = "";
+
+        // Lista de campos ajustada com o novo campo
+        const campos = ['modalidade', 'cotacao', 'unidade', 'LimitePorAposta', 'LimiteDescarrego', 'AtivarAreaCotacao'];
+
+        Array.from(tbody.rows).forEach(row => {
+            campos.forEach((campo, index) => {
+                const input = document.createElement("input");
+                input.type = "hidden";
+                input.name = campo + "[]";
+                input.value = row.cells[index].textContent.trim();
+                hiddenFieldsDiv.appendChild(input);
+            });
+        });
     }
-  }
 
-  function excluirModalidade(botao, modalidade) {
-    if (!confirm(`Tem certeza que deseja excluir a modalidade: ${modalidade}?`)) return;
+    function editarLinha(botao) {
+        const linha = botao.closest("tr");
+        const valoresOriginais = [];
 
-    fetch('/modalidade/', {
-      method: 'DELETE',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ "Modalidade": modalidade })
-    })
-    .then(response => {
-      if (!response.ok) throw new Error('Erro ao excluir modalidade');
-      return response.json();
-    })
-    .then(data => {
-      alert(data.message);
-      const linha = botao.closest("tr");
-      linha.remove();
-    })
-    .catch(error => {
-      console.error('Erro:', error);
-      alert('Erro ao excluir modalidade');
-    });
-  }
-</script>
+        // Salva os valores originais, incluindo o novo campo
+        for (let i = 0; i < 6; i++) {
+            valoresOriginais.push(linha.cells[i].textContent.trim());
+        }
 
-  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+        // Modalidade, Cotação, Unidade, LimitePorAposta e LimiteDescarrego como input
+        for (let i = 0; i < 5; i++) {
+            const valor = valoresOriginais[i];
+            linha.cells[i].innerHTML = `<input class="form-control" value="${valor}">`;
+        }
+
+        // Campo "Ativar Área" como select
+        const valorAtivar = valoresOriginais[5];
+        linha.cells[5].innerHTML = `
+            <select class="form-select">
+                <option value="sim" ${valorAtivar.toLowerCase() === "sim" ? "selected" : ""}>Sim</option>
+                <option value="nao" ${valorAtivar.toLowerCase() === "nao" ? "selected" : ""}>Não</option>
+            </select>
+        `;
+
+        linha.cells[6].innerHTML = `
+            <button class="botao-voltar" onclick="salvarEdicao(this)">💾 Salvar</button>
+            <button class="botao-salvar" onclick='cancelarEdicao(this, ${JSON.stringify(valoresOriginais)})'>❌ Cancelar</button>
+        `;
+    }
+
+    function salvarEdicao(botao) {
+        const linha = botao.closest("tr");
+        const inputs = linha.querySelectorAll("input");
+        const selectAtivo = linha.cells[5].querySelector("select");
+        const modalidadeOriginal = linha.cells[0].textContent.trim();
+
+        const dados = {
+            modalidade: inputs[0].value.trim(),
+            cotacao: parseFloat(inputs[1].value),
+            unidade: parseInt(inputs[2].value),
+            limite_por_aposta: parseInt(inputs[3].value),
+            limite_descarrego: parseFloat(inputs[4].value), // Novo campo
+            ativar_area: selectAtivo.value
+        };
+
+        fetch('/modalidade/editar', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(dados)
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Atualiza a linha com os novos valores
+                linha.cells[0].textContent = dados.modalidade;
+                linha.cells[1].textContent = dados.cotacao;
+                linha.cells[2].textContent = dados.unidade;
+                linha.cells[3].textContent = dados.limite_por_aposta;
+                linha.cells[4].textContent = dados.limite_descarrego;
+                linha.cells[5].textContent = dados.ativar_area === "sim" ? "Sim" : "Não";
+
+                linha.cells[6].innerHTML = `
+                    <button class="botao-estiloso" onclick="editarLinha(this)">✏️ Editar</button>
+                    <button class="botao-salvar" onclick="excluirModalidade(this, '${dados.modalidade}')">🗑️ Excluir</button>
+                `;
+                alert(data.message);
+                location.reload();
+            } else {
+                alert(data.message);
+            }
+        })
+        .catch(error => {
+            console.error("Erro ao editar:", error);
+            alert("Erro ao editar modalidade.");
+        });
+    }
+
+    function cancelarEdicao(botao, valoresOriginais) {
+        const linha = botao.closest("tr");
+        // Loop para restaurar os valores originais, agora com 6 células
+        for (let i = 0; i < 6; i++) {
+            linha.cells[i].textContent = valoresOriginais[i];
+        }
+        linha.cells[6].innerHTML = `
+            <button class="botao-estiloso" onclick="editarLinha(this)">✏️ Editar</button>
+            <button class="botao-salvar" onclick="excluirModalidade(this, '${valoresOriginais[0]}')">🗑️ Excluir</button>
+        `;
+    }
+
+    function excluirLinha(botao) {
+        if (confirm("Tem certeza que deseja excluir esta linha?")) {
+            const linha = botao.closest("tr");
+            linha.remove();
+        }
+    }
+
+    function filtrarTabela() {
+        const termo = document.getElementById("busca").value.toLowerCase();
+        const linhas = document.querySelectorAll("#tabela tbody tr");
+
+        linhas.forEach(linha => {
+            const modalidade = linha.cells[0].textContent.toLowerCase();
+            linha.style.display = modalidade.includes(termo) ? "" : "none";
+        });
+    }
+
+    function excluirModalidade(botao, modalidade) {
+        if (!confirm(`Tem certeza que deseja excluir a modalidade: ${modalidade}?`)) return;
+
+        fetch('/modalidade/', {
+            method: 'DELETE',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ "Modalidade": modalidade })
+        })
+        .then(response => {
+            if (!response.ok) throw new Error('Erro ao excluir modalidade');
+            return response.json();
+        })
+        .then(data => {
+            alert(data.message);
+            const linha = botao.closest("tr");
+            linha.remove();
+        })
+        .catch(error => {
+            console.error('Erro:', error);
+            alert('Erro ao excluir modalidade');
+        });
+    }
+    </script>
 </body>
 </html>

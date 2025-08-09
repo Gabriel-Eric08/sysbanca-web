@@ -4,10 +4,10 @@ import os
 from urllib.parse import quote_plus
 
 db = SQLAlchemy()
-
+# dbsysbanca
 def init_db(app):
     db_user = os.getenv("DB_USER", "dbsysbanca")
-    db_password = quote_plus(os.getenv("DB_PASSWORD", "Tns22062010@@@"))
+    db_password = quote_plus(os.getenv("DB_PASSWORD", "Tns22062010#"))
     db_name = os.getenv("DB_NAME", "dbsysbanca")
     db_host = os.getenv("DB_HOST", "dbsysbanca.mysql.dbaas.com.br")
     db_port = int(os.getenv("DB_PORT", 3306))

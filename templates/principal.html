@@ -89,6 +89,10 @@
   <!-- Navbar -->
   <nav class="navbar navbar-expand-lg navbar-light bg-white">
     <div class="container">
+      <!-- Logo aumentada no canto esquerdo -->
+      <a class="navbar-brand" href="#">
+        <img src="/static/logo.png" alt="Logo CL Esperança" class="navbar-logo">
+      </a>
 
       <button
         class="navbar-toggler"
@@ -147,6 +151,7 @@
               <li><a class="dropdown-item" href="{{ url_for('Coletor.coletor_page') }}">Coletor/Recolhe</a></li>
               <li><a class="dropdown-item" href="{{ url_for('Vendedores.vendedores_page') }}">Vendedor/Operador</a></li>
               <li><a class="dropdown-item" href="{{ url_for('CadastroDescarrego.cadastro_page') }}">Descarrego</a></li>
+              <li><a class="dropdown-item" href="#">Números Cotados</a></li>
             </ul>
           </li>    
 
@@ -163,10 +168,8 @@
               Administração
             </a>
             <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="administracaoDropdown">
-              <li><a class="dropdown-item" href="{{ url_for('Resultado1.resultado_page') }}">Resultado</a></li>
-              <li><a class="dropdown-item" href="#">Programação de Extração</a></li>
+              <!-- <li><a class="dropdown-item" href="#">Programação de Extração</a></li> -->
               <li><a class="dropdown-item" href="{{ url_for('Resultado.resultado_page') }}">Programação de resultados</a></li>
-              <li><a class="dropdown-item" href="#">Números Cotados</a></li>
             </ul>
           </li>
 
@@ -187,7 +190,11 @@
               <li><a class="dropdown-item" href="#">Números Cotados</a></li>
               <li><a class="dropdown-item" href=" {{ url_for('Relatorio.relatorio_page') }} ">Relatório ações</a></li>
               <li><a class="dropdown-item" href=" {{ url_for('Relatorio.relatorio_page1') }} ">Relatório vendas</a></li>
+              <li><a class="dropdown-item" href=" {{ url_for('Relatorio.relatorio_apostas_excluidas') }} ">Apostas excluídas</a></li>
               <li><a class="dropdown-item" href=" {{ url_for('Aposta.consultar_aposta', aposta_id=0) }} ">Consulta venda</a></li>
+              <li><a class="dropdown-item" href="{{ url_for('Resultado1.resultado1_page') }}">Resultado</a></li>
+              <li><a class="dropdown-item" href=" {{ url_for('Aposta.relatorio_apostas_detalhado') }} ">Relatório Geral Caixa</a></li>
+              <li><a class="dropdown-item" href=" {{ url_for('Aposta.relatorio_agrupado_area') }} ">Relatório Financeiro</a></li>
             </ul>
           </li>
 

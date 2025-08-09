@@ -6,15 +6,22 @@ class ComissaoArea(db.Model):
 
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     area = db.Column(db.String, nullable=False)
-    modalidade = db.Column(db.String, nullable=False)
+    modalidade = db.Column(db.Text, nullable=False)
     comissao = db.Column(db.Float, nullable=False)
     ativar = db.Column(db.String, nullable=False)
+    vendedor = db.Column(db.Text, nullable=True) # New column
+    extracao = db.Column(db.Text, nullable=True)
+
+class Cotado(db.Model):
+    __tablename__ = 'tb_numeros_cotados'
+
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    numero = db.Column(db.Integer)
 
 class ApostaExcluida(db.Model):
     __tablename__ = 'tb_apostas_excluidas'
 
-    id = db.Column(db.Integer, primary_key=True)
-    aposta_id_original = db.Column(db.Integer, nullable=False)
+    aposta_id_original = db.Column('id',db.Integer,primary_key=True, nullable=False)
     area = db.Column(db.String(50))
     vendedor = db.Column(db.String(50))
     data_atual = db.Column(db.Date)
@@ -39,6 +46,25 @@ class Aposta(db.Model):
     pre_datar = db.Column(db.Boolean, default=False, nullable=False)
     data_agendada = db.Column(db.Date, nullable=True)
     area = db.Column(db.String(25), nullable=False)
+
+class ApostaPremiada(db.Model):
+    __tablename__ = 'tb_apostas_premiadas'
+
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    vendedor = db.Column(db.Text, nullable=False)
+    data_atual = db.Column(db.Date, nullable=False)
+    hora_atual = db.Column(db.Time, nullable=False)
+    valor_total = db.Column(db.Float, nullable=False)
+    extracao = db.Column('horario_selecionado', db.String(50), nullable=False)
+    apostas = db.Column(db.Text, nullable=False)
+    pre_datar = db.Column(db.Boolean, default=False, nullable=False)
+    data_agendada = db.Column(db.Date, nullable=True)
+    area = db.Column(db.String(25), nullable=False)
+    valor_premio = db.Column(db.Text, nullable=True)
+    impresso = db.Column(db.Integer, default=0, nullable=False)
+    # --- Nova Coluna ---
+    numero_bilhete = db.Column(db.Integer, nullable=False, unique=True)
+    pago = db.Column(db.Integer, nullable=True, default=0)  # 0 = Não pago, 1 = Pago
 
 class Pessoa(db.Model):
     __tablename__ = 'tblpessoa'
@@ -79,6 +105,15 @@ class CadastroDescarrego(db.Model):
     extracao = db.Column(db.Text, nullable=False)
     limite = db.Column(db.Float, nullable=False)
 
+class Coleta(db.Model):
+    __tablename__ = 'tb_coletas'
+    
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    coletor = db.Column(db.String(50))
+    data = db.Column(db.Date)
+    valor_coleta = db.Column(db.Float)
+    valor_debito = db.Column(db.Float)
+    vendedor = db.Column(db.Text, nullable=False)
 
 class ColetaVendedor(db.Model):
     __tablename__ = 'tb_ColetaVendedor'
@@ -111,6 +146,10 @@ class Descarrego(db.Model):
     valor_excedente = db.Column(db.Float, nullable=False)
     numeros = db.Column(db.Text, nullable=False)
     data = db.Column(db.DateTime, nullable=False)
+    modalidade = db.Column(db.Text, nullable=False)
+    premio_total = db.Column(db.Float, nullable=True) # Pode ser True se o cálculo ocorrer depois ou puder ser nulo
+    premio_excedente = db.Column(db.Float, nullable=True)
+    tipo_premio = db.Column(db.String(50), nullable=True)
 
 class Extracao(db.Model):
     __tablename__ = 'tb_extracao'
@@ -127,9 +166,10 @@ class Modalidade(db.Model):
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     modalidade = db.Column(db.String(15), unique=True, nullable=False)
     unidade = db.Column(db.Integer, nullable=False)
-    limite_por_aposta = db.Column('LimitePorAposta', db.Integer, nullable=False)
+    limite_por_aposta = db.Column('LimitePorAposta', db.Float, nullable=False)
     cotacao = db.Column(db.Float, nullable=False)
     ativar_area = db.Column(db.Integer, nullable=False)
+    limite_descarrego = db.Column('LimiteDescarrego', db.Float, nullable=False, default=0.0)
 
 class Operador(db.Model):
     __tablename__ = 'tb_operador'
@@ -165,7 +205,7 @@ class Resultado(db.Model):
 
     id = db.Column('ID', db.Integer, primary_key=True, autoincrement=True)
     extracao = db.Column(db.String(255), nullable=True)
-    data = db.Column(db.DateTime, nullable=False)
+    data = db.Column(db.Date, nullable=False)
     premio_1 = db.Column(db.Integer, nullable=False)
     premio_2 = db.Column(db.Integer, nullable=False)
     premio_3 = db.Column(db.Integer, nullable=False)
@@ -228,7 +268,7 @@ class Vendedor(db.Model):
 
     regiao = db.Column(db.String(50), nullable=True)
     ativo = db.Column(db.Enum('sim', 'nao'), nullable=True)
-    comissao = db.Column(db.Numeric(5, 2), nullable=True)
+    comissao = db.Column(db.Float, nullable=True)
     cancelar_poule = db.Column(db.Enum('sim', 'nao'), nullable=True)
     exibe_comissao = db.Column(db.Enum('sim', 'nao'), nullable=True)
     limite_venda = db.Column(db.Numeric(10, 2), nullable=True)
@@ -254,5 +294,5 @@ class AreaExtracao(db.Model):
 
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     area = db.Column('area',db.String(100), nullable=True)
-    extracao = db.Column('extracao',db.String(100), nullable=True)
+    extracao = db.Column('extracao',db.Text, nullable=True)
     ativar = db.Column('ativar',db.String(10), nullable=True, default="Não")

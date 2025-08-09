@@ -1,0 +1,389 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8" name="viewport" content="width=device-width, initial-scale=1"/>
+    <title>Relatório Agrupado por Área</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/choices.js/public/assets/styles/choices.min.css">
+    <style>
+        body {
+            font-family: 'Roboto', sans-serif;
+            padding: 10px;
+            background-color: #f8f9fa;
+        }
+        .container {
+            max-width: 95%;
+            padding: 0;
+        }
+        /* ... (mantém os estilos existentes, como .table, .table-light-green, etc.) ... */
+        .filter-form-row {
+            padding: 15px;
+            border-radius: 8px;
+            background-color: #e9ecef;
+            margin-bottom: 20px;
+        }
+        .filter-form-label {
+            font-weight: 500;
+            margin-bottom: 5px;
+            font-size: 0.9rem;
+        }
+        .filter-form-control {
+            border: 1px solid #ced4da;
+        }
+        .botao-estiloso {
+            font-size: 1rem;
+            color: white;
+            border-radius: 0.35rem;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+            border: none;
+            padding: 8px 15px;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            vertical-align: middle;
+            text-decoration: none;
+            background-color: #072749;
+        }
+        .botao-estiloso:hover {
+            background-color: #0056b3;
+            box-shadow: 0 6px 18px rgba(0,0,0,0.2);
+            transform: translateY(-2px);
+        }
+        /* Estilos para o Choices.js */
+        .choices__inner {
+            background-color: #fff;
+            border: 1px solid #ced4da;
+            border-radius: 0.35rem;
+            min-height: 38px;
+            display: flex;
+            align-items: center;
+            padding: 0.375rem 0.75rem;
+        }
+        .choices__list--single {
+            padding: 0;
+        }
+        @media print {
+             /* ... (mantém os estilos de impressão existentes) ... */
+             .filter-form-row, .botao-estiloso {
+                display: none !important; 
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1 class="text-center my-3">Relatório Financeiro</h1>
+
+        <div class="row filter-form-row no-print">
+            <form action="{{ url_for('Aposta.relatorio_agrupado_area') }}" method="get" class="row g-3">
+                <div class="col-md-2">
+                    <label for="data_inicial" class="form-label filter-form-label">Data Inicial:</label>
+                    <input type="date" class="form-control form-control-sm filter-form-control" id="data_inicial" name="data_inicial" value="{{ filtros.data_inicial }}">
+                </div>
+                <div class="col-md-2">
+                    <label for="data_final" class="form-label filter-form-label">Data Final:</label>
+                    <input type="date" class="form-control form-control-sm filter-form-control" id="data_final" name="data_final" value="{{ filtros.data_final }}">
+                </div>
+                <div class="col-md-2">
+                    <label for="selectArea" class="form-label filter-form-label">Área:</label>
+                    <select id="selectArea" name="area" class="form-select form-select-sm filter-form-control">
+                        <option value="">Todas as Áreas</option>
+                        {% for area in area_valores %}
+                            <option value="{{ area }}" {% if filtros.area == area %}selected{% endif %}>{{ area }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <label for="selectVendedor" class="form-label filter-form-label">Vendedor:</label>
+                    <select id="selectVendedor" name="vendedor" class="form-select form-select-sm filter-form-control">
+                        <option value="">Todos os Vendedores</option>
+                        {% for vendedor in vendedor_valores %}
+                            <option value="{{ vendedor }}" {% if filtros.vendedor == vendedor %}selected{% endif %}>{{ vendedor }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <label for="selectExtracao" class="form-label filter-form-label">Extração:</label>
+                    <select id="selectExtracao" name="extracao" class="form-select form-select-sm filter-form-control">
+                        <option value="">Todas as Extrações</option>
+                        {% for extracao in extracao_valores %}
+                            <option value="{{ extracao }}" {% if filtros.extracao == extracao %}selected{% endif %}>{{ extracao }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <label for="selectModalidade" class="form-label filter-form-label">Modalidade:</label>
+                    <select id="selectModalidade" name="modalidade" class="form-select form-select-sm filter-form-control">
+                        <option value="">Todas as Modalidades</option>
+                        {% for modalidade in modalidade_valores %}
+                            <option value="{{ modalidade }}" {% if filtros.modalidade == modalidade %}selected{% endif %}>{{ modalidade }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-12 d-flex justify-content-end">
+                    <button type="submit" class="btn btn-primary btn-sm me-2">Filtrar</button>
+                    <button type="button" class="btn botao-estiloso btn-sm" onclick="printReport()">Imprimir</button>
+                </div>
+            </form>
+        </div>
+
+        {% if relatorio_agrupado %}
+            {% for area_data in relatorio_agrupado %}
+                <div class="card mb-4 print-content" data-area-title="AREA: {{ area_data.area }} - Total de vendedores: {{ area_data.vendedores|length }}">
+                    <div class="card-header bg-light">
+                        <h5 class="area-title my-0">Área: {{ area_data.area }}</h5>
+                    </div>
+                    <div class="card-body p-0">
+                        <table class="table table-bordered table-hover table-light-green mb-0">
+                            <thead>
+                                <tr>
+                                    <th>Vendedor</th>
+                                    <th>Apurado</th>
+                                    <th>Comissão</th>
+                                    <th>Líquido</th>
+                                    <th>Prêmio</th>
+                                    <th>Total</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for vendedor_data in area_data.vendedores %}
+                                    <tr>
+                                        <td>{{ vendedor_data.nome }}</td>
+                                        <td>R$ {{ "%.2f"|format(vendedor_data.apurado)|replace('.', ',') }}</td>
+                                        <td>R$ {{ "%.2f"|format(vendedor_data.comissao)|replace('.', ',') }}</td>
+                                        <td>R$ {{ "%.2f"|format(vendedor_data.liquido)|replace('.', ',') }}</td>
+                                        <td>R$ {{ "%.2f"|format(vendedor_data.premio)|replace('.', ',') }}</td>
+                                        <td>
+                                            <span class="{{ 'negative-value' if vendedor_data.total < 0 else 'positive-value' }}">
+                                                R$ {{ "%.2f"|format(vendedor_data.total)|replace('.', ',') }}
+                                            </span>
+                                        </td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                            <tfoot>
+                                <tr class="table-info fw-bold">
+                                    <td>Total da Área</td>
+                                    <td>R$ {{ "%.2f"|format(area_data.totais.apurado)|replace('.', ',') }}</td>
+                                    <td>R$ {{ "%.2f"|format(area_data.totais.comissao)|replace('.', ',') }}</td>
+                                    <td>R$ {{ "%.2f"|format(area_data.totais.liquido)|replace('.', ',') }}</td>
+                                    <td>R$ {{ "%.2f"|format(area_data.totais.premio)|replace('.', ',') }}</td>
+                                    <td>
+                                        <span class="{{ 'negative-value' if area_data.totais.total < 0 else 'positive-value' }}">
+                                            R$ {{ "%.2f"|format(area_data.totais.total)|replace('.', ',') }}
+                                        </span>
+                                    </td>
+                                </tr>
+                            </tfoot>
+                        </table>
+                    </div>
+                </div>
+            {% endfor %}
+            <div id="total_geral_data" class="d-none"
+                 data-apurado="{{ "%.2f"|format(total_geral_apurado)|replace('.', ',') }}"
+                 data-comissao="{{ "%.2f"|format(total_geral_comissao)|replace('.', ',') }}"
+                 data-liquido="{{ "%.2f"|format(total_geral_liquido)|replace('.', ',') }}"
+                 data-premio="{{ "%.2f"|format(total_geral_premio)|replace('.', ',') }}"
+                 data-total="{{ "%.2f"|format(total_geral_total)|replace('.', ',') }}"
+                 data-vendedores="{{ total_vendedores }}"
+            ></div>
+            <div class="card mt-4 no-print">
+                <div class="card-body">
+                    <h5 class="card-title">Resumo Geral</h5>
+                    <p class="summary-info"><strong>Total Apurado:</strong> R$ {{ "%.2f"|format(total_geral_apurado)|replace('.', ',') }}</p>
+                    <p class="summary-info"><strong>Total Comissão:</strong> R$ {{ "%.2f"|format(total_geral_comissao)|replace('.', ',') }}</p>
+                    <p class="summary-info"><strong>Total Líquido:</strong> R$ {{ "%.2f"|format(total_geral_liquido)|replace('.', ',') }}</p>
+                    <p class="summary-info"><strong>Total Prêmio:</strong> R$ {{ "%.2f"|format(total_geral_premio)|replace('.', ',') }}</p>
+                    <p class="summary-info"><strong>Total Geral:</strong> <span class="{{ 'negative-value' if total_geral_total < 0 else 'positive-value' }}">R$ {{ "%.2f"|format(total_geral_total)|replace('.', ',') }}</span></p>
+                    <p class="summary-info"><strong>Total de Vendedores:</strong> {{ total_vendedores }}</p>
+                </div>
+            </div>
+        {% else %}
+            <div class="alert alert-info text-center" role="alert">
+                Nenhum dado encontrado para os filtros selecionados.
+            </div>
+        {% endif %}
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/choices.js/public/assets/scripts/choices.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const selectVendedor = document.getElementById('selectVendedor');
+            const selectExtracao = document.getElementById('selectExtracao');
+            const selectArea = document.getElementById('selectArea');
+            const selectModalidade = document.getElementById('selectModalidade');
+            
+            // Inicializa Choices.js para os selects
+            new Choices(selectVendedor);
+            new Choices(selectExtracao);
+            new Choices(selectArea);
+            new Choices(selectModalidade);
+        });
+
+        function printReport() {
+            const dataInicial = document.getElementById('data_inicial').value;
+            const dataFinal = document.getElementById('data_final').value;
+            const extracao = document.getElementById('selectExtracao').value;
+            const area = document.getElementById('selectArea').value;
+            const vendedor = document.getElementById('selectVendedor').value;
+            const modalidade = document.getElementById('selectModalidade').value;
+
+            const formatarData = (dataStr) => {
+                if (!dataStr) return '';
+                const [ano, mes, dia] = dataStr.split('-');
+                return `${dia}/${mes}/${ano}`;
+            };
+            
+            const printWindow = window.open('', '_blank');
+            printWindow.document.write(`
+                <!DOCTYPE html>
+                <html lang="pt-br">
+                <head>
+                    <title>Relatório Agrupado</title>
+                    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+                    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+                    <style>
+                        /* Estilos para impressão */
+                        body {
+                            font-family: 'Roboto', sans-serif;
+                            padding: 10px;
+                            background-color: #ffffff !important;
+                            color: #000;
+                        }
+                        .container {
+                            width: 100%;
+                            margin: 0;
+                            padding: 10px;
+                        }
+                        .header-print {
+                            text-align: center;
+                            font-size: 14px;
+                            font-weight: bold;
+                            margin-bottom: 20px;
+                            color: #000;
+                        }
+                        .filter-details {
+                            font-size: 10px;
+                            text-align: center;
+                            margin-bottom: 10px;
+                        }
+                        .area-section {
+                            margin-bottom: 15px;
+                        }
+                        .area-title {
+                            font-size: 12px;
+                            font-weight: bold;
+                            border-bottom: 1px solid #000;
+                            padding-bottom: 2px;
+                            margin-bottom: 5px;
+                        }
+                        .table-print {
+                            width: 100%;
+                            border-collapse: collapse;
+                            font-size: 8px;
+                            margin-bottom: 5px;
+                        }
+                        .table-print th, .table-print td {
+                            border: 1px solid #ccc;
+                            padding: 2px;
+                            text-align: center;
+                            white-space: nowrap;
+                        }
+                        .table-print th {
+                            background-color: #d4edda;
+                            color: #155724;
+                            border-bottom: 2px solid #28a745;
+                        }
+                        .table-print tbody tr:nth-child(odd) {
+                            background-color: #ffffff;
+                        }
+                        .table-print tbody tr:nth-child(even) {
+                            background-color: #f2f2f2;
+                        }
+                        .table-print tfoot {
+                            font-weight: bold;
+                            background-color: #cce5ff;
+                            color: #004085;
+                        }
+                        .total-geral {
+                            text-align: right;
+                            font-size: 12px;
+                            font-weight: bold;
+                            margin-top: 20px;
+                            padding-top: 10px;
+                            border-top: 2px solid #000;
+                        }
+                        .negative-value { color: #dc3545; font-weight: bold; }
+                        .positive-value { color: #28a745; font-weight: bold; }
+                    </style>
+                </head>
+                <body>
+                    <div class="container">
+                        <div class="header-print">
+                            Relatório Agrupado por Área <br> Período: ${formatarData(dataInicial)} até ${formatarData(dataFinal)}
+                        </div>
+                        <div class="filter-details">
+                            ${area ? `Área: ${area} | ` : ''}
+                            ${vendedor ? `Vendedor: ${vendedor} | ` : ''}
+                            ${extracao ? `Extração: ${extracao} | ` : ''}
+                            ${modalidade ? `Modalidade: ${modalidade}` : ''}
+                        </div>
+                        <div id="print-content-placeholder"></div>
+                    </div>
+                </body>
+                </html>
+            `);
+            
+            // Preenche o conteúdo com as tabelas do relatório
+            const contentPlaceholder = printWindow.document.getElementById('print-content-placeholder');
+            const tablesHTML = document.querySelectorAll('.print-content');
+            
+            tablesHTML.forEach(card => {
+                const areaTitle = card.getAttribute('data-area-title');
+                const table = card.querySelector('table').cloneNode(true);
+                
+                // Renomeia a classe para usar os estilos de impressão
+                table.classList.remove('table-bordered', 'table-hover', 'table-light-green');
+                table.classList.add('table-print');
+                
+                let areaDiv = printWindow.document.createElement('div');
+                areaDiv.className = 'area-section';
+                areaDiv.innerHTML = `<div class="area-title">${areaTitle}</div>`;
+                areaDiv.appendChild(table);
+
+                contentPlaceholder.appendChild(areaDiv);
+            });
+
+            // Adiciona o total geral no final
+            const totalGeralData = document.getElementById('total_geral_data');
+            if (totalGeralData) {
+                const totalVendedores = totalGeralData.getAttribute('data-vendedores');
+                const totalApurado = totalGeralData.getAttribute('data-apurado');
+                const totalComissao = totalGeralData.getAttribute('data-comissao');
+                const totalLiquido = totalGeralData.getAttribute('data-liquido');
+                const totalPremio = totalGeralData.getAttribute('data-premio');
+                const totalTotal = totalGeralData.getAttribute('data-total');
+
+                const totalTable = `
+                    <div class="total-geral">
+                        Total de ${totalVendedores} VENDEDOR(ES) <br>
+                        APURADO: R$ ${totalApurado} | COMISSÃO: R$ ${totalComissao} | LÍQUIDO: R$ ${totalLiquido} <br>
+                        PRÊMIO: R$ ${totalPremio} | TOTAL: R$ ${totalTotal}
+                    </div>
+                `;
+                contentPlaceholder.insertAdjacentHTML('beforeend', totalTable);
+            }
+
+            printWindow.document.close();
+            printWindow.focus();
+            printWindow.print();
+        }
+    </script>
+</body>
+</html>

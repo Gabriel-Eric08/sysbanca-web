@@ -1,0 +1,615 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8" name="viewport" content="width=device-width, initial-scale=1"/>
+    <title>Relatório Financeiro</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/choices.js/public/assets/styles/choices.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Roboto', sans-serif;
+            padding: 20px;
+            background-color: #f8f9fa;
+        }
+        .table tbody tr:nth-child(odd) {
+            background-color: #ffffff;
+        }
+        .table tbody tr:nth-child(even) {
+            background-color: #f2f2f2;
+        }
+        .table-light-green thead {
+            background-color: #d4edda;
+            color: #155724;
+            border-bottom: 2px solid #28a745;
+        }
+        .table-light-green th {
+            padding: 0.75rem 1rem;
+        }
+        .form-control, .form-select {
+            border-radius: 0.35rem;
+            border: 1px solid #ced4da;
+            box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+        }
+        .botao-estiloso {
+            font-size: 1rem;
+            color: white;
+            border-radius: 0.35rem;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+            border: none;
+            padding: 8px 15px;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            vertical-align: middle;
+            text-decoration: none;
+            background-color: #072749;
+        }
+        .botao-estiloso:hover {
+            background-color: #0056b3;
+            box-shadow: 0 6px 18px rgba(0,0,0,0.2);
+            transform: translateY(-2px);
+        }
+        .summary-info {
+            font-size: 1.25em;
+            margin-bottom: 10px;
+            padding: 5px 0;
+        }
+        .summary-info strong {
+            color: #072749;
+        }
+        .negative-value {
+            color: #dc3545;
+            font-weight: 600;
+        }
+        .positive-value {
+            color: #28a745;
+            font-weight: 600;
+        }
+        .table {
+            border-radius: 0.5rem;
+            overflow: hidden;
+            box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.1);
+        }
+        .table thead th {
+            border-bottom: none;
+        }
+        .table td, .table th {
+            padding: 0.8rem;
+            vertical-align: middle;
+            border-top: 1px solid #dee2e6;
+        }
+        @media print {
+            body { 
+                padding: 0; 
+                margin: 0; 
+                font-family: 'Roboto', sans-serif; 
+                background-color: #ffffff !important;
+                color: #000;
+            }
+            .container { 
+                width: 100%; 
+                margin: 0; 
+                padding: 20px; 
+            }
+            .no-print { 
+                display: none !important; 
+            }
+            .print-only { 
+                display: block !important; 
+            }
+            .print-only h1 { 
+                text-align: center; 
+                margin-bottom: 20px; 
+                color: #072749; 
+                font-size: 2em; 
+            }
+            .print-only .print-details p, 
+            .print-only .print-summary p { 
+                margin-bottom: 8px; 
+                font-size: 1.25em; 
+            }
+            .print-only .print-details strong, 
+            .print-only .print-summary strong { 
+                color: #072749; 
+            }
+            .print-only .print-summary { 
+                margin-top: 30px; 
+                border-top: 1px solid #ccc; 
+                padding-top: 20px; 
+            }
+            .negative-value { 
+                color: #dc3545; 
+                font-weight: 600; 
+            }
+            .positive-value { 
+                color: #28a745; 
+                font-weight: 600; 
+            }
+            .table {
+                border-collapse: collapse;
+                width: 100%;
+                margin-bottom: 1rem;
+                background-color: transparent;
+                box-shadow: none;
+            }
+            .table thead th {
+                background-color: #d4edda !important;
+                color: #155724 !important;
+                border-bottom: 2px solid #28a745 !important;
+                font-weight: bold;
+            }
+            .table tbody tr:nth-child(odd) {
+                background-color: #f2f2f2 !important;
+            }
+            .table tbody tr:nth-child(even) {
+                background-color: #ffffff !important;
+            }
+            .table td, .table th {
+                padding: 0.75rem;
+                vertical-align: top;
+                border-top: 1px solid #dee2e6;
+                color: #000;
+            }
+            .table-bordered th, .table-bordered td {
+                border: 1px solid #dee2e6 !important;
+            }
+            .table thead th {
+                font-size: 10px; 
+                padding: 4px; 
+                text-align: center;
+                white-space: nowrap; 
+            }
+            .table td { 
+                padding: 4px;
+                border: 1px solid #dee2e6;
+                font-size: 12px;
+                white-space: nowrap;
+                text-align: center;
+            }
+
+            .table.table-bordered {
+                width: 100%;
+                table-layout: auto;
+            }
+            .table td:nth-child(1), .table th:nth-child(1) { 
+                text-align: left;
+                width: 15%;
+            }
+            .table td:nth-child(2), .table th:nth-child(2) { 
+                width: 10%;
+            }
+            .table td:nth-child(3), .table th:nth-child(3), 
+            .table td:nth-child(4), .table th:nth-child(4), 
+            .table td:nth-child(5), .table th:nth-child(5) { 
+                width: 15%;
+            }
+        }
+    </style>
+</head>
+<body class="bg-light p-4">
+    <div class="container mt-4 no-print">
+        <h3 class="mb-4">Relatório</h3>
+
+        <div class="row mb-3 g-3">
+            <div class="col-md-3">
+                <label for="selectVendedor" class="form-label">Vendedor:</label>
+                <select id="selectVendedor" class="form-select" onchange="applyFilters()">
+                    <option value="">Todos os Vendedores</option>
+                    {% for vendedor in vendedores %}
+                        <option value="{{ vendedor }}">{{ vendedor }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label for="selectModalidade" class="form-label">Modalidade:</label>
+                <select id="selectModalidade" class="form-select" onchange="applyFilters()">
+                    <option value="">Todas as Modalidades</option>
+                    {% for modalidade in modalidades %}
+                        <option value="{{ modalidade }}">{{ modalidade }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label for="selectExtracao" class="form-label">Extração:</label>
+                <select id="selectExtracao" class="form-select" onchange="applyFilters()">
+                    <option value="">Todas as Extrações</option>
+                    {% for extracao in extracoes %}
+                        <option value="{{ extracao }}">{{ extracao }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label for="selectArea" class="form-label">Área:</label>
+                <select id="selectArea" class="form-select" onchange="applyFilters()">
+                    <option value="">Todas as Áreas</option>
+                    {% for area in areas %}
+                        <option value="{{ area }}">{{ area }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+        </div>
+        <div class="row mb-4 align-items-end">
+            <div class="col-md-3">
+                <label for="filterDate" class="form-label">Data:</label>
+                <input type="date" id="filterDate" class="form-control" onchange="applyFilters()">
+            </div>
+            <div class="col-md-auto">
+                <button type="button" class="btn botao-estiloso" onclick="printReport()">Imprimir Relatório</button>
+            </div>
+        </div>
+        
+        <h3 class="mb-4 mt-5">Geral Caixa</h3>
+        <table id="tabela-resumo" class="table table-bordered table-hover bg-white table-light-green">
+            <thead>
+                <tr>
+                    <th>Vendedor</th>
+                    <th>Área</th>
+                    <th>Apurado</th>
+                    <th>Comissão</th>
+                    <th>Total</th>
+                </tr>
+            </thead>
+            <tbody>
+            </tbody>
+        </table>
+
+        <h3 class="mb-4 mt-5">Todas as apostas</h3>
+        <table class="table table-bordered table-hover bg-white table-light-green" id="apostasTable">
+            <thead>
+                <tr>
+                    <th>Bilhete</th>
+                    <th>Data</th>
+                    <th>Vendedor</th>
+                    <th>Extração</th>
+                    <th>Área</th>
+                    <th>Modalidade</th>
+                    <th>Números</th>
+                    <th>Prêmio (Tipo)</th>
+                    <th>Valor Apostado (Individual)</th>
+                    <th>Unidade Aposta</th>
+                    <th>Comissão (%)</th>
+                    <th>Valor Comissão</th>
+                </tr>
+            </thead>
+            <tbody id="apostasTableBody">
+                {% for aposta in apostas %}
+                    <tr 
+                        data-vendedor="{{ aposta.vendedor }}" 
+                        data-modalidade="{{ aposta.modalidade }}" 
+                        data-extracao="{{ aposta.extracao }}" 
+                        data-area="{{ aposta.area }}" 
+                        data-data="{{ aposta.data_aposta }}" 
+                        data-valor-apostado="{{ '%.2f'|format(aposta.valor_apostado_individual) }}"
+                        data-valor-comissao="{{ '%.2f'|format(aposta.valor_comissao) }}"
+                    >
+                        <td>#{{ aposta.bilhete_id }}</td>
+                        <td>{{ aposta.data_aposta }}</td>
+                        <td>{{ aposta.vendedor }}</td>
+                        <td>{{ aposta.extracao }}</td>
+                        <td>{{ aposta.area }}</td>
+                        <td>{{ aposta.modalidade }}</td>
+                        <td>{{ aposta.numeros }}</td>
+                        <td>{{ aposta.premio_str }}</td>
+                        <td data-value="{{ '%.2f'|format(aposta.valor_apostado_individual) }}">R$ {{ '%.2f'|format(aposta.valor_apostado_individual) }}</td>
+                        <td>{{ '%.2f'|format(aposta.unidade_aposta) }}</td>
+                        <td>{{ '%.2f'|format(aposta.comissao_percentual) }}%</td>
+                        <td data-value="{{ '%.2f'|format(aposta.valor_comissao) }}">R$ {{ '%.2f'|format(aposta.valor_comissao) }}</td>
+                    </tr>
+                {% else %}
+                    <tr>
+                        <td colspan="12" class="text-center">Nenhuma aposta encontrada.</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+        <hr>
+
+        <h3 class="mb-4 mt-5">Apostas Premiadas</h3>
+        <table class="table table-bordered table-hover bg-white table-light-green" id="apostasPremiadasTable">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Bilhete #</th>
+                    <th>Data</th>
+                    <th>Hora</th>
+                    <th>Vendedor</th>
+                    <th>Extração</th>
+                    <th>Área</th>
+                    <th>Valor Prêmio</th>
+                    <th>Impresso</th>
+                    <th>Pago</th>
+                </tr>
+            </thead>
+            <tbody id="apostasPremiadasTableBody">
+                {% for premiada in apostas_premiadas %}
+                    <tr
+                        data-vendedor="{{ premiada.vendedor }}"
+                        data-extracao="{{ premiada.extracao }}"
+                        data-area="{{ premiada.area }}"
+                        data-data="{{ premiada.data_atual.strftime('%Y-%m-%d') }}"
+                        data-valor-premio="{{ premiada.valor_premio|replace(',', '.') }}"
+                        data-pago="{{ premiada.pago }}"
+                    >
+                        <td>{{ premiada.id }}</td>
+                        <td>#{{ premiada.numero_bilhete }}</td>
+                        <td>{{ premiada.data_atual.strftime('%d/%m/%Y') }}</td>
+                        <td>{{ premiada.hora_atual.strftime('%H:%M') }}</td>
+                        <td>{{ premiada.vendedor }}</td>
+                        <td>{{ premiada.extracao }}</td>
+                        <td>{{ premiada.area }}</td>
+                        <td data-value="{{ premiada.valor_premio|replace(',', '.') }}">R$ {{ premiada.valor_premio }}</td>
+                        <td>{{ 'Sim' if premiada.impresso == 1 else 'Não' }}</td>
+                        <td>{{ 'Sim' if premiada.pago == 1 else 'Não' }}</td>
+                    </tr>
+                {% else %}
+                    <tr>
+                        <td colspan="10" class="text-center">Nenhuma aposta premiada encontrada.</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        const debitoAnteriorValue = {{ debito_anterior | tojson }};
+
+        const allApostasRows = Array.from(document.getElementById('apostasTableBody').querySelectorAll('tr'));
+        const allApostasPremiadasRows = Array.from(document.getElementById('apostasPremiadasTableBody').querySelectorAll('tr'));
+
+        function normalizeString(str) {
+            if (str === null || typeof str === 'undefined') {
+                return '';
+            }
+            return String(str).normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim();
+        }
+
+        function parseCurrencyToFloat(currencyStr) {
+            if (currencyStr === null || typeof currencyStr === 'undefined') {
+                return 0.0;
+            }
+            const cleanedStr = String(currencyStr).replace('R$', '').trim().replace(',', '.');
+            const parsed = parseFloat(cleanedStr);
+            return isNaN(parsed) ? 0.0 : parsed;
+        }
+
+        function convertDateToYYYYMMDD(dateStr) {
+            if (!dateStr || dateStr.length !== 10 || !dateStr.includes('/')) {
+                return dateStr;
+            }
+            const parts = dateStr.split('/');
+            if (parts.length === 3) {
+                const [day, month, year] = parts;
+                return `${year}-${month}-${day}`;
+            }
+            return dateStr;
+        }
+
+        function applyFilters() {
+            const selectedVendedor = normalizeString(document.getElementById('selectVendedor').value);
+            const selectedModalidade = normalizeString(document.getElementById('selectModalidade').value);
+            const selectedExtracao = normalizeString(document.getElementById('selectExtracao').value);
+            const selectedArea = normalizeString(document.getElementById('selectArea').value);
+            const selectedDate = document.getElementById('filterDate').value;
+
+            const resumoVendedores = {};
+
+            // Filtrar e processar a tabela de apostas
+            const apostasTableBody = document.getElementById('apostasTableBody');
+            apostasTableBody.innerHTML = '';
+            let apostasFound = false;
+
+            allApostasRows.forEach(row => {
+                const rowDataAposta = row.dataset.data;
+                const rowVendedor = normalizeString(row.dataset.vendedor);
+                const rowExtracao = normalizeString(row.dataset.extracao);
+                const rowArea = normalizeString(row.dataset.area);
+                const rowModalidade = normalizeString(row.dataset.modalidade);
+
+                const valorApostado = parseCurrencyToFloat(row.dataset.valorApostado);
+                const valorComissao = parseCurrencyToFloat(row.dataset.valorComissao);
+
+                let matches = true;
+                if (selectedDate && rowDataAposta !== selectedDate) matches = false;
+                if (selectedVendedor && rowVendedor !== selectedVendedor) matches = false;
+                if (selectedExtracao && rowExtracao !== selectedExtracao) matches = false;
+                if (selectedArea && rowArea !== selectedArea) matches = false;
+                if (selectedModalidade && rowModalidade !== selectedModalidade) matches = false;
+
+                if (matches) {
+                    apostasTableBody.appendChild(row.cloneNode(true));
+                    apostasFound = true;
+                    if (!resumoVendedores[rowVendedor]) {
+                        resumoVendedores[rowVendedor] = {
+                            area: rowArea,
+                            apurado: 0,
+                            comissao: 0
+                        };
+                    }
+                    resumoVendedores[rowVendedor].apurado += valorApostado;
+                    resumoVendedores[rowVendedor].comissao += valorComissao;
+                }
+            });
+
+            if (!apostasFound) {
+                const noDataRow = document.createElement('tr');
+                noDataRow.innerHTML = '<td colspan="12" class="text-center">Nenhuma aposta encontrada com os filtros aplicados.</td>';
+                apostasTableBody.appendChild(noDataRow);
+            }
+
+            // Filtrar e processar a tabela de apostas premiadas
+            const apostasPremiadasTableBody = document.getElementById('apostasPremiadasTableBody');
+            apostasPremiadasTableBody.innerHTML = '';
+            let premiadasFound = false;
+            const resumoPremios = {}; // Para somar os prêmios por vendedor, independentemente dos filtros
+
+            allApostasPremiadasRows.forEach(row => {
+                const rowDataPremiada = row.dataset.data;
+                const rowVendedorPremiada = normalizeString(row.dataset.vendedor);
+                const rowExtracaoPremiada = normalizeString(row.dataset.extracao);
+                const rowAreaPremiada = normalizeString(row.dataset.area);
+                const rowPagoStatus = row.dataset.pago;
+                const valorPremio = parseCurrencyToFloat(row.dataset.valorPremio);
+
+                let matches = true;
+                if (selectedDate && rowDataPremiada !== selectedDate) matches = false;
+                if (selectedVendedor && rowVendedorPremiada !== selectedVendedor) matches = false;
+                if (selectedExtracao && rowExtracaoPremiada !== selectedExtracao) matches = false;
+                if (selectedArea && rowAreaPremiada !== selectedArea) matches = false;
+                
+                if (matches) {
+                    apostasPremiadasTableBody.appendChild(row.cloneNode(true));
+                    premiadasFound = true;
+                    
+                    if (rowPagoStatus === '1') {
+                        if (!resumoPremios[rowVendedorPremiada]) {
+                            resumoPremios[rowVendedorPremiada] = 0;
+                        }
+                        resumoPremios[rowVendedorPremiada] += valorPremio;
+                    }
+                }
+            });
+
+            if (!premiadasFound) {
+                const noDataRow = document.createElement('tr');
+                noDataRow.innerHTML = '<td colspan="10" class="text-center">Nenhuma aposta premiada encontrada com os filtros aplicados.</td>';
+                apostasPremiadasTableBody.appendChild(noDataRow);
+            }
+
+            // Preencher a tabela de resumo
+            const tabelaResumoBody = document.querySelector('#tabela-resumo tbody');
+            tabelaResumoBody.innerHTML = '';
+            
+            // Unir os dados de apostas e prêmios para a tabela de resumo
+            const allVendedores = new Set([...Object.keys(resumoVendedores), ...Object.keys(resumoPremios)]);
+
+            if (allVendedores.size === 0) {
+                const noDataRow = document.createElement('tr');
+                noDataRow.innerHTML = '<td colspan="5" class="text-center">Nenhum dado encontrado para os filtros aplicados.</td>';
+                tabelaResumoBody.appendChild(noDataRow);
+            } else {
+                for (const vendedor of allVendedores) {
+                    const dadosAposta = resumoVendedores[vendedor] || { apurado: 0, comissao: 0, area: 'N/A' };
+                    const premioPago = resumoPremios[vendedor] || 0;
+
+                    const apurado = dadosAposta.apurado;
+                    const comissao = dadosAposta.comissao;
+                    const area = dadosAposta.area;
+                    const total = apurado - comissao - premioPago;
+                    
+                    const newRow = tabelaResumoBody.insertRow();
+                    newRow.innerHTML = `
+                        <td>${vendedor}</td>
+                        <td>${area}</td>
+                        <td>R$ ${apurado.toFixed(2).replace('.', ',')}</td>
+                        <td>R$ ${comissao.toFixed(2).replace('.', ',')}</td>
+                        <td>R$ ${total.toFixed(2).replace('.', ',')}</td>
+                    `;
+                }
+            }
+        }
+
+        function printReport() {
+            const selectedDateText = document.getElementById('filterDate').value ? new Date(document.getElementById('filterDate').value + 'T12:00:00').toLocaleDateString('pt-BR') : 'Todo o período';
+            const selectedVendedorText = document.getElementById('selectVendedor').options[document.getElementById('selectVendedor').selectedIndex].text;
+            const selectedModalidadeText = document.getElementById('selectModalidade').options[document.getElementById('selectModalidade').selectedIndex].text;
+            const selectedExtracaoText = document.getElementById('selectExtracao').options[document.getElementById('selectExtracao').selectedIndex].text;
+            const selectedAreaText = document.getElementById('selectArea').options[document.getElementById('selectArea').selectedIndex].text;
+
+            const resumoTable = document.getElementById('tabela-resumo').cloneNode(true);
+            
+            // A tabela de resumo impressa precisa ter o cabeçalho correto, pois foi alterado
+            resumoTable.querySelector('thead tr').innerHTML = `
+                <th>Vendedor</th>
+                <th>Área</th>
+                <th>Apurado</th>
+                <th>Comissão</th>
+                <th>Total</th>
+            `;
+
+            const printContent = `
+                <div class="container print-only">
+                    <h1 class="text-center mb-4">Relatório Financeiro</h1>
+                    <div class="print-details mb-4">
+                        <p><strong>Data:</strong> ${selectedDateText}</p>
+                        <p><strong>Vendedor:</strong> ${selectedVendedorText}</p>
+                        <p><strong>Extração:</strong> ${selectedExtracaoText}</p>
+                        <p><strong>Modalidade:</strong> ${selectedModalidadeText}</p>
+                        <p><strong>Área:</strong> ${selectedAreaText}</p>
+                    </div>
+                    
+                    <h2>Geral Caixa</h2>
+                    ${resumoTable.outerHTML}
+                </div>
+            `;
+
+            const printWindow = window.open('', '_blank');
+            printWindow.document.write(`
+                <!DOCTYPE html>
+                <html lang="pt-br">
+                <head>
+                    <title>Relatório Financeiro</title>
+                    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+                    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+                    <style>
+                        body { font-family: 'Roboto', sans-serif; padding: 20px; }
+                        h1, h2 { text-align: center; margin-bottom: 20px; color: #072749; }
+                        .print-details p { margin-bottom: 8px; }
+                        .print-details strong { color: #072749; }
+                        .table { margin-bottom: 20px; border-collapse: collapse; width: 100%; }
+                        .table thead th { 
+                            background-color: #d4edda !important; 
+                            color: #155724 !important;
+                            font-size: 10px; 
+                            padding: 4px; 
+                            text-align: center;
+                            white-space: nowrap; 
+                        }
+                        .table tbody tr:nth-child(odd) { background-color: #ffffff !important; }
+                        .table tbody tr:nth-child(even) { background-color: #f2f2f2 !important; }
+                        .table td { 
+                            padding: 4px;
+                            border: 1px solid #dee2e6;
+                            font-size: 12px;
+                            white-space: nowrap;
+                            text-align: center;
+                        }
+
+                        .table.table-bordered {
+                            width: 100%;
+                            table-layout: auto;
+                        }
+                        .table td:nth-child(1), .table th:nth-child(1) { 
+                            text-align: left;
+                            width: 15%;
+                        }
+                        .table td:nth-child(2), .table th:nth-child(2) { 
+                            width: 10%;
+                        }
+                        .table td:nth-child(3), .table th:nth-child(3), 
+                        .table td:nth-child(4), .table th:nth-child(4), 
+                        .table td:nth-child(5), .table th:nth-child(5) { 
+                            width: 15%;
+                        }
+                    </style>
+                </head>
+                <body>
+                    ${printContent}
+                </body>
+                </html>
+            `);
+            printWindow.document.close();
+            printWindow.focus();
+            printWindow.print();
+        }
+        
+        document.addEventListener('DOMContentLoaded', applyFilters);
+    </script>
+</body>
+</html>

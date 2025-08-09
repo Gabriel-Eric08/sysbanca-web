@@ -21,6 +21,7 @@ from routes.cadastro_descarrego import cadastro_descarrego_route
 from routes.descarrego import descarrego_route
 import unicodedata
 import re
+import json
 
 app = Flask(__name__)
 init_db(app)
@@ -42,7 +43,14 @@ def after_request_func(response):
 @app.route("/health")
 def health():
     return "OK"
-    
+
+def from_json_filter(value):
+    """Filtro personalizado para converter string JSON em objeto Python."""
+    return json.loads(value)
+
+# Registra o filtro no ambiente do Jinja2
+app.jinja_env.filters['from_json'] = from_json_filter
+
 app.register_blueprint(auth_route)
 app.register_blueprint(admin_route, url_prefix='/admin')
 app.register_blueprint(relatorio_route, url_prefix='/relatorio')

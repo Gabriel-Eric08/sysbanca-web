@@ -1,35 +1,57 @@
 <!DOCTYPE html>
 <html lang="pt-br">
 <head>
-  <meta charset="UTF-8" name="viewport" content="width=device-width, initial-scale=1"/>
-  <title>Relatório de Apostas</title>
+  <meta charset="UTF-8" name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Relatório de Vendas</title>
+
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/choices.js/public/assets/styles/choices.min.css">
+
   <style>
     .botao-estiloso, .botao-voltar, .botao-salvar {
-      font-size: 18px; color: white; border-radius: 8px;
+      font-size: 18px;
+      color: white;
+      border-radius: 8px;
       box-shadow: 0 5px 15px rgba(0,0,0,0.2);
-      transition: all 0.3s ease; position: relative; overflow: hidden;
-      border: none; padding: 6px 20px; cursor: pointer;
-      display: inline-flex; align-items: center; gap: 8px; vertical-align: middle;
+      transition: all 0.3s ease;
+      position: relative;
+      overflow: hidden;
+      border: none;
+      padding: 6px 20px;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      vertical-align: middle;
     }
+
     .botao-estiloso { background-color: #072749; }
     .botao-estiloso:hover { background-color: #0056b3; }
+
     .botao-voltar { background-color: #1fa53c; }
     .botao-voltar:hover { background-color: #128d2e; }
+
     .botao-salvar { background-color: #be0d0d; }
     .botao-salvar:hover { background-color: #ec5050; }
+
     .botao-estiloso::after, .botao-voltar::after, .botao-salvar::after {
-      content: ""; position: absolute; top: 0; left: -100%;
-      width: 100%; height: 100%;
-      background: rgba(255, 255, 255, 0.2); transform: skewX(-20deg);
+      content: "";
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 100%;
+      background: rgba(255, 255, 255, 0.2);
+      transform: skewX(-20deg);
       transition: left 0.5s ease;
     }
+
     .botao-estiloso:hover::after, .botao-voltar:hover::after, .botao-salvar:hover::after {
       left: 100%;
     }
   </style>
 </head>
+
 <body class="bg-light p-4">
   <div class="container">
     <h2 class="mb-4">Relatório de Apostas</h2>
@@ -82,11 +104,6 @@
 
     <div class="mb-3 mt-4">
       <h5 class="text-success">Valor Total de Apostas: R$ <span id="totalApostas">0.00</span></h5>
-      {% for e in extracoes %}
-        <h5 class="text-secondary">R$ {{ e.extracao }}:
-          <span id="extracao_{{ e.extracao | remover_acentos | lower | replace(' ', '_') | replace(':', '_') | replace('.', '_') | replace('-', '_') }}">{{ '0.00' }}</span>
-        </h5>
-      {% endfor %}
     </div>
 
     <table id="tabela-vendas" class="table table-bordered table-hover bg-white">
@@ -98,24 +115,24 @@
           <th>Extração</th>
           <th>Área</th>
           <th>Valor Total</th>
-          <th>Ações</th>  <!-- Coluna nova -->
+          <th>Ações</th>
         </tr>
       </thead>
       <tbody>
         {% if apostas %}
           {% for a in apostas %}
-          <tr data-data="{{ a.data_atual.strftime('%Y-%m-%d') }}" data-vendedor="{{ a.vendedor }}" data-extracao="{{ a.extracao }}" data-area="{{ a.area }}">
-            <td>{{ a.vendedor }}</td>
-            <td>{{ a.data_atual.strftime('%d/%m/%Y') }}</td>
-            <td>#{{ a.id }}</td>
-            <td>{{ a.extracao }}</td>
-            <td>{{ a.area }}</td>
-            <td>R$ {{ '%.2f'|format(a.valor_total) }}</td>
-            <td>
-              <a href="{{ url_for('Aposta.consultar_aposta', aposta_id=a.id) }}" class="btn btn-sm btn-info me-1" title="Consultar">Consultar</a>
-              <button class="btn btn-sm btn-danger" title="Excluir"onclick="excluirAposta({{ a.id }})">Excluir</button>
-            </td>
-          </tr>
+            <tr data-data="{{ a.data_atual.strftime('%Y-%m-%d') }}" data-vendedor="{{ a.vendedor }}" data-extracao="{{ a.extracao }}" data-area="{{ a.area }}">
+              <td>{{ a.vendedor }}</td>
+              <td>{{ a.data_atual.strftime('%d/%m/%Y') }}</td>
+              <td>#{{ a.id }}</td>
+              <td>{{ a.extracao }}</td>
+              <td>{{ a.area }}</td>
+              <td>R$ {{ '%.2f'|format(a.valor_total) }}</td>
+              <td>
+                <a href="{{ url_for('Aposta.consultar_aposta', aposta_id=a.id) }}" class="btn btn-sm btn-info me-1" title="Consultar">Consultar</a>
+                <button class="btn btn-sm btn-danger" onclick="excluirAposta({{ a.id }})">Excluir</button>
+              </td>
+            </tr>
           {% endfor %}
         {% else %}
           <tr><td colspan="7" class="text-center">Nenhuma aposta encontrada.</td></tr>
@@ -127,6 +144,7 @@
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/choices.js/public/assets/scripts/choices.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
 
   <script>
     const filtroIds = ['filtroVendedor', 'filtroExtracao', 'filtroArea'];
@@ -143,46 +161,33 @@
           shouldSort: false
         });
 
-        // Adiciona um listener para a mudança nos filtros de select
         el.addEventListener('change', aplicarFiltros);
       });
 
-      // Adiciona listeners para os campos de data
       document.getElementById('data-inicial').addEventListener('change', aplicarFiltros);
       document.getElementById('data-final').addEventListener('change', aplicarFiltros);
 
-      aplicarFiltros(); // Aplica os filtros na carga inicial da página
+      aplicarFiltros();
     });
-
-    function removerAcentos(texto) {
-      return texto.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
-    }
-
-    function formatExtracaoId(name) {
-      // Garante que o nome da extração seja normalizado e formatado para o ID
-      return 'extracao_' + removerAcentos(name).toLowerCase().replace(/[\s:\-\.]/g, '_');
-    }
 
     function getSelectedValues(id) {
       return choicesInstances[id].getValue().map(v => v.value);
     }
 
     function aplicarFiltros() {
-      const vendedores = getSelectedValues('filtroVendedor');
+      const vendedores = getSelectedValues('filtroVendedor').map(v => v.toLowerCase());
       const extracoes = getSelectedValues('filtroExtracao');
       const areas = getSelectedValues('filtroArea');
       const dataInicial = document.getElementById('data-inicial').value;
       const dataFinal = document.getElementById('data-final').value;
 
-      // Conversão de datas para objetos Date para comparação segura
       const dataIniObj = dataInicial ? new Date(dataInicial + "T00:00:00") : null;
       const dataFinObj = dataFinal ? new Date(dataFinal + "T23:59:59") : null;
 
       let totalGeral = 0;
-      const totalPorExtracao = {};
 
       document.querySelectorAll('#tabela-vendas tbody tr').forEach(linha => {
-        const vendedor = linha.dataset.vendedor?.trim();
+        const vendedor = linha.dataset.vendedor?.trim().toLowerCase();
         const extracao = linha.dataset.extracao?.trim();
         const area = linha.dataset.area?.trim();
         const dataVendaStr = linha.dataset.data?.trim();
@@ -192,16 +197,11 @@
           return;
         }
 
-        // Criação de objeto Date com um horário fixo para evitar problemas de fuso horário
         const dataVenda = new Date(dataVendaStr + "T12:00:00");
-
-        // Correção no parse do valor: remove "R$" e espaços, depois substitui vírgula por ponto (se necessário)
-        // No seu caso, o formato é 'R$ XX.XX', então basta remover 'R$' e trim.
         const valorTexto = linha.cells[5].textContent.replace('R$', '').trim();
         const valor = parseFloat(valorTexto) || 0;
 
-        // Condições de filtro
-        const condVendedor = vendedores.length === 0 || vendedores.map(v => v.toLowerCase()).includes(vendedor.toLowerCase());
+        const condVendedor = vendedores.length === 0 || vendedores.includes(vendedor);
         const condExtracao = extracoes.length === 0 || extracoes.includes(extracao);
         const condArea = areas.length === 0 || areas.includes(area);
         const condDataInicial = !dataIniObj || dataVenda >= dataIniObj;
@@ -213,102 +213,95 @@
 
         if (mostrar) {
           totalGeral += valor;
-          const extracaoId = formatExtracaoId(extracao); // Usa a função corrigida
-          totalPorExtracao[extracaoId] = (totalPorExtracao[extracaoId] || 0) + valor;
         }
       });
 
       document.getElementById('totalApostas').textContent = totalGeral.toFixed(2);
-
-      // Atualiza os totais por extração
-      document.querySelectorAll('[id^="extracao_"]').forEach(span => {
-        span.textContent = (totalPorExtracao[span.id] || 0).toFixed(2);
-      });
     }
 
-    // Garante que a função esteja acessível globalmente
     window.aplicarFiltros = aplicarFiltros;
 
     async function gerarPDF() {
-    const { jsPDF } = window.jspdf;
-    const doc = new jsPDF();
+      const { jsPDF } = window.jspdf;
+      const doc = new jsPDF();
 
-    const vendedores = getSelectedValues('filtroVendedor');
-    const extracoes = getSelectedValues('filtroExtracao');
-    const areas = getSelectedValues('filtroArea');
-    const dataInicial = document.getElementById('data-inicial').value;
-    const dataFinal = document.getElementById('data-final').value;
-    const totalApostas = document.getElementById('totalApostas').textContent;
+      const vendedores = getSelectedValues('filtroVendedor').map(v => v.toLowerCase());
+      const extracoes = getSelectedValues('filtroExtracao');
+      const areas = getSelectedValues('filtroArea');
+      const dataInicial = document.getElementById('data-inicial').value;
+      const dataFinal = document.getElementById('data-final').value;
+      const totalApostas = document.getElementById('totalApostas').textContent;
 
-    const totaisPorExtracao = {};
-    document.querySelectorAll('[id^="extracao_"]').forEach(span => {
-      const extracaoNome = span.previousSibling.textContent.trim().replace('R$ ', '').replace(':', '');
-      const valor = span.textContent;
-      totaisPorExtracao[extracaoNome] = valor;
-    });
+      let linha = 10;
+      doc.setFontSize(16);
+      doc.text("Relatório de Vendas", 10, linha);
 
-    let linha = 10;
-    doc.setFontSize(16);
-    doc.text("Relatório de Vendas", 10, linha);
-
-    doc.setFontSize(12);
-    linha += 10;
-    doc.text(`Vendedor(es): ${vendedores.length ? vendedores.join(', ') : 'Todos'}`, 10, linha);
-    linha += 7;
-    doc.text(`Área(s): ${areas.length ? areas.join(', ') : 'Todas'}`, 10, linha);
-    linha += 7;
-    doc.text(`Extração(ões): ${extracoes.length ? extracoes.join(', ') : 'Todas'}`, 10, linha);
-    linha += 7;
-    doc.text(`Período: ${dataInicial || '...'} a ${dataFinal || '...'}`, 10, linha);
-    linha += 10;
-
-    doc.setFontSize(13);
-    doc.text(`Valor Total de Vendas: R$ ${totalApostas}`, 10, linha);
-    linha += 10;
-
-    doc.setFontSize(12);
-    doc.text("Totais por Extração:", 10, linha);
-    linha += 7;
-
-    for (const [nome, valor] of Object.entries(totaisPorExtracao)) {
-      doc.text(`${nome}: R$ ${valor}`, 10, linha);
+      doc.setFontSize(12);
+      linha += 10;
+      doc.text(`Vendedor(es): ${vendedores.length ? vendedores.join(', ') : 'Todos'}`, 10, linha);
       linha += 7;
-    }
+      doc.text(`Área(s): ${areas.length ? areas.join(', ') : 'Todas'}`, 10, linha);
+      linha += 7;
+      doc.text(`Extração(ões): ${extracoes.length ? extracoes.join(', ') : 'Todas'}`, 10, linha);
+      linha += 7;
+      doc.text(`Período: ${dataInicial || '...'} a ${dataFinal || '...'}`, 10, linha);
+      linha += 10;
 
-    doc.save("relatorio_vendas.pdf");
-  }
+      doc.setFontSize(13);
+      doc.text(`Valor Total de Vendas: R$ ${totalApostas}`, 10, linha);
+      linha += 10;
 
-  window.aplicarFiltros = aplicarFiltros;
-  window.gerarPDF = gerarPDF;
-  </script>
-  <script>
-  async function excluirAposta(apostaId) {
-    if (!confirm('Tem certeza que deseja excluir esta aposta?')) {
-      return;
-    }
+      const tableData = [];
+      const headers = ["Vendedor", "Data", "Nº Bilhete", "Extração", "Área", "Valor Total"];
 
-    try {
-      const response = await fetch(`/aposta/${apostaId}/excluir_ajax`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-Requested-With': 'XMLHttpRequest'
+      document.querySelectorAll('#tabela-vendas tbody tr').forEach(row => {
+        if (row.style.display !== 'none') {
+          const rowData = Array.from(row.cells).slice(0, 6).map(cell => cell.textContent.trim());
+          tableData.push(rowData);
         }
       });
 
-      const data = await response.json();
+      doc.autoTable({
+        head: [headers],
+        body: tableData,
+        startY: linha,
+        theme: 'striped',
+        headStyles: {
+          fillColor: [39, 174, 96]
+        }
+      });
 
-      if (response.ok && data.success) {
-        alert(data.message);
-        location.reload();  // Atualiza a página para refletir a exclusão
-      } else {
-        alert('Erro ao excluir: ' + (data.message || 'Erro desconhecido'));
+      doc.save("relatorio_vendas.pdf");
+    }
+
+    window.gerarPDF = gerarPDF;
+
+    async function excluirAposta(apostaId) {
+      if (!confirm('Tem certeza que deseja excluir esta aposta?')) {
+        return;
       }
 
-    } catch (error) {
-      alert('Erro ao conectar com o servidor: ' + error.message);
+      try {
+        const response = await fetch(`/aposta/${apostaId}/excluir_ajax`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-Requested-With': 'XMLHttpRequest'
+          }
+        });
+
+        const data = await response.json();
+
+        if (response.ok && data.success) {
+          alert(data.message);
+          location.reload();
+        } else {
+          alert('Erro ao excluir: ' + (data.message || 'Erro desconhecido'));
+        }
+      } catch (error) {
+        alert('Erro ao conectar com o servidor: ' + error.message);
+      }
     }
-  }
-</script>a
+  </script>
 </body>
 </html>

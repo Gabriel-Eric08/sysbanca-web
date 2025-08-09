@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <title>Resultados</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        .animal-nome {
+            color: red;
+            font-weight: bold;
+        }
+    </style>
+</head>
+
+<body class="container py-4">
+    <h2 class="mb-4">Resultados</h2>
+
+    <div class="mb-3">
+    <label class="form-label">Extração</label>
+    <select id="extracao_select" class="form-select w-auto d-inline-block me-3">
+        {% for extrac in extracoes %}
+            <option value="{{ extrac.extracao }}" {% if extracao_selecionada == extrac.extracao %}selected{% endif %}>
+                {{ extrac.extracao }}
+            </option>
+        {% endfor %}
+    </select>
+</div>
+
+    <div class="mb-4">
+        <div class="mb-2">
+            <label>1º Prêmio:</label>
+            <input type="text" id="premio1" maxlength="4" class="form-control d-inline-block w-auto premio-input"
+                   {% if not pode_salvar %}readonly{% endif %}
+                   oninput="gerarAutomaticos()">
+            Grupo:
+            <input type="text" id="grupo1" maxlength="2" class="form-control d-inline-block w-auto" readonly>
+            Bicho:
+            <span id="animal1" class="animal-nome"></span>
+        </div>
+        <div class="mb-2">
+            <label>2º Prêmio:</label>
+            <input type="text" id="premio2" maxlength="4" class="form-control d-inline-block w-auto premio-input"
+                   {% if not pode_salvar %}readonly{% endif %}
+                   oninput="gerarAutomaticos()">
+            Grupo:
+            <input type="text" id="grupo2" maxlength="2" class="form-control d-inline-block w-auto" readonly>
+            Bicho:
+            <span id="animal2" class="animal-nome"></span>
+        </div>
+        <div class="mb-2">
+            <label>3º Prêmio:</label>
+            <input type="text" id="premio3" maxlength="4" class="form-control d-inline-block w-auto premio-input"
+                   {% if not pode_salvar %}readonly{% endif %}
+                   oninput="gerarAutomaticos()">
+            Grupo:
+            <input type="text" id="grupo3" maxlength="2" class="form-control d-inline-block w-auto" readonly>
+            Bicho:
+            <span id="animal3" class="animal-nome"></span>
+        </div>
+        <div class="mb-2">
+            <label>4º Prêmio:</label>
+            <input type="text" id="premio4" maxlength="4" class="form-control d-inline-block w-auto premio-input"
+                   {% if not pode_salvar %}readonly{% endif %}
+                   oninput="gerarAutomaticos()">
+            Grupo:
+            <input type="text" id="grupo4" maxlength="2" class="form-control d-inline-block w-auto" readonly>
+            Bicho:
+            <span id="animal4" class="animal-nome"></span>
+        </div>
+        <div class="mb-2">
+            <label>5º Prêmio:</label>
+            <input type="text" id="premio5" maxlength="4" class="form-control d-inline-block w-auto premio-input"
+                   {% if not pode_salvar %}readonly{% endif %}
+                   oninput="gerarAutomaticos()">
+            Grupo:
+            <input type="text" id="grupo5" maxlength="2" class="form-control d-inline-block w-auto" readonly>
+            Bicho:
+            <span id="animal5" class="animal-nome"></span>
+        </div>
+
+        <div class="mb-2">
+            <label>6º Prêmio:</label>
+            <input type="text" id="premio6" class="form-control d-inline-block w-auto premio-input" readonly>
+            Grupo:
+            <input type="text" id="grupo6" maxlength="2" class="form-control d-inline-block w-auto" readonly>
+            Bicho:
+            <span id="animal6" class="animal-nome"></span>
+        </div>
+        <div class="mb-2">
+            <label>7º Prêmio:</label>
+            <input type="text" id="premio7" class="form-control d-inline-block w-auto premio-input" readonly>
+            Grupo:
+            <input type="text" id="grupo7" maxlength="2" class="form-control d-inline-block w-auto" readonly>
+            Bicho:
+            <span id="animal7" class="animal-nome"></span>
+        </div>
+        <div class="mb-2">
+            <label>8º Prêmio:</label>
+            <input type="text" id="premio8" class="form-control d-inline-block w-auto premio-input" readonly>
+            Grupo:
+            <input type="text" id="grupo8" maxlength="2" class="form-control d-inline-block w-auto" readonly>
+            Bicho:
+            <span id="animal8" class="animal-nome"></span>
+        </div>
+        <div class="mb-2">
+            <label>9º Prêmio:</label>
+            <input type="text" id="premio9" class="form-control d-inline-block w-auto premio-input" readonly>
+            Grupo:
+            <input type="text" id="grupo9" maxlength="2" class="form-control d-inline-block w-auto" readonly>
+            Bicho:
+            <span id="animal9" class="animal-nome"></span>
+        </div>
+        <div class="mb-2">
+            <label>10º Prêmio:</label>
+            <input type="text" id="premio10" class="form-control d-inline-block w-auto premio-input" readonly>
+            Grupo:
+            <input type="text" id="grupo10" maxlength="2" class="form-control d-inline-block w-auto" readonly>
+            Bicho:
+            <span id="animal10" class="animal-nome"></span>
+        </div>
+    </div>
+
+    <div class="mb-4">
+        <a href="{{ url_for('Home.home') }}" class="btn btn-success">Voltar</a>
+        {% if pode_salvar %}
+            <button type="button" class="btn btn-secondary me-2" onclick="gerarNumeros()">Gerar números</button> 
+            <button class="btn btn-primary" onclick="salvarTabela()">Salvar</button>
+        {% endif %}
+    </div>
+
+    <script>
+        const animais = [
+            'AVESTRUZ', 'ÁGUIA', 'BURRO', 'BORBOLETA', 'CACHORRO', 'CABRA',
+            'CARNEIRO', 'CAMELO', 'COBRA', 'COELHO', 'CAVALO', 'ELEFANTE',
+            'GALO', 'GATO', 'JACARÉ', 'LEÃO', 'MACACO', 'PORCO', 'PAVÃO',
+            'PERU', 'TOURO', 'TIGRE', 'URSO', 'VEADO', 'VACA'
+        ];
+
+        function gerarGrupoBicho(inputId, grupoId, animalId) {
+            const valor = document.getElementById(inputId).value.trim();
+            if (/^\d{4}$/.test(valor)) {
+                let ultimosDois = valor.slice(2);
+                let numero = parseInt(ultimosDois, 10);
+                if (numero === 0) numero = 100;
+                const grupo = Math.ceil(numero / 4);
+                document.getElementById(grupoId).value = String(grupo).padStart(2, '0');
+                document.getElementById(animalId).innerText = animais[grupo - 1] || '';
+            } else {
+                document.getElementById(grupoId).value = '';
+                document.getElementById(animalId).innerText = '';
+            }
+        }
+
+        function gerarAutomaticos() {
+            // Gera grupo e bicho para os primeiros 5 prêmios enquanto o usuário digita
+            for (let idx = 1; idx <= 5; idx++) {
+                gerarGrupoBicho(`premio${idx}`, `grupo${idx}`, `animal${idx}`);
+            }
+
+            const premiosPreenchidos = Array.from({ length: 5 }, (_, i) => document.getElementById(`premio${i + 1}`).value.trim());
+            const todosValidos = premiosPreenchidos.every(val => /^\d{4}$/.test(val));
+
+            if (todosValidos) {
+                const premio1 = document.getElementById("premio1").value;
+                const premio2 = document.getElementById("premio2").value;
+                const premio3 = document.getElementById("premio3").value;
+                const premio4 = document.getElementById("premio4").value;
+                const premio5 = document.getElementById("premio5").value;
+
+                const premio6 = premio1.slice(0, 1) + premio2.slice(0, 1) + premio3.slice(0, 1) + premio4.slice(0, 1);
+                const premio7 = premio1.slice(1, 2) + premio2.slice(1, 2) + premio3.slice(1, 2) + premio4.slice(1, 2);
+                const premio8 = premio1.slice(2, 3) + premio2.slice(2, 3) + premio3.slice(2, 3) + premio4.slice(2, 3);
+                const premio9 = premio1.slice(3, 4) + premio2.slice(3, 4) + premio3.slice(3, 4) + premio4.slice(3, 4);
+                
+                const totalSoma = [premio1, premio2, premio3, premio4, premio5, premio6, premio7, premio8, premio9]
+                    .reduce((soma, val) => soma + (parseFloat(val) || 0), 0);
+
+                const somaFormatada = String(Math.floor(totalSoma) % 10000).padStart(4, '0');
+
+                document.getElementById("premio6").value = premio6;
+                document.getElementById("premio7").value = premio7;
+                document.getElementById("premio8").value = premio8;
+                document.getElementById("premio9").value = premio9;
+                document.getElementById("premio10").value = somaFormatada;
+
+                for (let idx = 6; idx <= 10; idx++) {
+                    gerarGrupoBicho(`premio${idx}`, `grupo${idx}`, `animal${idx}`);
+                }
+            } else {
+                for (let idx = 6; idx <= 10; idx++) {
+                    document.getElementById(`premio${idx}`).value = '';
+                    document.getElementById(`grupo${idx}`).value = '';
+                    document.getElementById(`animal${idx}`).innerText = '';
+                }
+            }
+        }
+
+        function gerarNumeros() {
+            for (let idx = 1; idx <= 5; idx++) {
+                const numero = String(Math.floor(1000 + Math.random() * 9000));
+                document.getElementById(`premio${idx}`).value = numero;
+            }
+            gerarAutomaticos();
+        }
+
+        function salvarTabela() {
+            const extracao = document.getElementById("extracao").value;
+            const data = document.getElementById("DataExtracao").value;
+
+            const premios = [];
+            for (let i = 1; i <= 10; i++) {
+                premios.push(document.getElementById(`premio${i}`).value.trim());
+            }
+
+            fetch("{{ url_for('Resultado.salvar') }}", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({
+                    extracao: extracao,
+                    data: data,
+                    premios: premios
+                })
+            })
+            .then(res => res.json())
+            .then(json => {
+                alert(json.message);
+            })
+            .catch(err => {
+                console.error("Erro ao salvar:", err);
+                alert("Erro ao salvar os dados.");
+            });
+        }
+
+        function buscarEPreencher() {
+            const extracao = document.getElementById("extracao").value;
+            const data = document.getElementById("DataExtracao").value;
+
+            if (!extracao || !data) {
+                alert("Por favor, selecione a extração e a data.");
+                return;
+            }
+
+            const url_rota_consulta = "{{ url_for('Resultado.consultar_resultado', extracao='EXTRACAO', data='DATA') }}";
+            const url_rota1_consulta = "{{ url_for('Resultado1.consultar_resultado', extracao='EXTRACAO', data='DATA') }}";
+
+            let urlComParametros;
+            if ("{{ pode_salvar }}" === "True") {
+                urlComParametros = url_rota_consulta;
+            } else {
+                urlComParametros = url_rota1_consulta;
+            }
+
+            urlComParametros = urlComParametros
+                .replace('EXTRACAO', encodeURIComponent(extracao))
+                .replace('DATA', encodeURIComponent(data));
+
+            window.location.href = urlComParametros;
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const resultado = {{ resultado|tojson|safe if resultado else '{}' }};
+            if (Object.keys(resultado).length > 0) {
+                for (let i = 1; i <= 10; i++) {
+                    const premioKey = 'premio_' + i;
+                    const premioValue = resultado[premioKey];
+                    if (premioValue) {
+                        document.getElementById(`premio${i}`).value = premioValue;
+                        gerarGrupoBicho(`premio${i}`, `grupo${i}`, `animal${i}`);
+                    }
+                }
+            }
+        });
+    </script>
+</body>
+</html>
