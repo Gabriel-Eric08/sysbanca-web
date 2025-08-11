@@ -111,3 +111,10 @@ def validate_credentials():
         "area": user.area
 
     }, 200
+
+@auth_route.route('/validate/download', methods=['GET'])
+def download():
+    # Caminho para o arquivo que você quer que seja baixado
+    # Este arquivo precisa estar na pasta 'static' do seu projeto Flask
+    caminho_do_arquivo = 'SysApp.apk'
+    return render_template('download.html', file_path=caminho_do_arquivo)

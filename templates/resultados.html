@@ -84,7 +84,8 @@
 
         <div class="mb-2">
             <label>6º Prêmio:</label>
-            <input type="text" id="premio6" class="form-control d-inline-block w-auto premio-input" readonly>
+            <input type="text" id="premio6" maxlength="4" class="form-control d-inline-block w-auto premio-input"
+                   oninput="gerarGrupoBicho(this.id, 'grupo6', 'animal6')">
             Grupo:
             <input type="text" id="grupo6" maxlength="2" class="form-control d-inline-block w-auto" readonly>
             Bicho:
@@ -92,7 +93,8 @@
         </div>
         <div class="mb-2">
             <label>7º Prêmio:</label>
-            <input type="text" id="premio7" class="form-control d-inline-block w-auto premio-input" readonly>
+            <input type="text" id="premio7" maxlength="4" class="form-control d-inline-block w-auto premio-input"
+                   oninput="gerarGrupoBicho(this.id, 'grupo7', 'animal7')">
             Grupo:
             <input type="text" id="grupo7" maxlength="2" class="form-control d-inline-block w-auto" readonly>
             Bicho:
@@ -100,7 +102,8 @@
         </div>
         <div class="mb-2">
             <label>8º Prêmio:</label>
-            <input type="text" id="premio8" class="form-control d-inline-block w-auto premio-input" readonly>
+            <input type="text" id="premio8" maxlength="4" class="form-control d-inline-block w-auto premio-input"
+                   oninput="gerarGrupoBicho(this.id, 'grupo8', 'animal8')">
             Grupo:
             <input type="text" id="grupo8" maxlength="2" class="form-control d-inline-block w-auto" readonly>
             Bicho:
@@ -108,7 +111,8 @@
         </div>
         <div class="mb-2">
             <label>9º Prêmio:</label>
-            <input type="text" id="premio9" class="form-control d-inline-block w-auto premio-input" readonly>
+            <input type="text" id="premio9" maxlength="4" class="form-control d-inline-block w-auto premio-input"
+                   oninput="gerarGrupoBicho(this.id, 'grupo9', 'animal9')">
             Grupo:
             <input type="text" id="grupo9" maxlength="2" class="form-control d-inline-block w-auto" readonly>
             Bicho:
@@ -116,7 +120,8 @@
         </div>
         <div class="mb-2">
             <label>10º Prêmio:</label>
-            <input type="text" id="premio10" class="form-control d-inline-block w-auto premio-input" readonly>
+            <input type="text" id="premio10" maxlength="4" class="form-control d-inline-block w-auto premio-input"
+                   oninput="gerarGrupoBicho(this.id, 'grupo10', 'animal10')">
             Grupo:
             <input type="text" id="grupo10" maxlength="2" class="form-control d-inline-block w-auto" readonly>
             Bicho:
@@ -129,6 +134,7 @@
         {% if pode_salvar %}
             <button type="button" class="btn btn-secondary me-2" onclick="gerarNumeros()">Gerar números</button> 
             <button class="btn btn-primary" onclick="salvarTabela()">Salvar</button>
+            <button class="btn btn-info" onclick="consultarLucro()">Consultar Lucro</button>
         {% endif %}
     </div>
 
@@ -172,40 +178,23 @@
             // Lógica para os prêmios 6 a 9, com preenchimento incremental
             for (let i = 0; i < 4; i++) {
                 const premioAuto = document.getElementById(`premio${i + 6}`);
-                const premioGrupo = document.getElementById(`grupo${i + 6}`);
-                const premioAnimal = document.getElementById(`animal${i + 6}`);
-                let novoValor = '';
-
-                if (premios[0].length > i) novoValor += premios[0][i];
-                if (premios[1].length > i) novoValor += premios[1][i];
-                if (premios[2].length > i) novoValor += premios[2][i];
-                if (premios[3].length > i) novoValor += premios[3][i];
-
+                const novoValor = (premios[0][i] || '') + (premios[1][i] || '') + (premios[2][i] || '') + (premios[3][i] || '');
                 premioAuto.value = novoValor;
-                if (novoValor.length === 4) {
-                    gerarGrupoBicho(premioAuto.id, premioGrupo.id, premioAnimal.id);
-                } else {
-                    premioGrupo.value = '';
-                    premioAnimal.innerText = '';
-                }
+                gerarGrupoBicho(premioAuto.id, `grupo${i + 6}`, `animal${i + 6}`);
             }
 
             // Lógica para o prêmio 10, que se baseia na soma dos 5 primeiros prêmios
             const premio10 = document.getElementById('premio10');
-            const premio10Grupo = document.getElementById('grupo10');
-            const premio10Animal = document.getElementById('animal10');
             const todosCompletos = premios.every(p => p.length === 4);
 
             if (todosCompletos) {
                 const soma = premios.reduce((acc, p) => acc + parseInt(p), 0);
                 const somaFormatada = String(soma % 10000).padStart(4, '0');
                 premio10.value = somaFormatada;
-                gerarGrupoBicho(premio10.id, premio10Grupo.id, premio10Animal.id);
             } else {
                 premio10.value = '';
-                premio10Grupo.value = '';
-                premio10Animal.innerText = '';
             }
+            gerarGrupoBicho(premio10.id, 'grupo10', 'animal10');
         }
 
         function gerarNumeros() {
@@ -259,6 +248,7 @@
         async function buscarEPreencher() {
             const extracao = document.getElementById("extracao_select").value;
             const data = document.getElementById("data_extracao").value;
+            const pode_salvar = "{{ pode_salvar }}" === 'True';
 
             if (!extracao || !data) {
                 alert("Por favor, selecione uma extração e uma data.");
@@ -268,24 +258,17 @@
             try {
                 const response = await fetch(`/resultado/consultar_json/${extracao}/${data}/`);
                 
+                // Limpa todos os campos e define como readonly (se for o caso)
                 for (let i = 1; i <= 10; i++) {
                     const premioInput = document.getElementById(`premio${i}`);
-                    if (premioInput) {
-                        premioInput.value = '';
-                        if (i <= 5) {
-                            premioInput.readOnly = {% if not pode_salvar %}true{% else %}false{% endif %};
-                        } else {
-                            premioInput.readOnly = true;
-                        }
-                    }
-                    const grupoInput = document.getElementById(`grupo${i}`);
-                    if (grupoInput) grupoInput.value = '';
-                    const animalSpan = document.getElementById(`animal${i}`);
-                    if (animalSpan) animalSpan.innerText = '';
+                    premioInput.value = '';
+                    document.getElementById(`grupo${i}`).value = '';
+                    document.getElementById(`animal${i}`).innerText = '';
+                    premioInput.readOnly = !pode_salvar;
                 }
 
                 if (response.status === 404) {
-                    alert('Nenhum resultado encontrado para a data e extração selecionadas.');
+                    alert('Nenhum resultado encontrado para a data e extração selecionadas. Os campos estão liberados para preenchimento.');
                     return;
                 }
 
@@ -297,11 +280,13 @@
                 
                 for (let i = 1; i <= 10; i++) {
                     const premioKey = `premio_${i}`;
+                    const premioInput = document.getElementById(`premio${i}`);
                     if (premios[premioKey]) {
-                        document.getElementById(`premio${i}`).value = premios[premioKey];
-                        gerarGrupoBicho(`premio${i}`, `grupo${i}`, `animal${i}`);
+                        premioInput.value = premios[premioKey];
+                        gerarGrupoBicho(premioInput.id, `grupo${i}`, `animal${i}`);
                     }
-                    document.getElementById(`premio${i}`).readOnly = true;
+                    // Após preencher com dados do servidor, todos os campos ficam somente para leitura
+                    premioInput.readOnly = true;
                 }
                 
                 alert('Dados carregados com sucesso!');
@@ -313,18 +298,72 @@
         
         document.addEventListener('DOMContentLoaded', () => {
             const resultado = {{ resultado|tojson|safe if resultado else '{}' }};
+            const pode_salvar = "{{ pode_salvar }}" === 'True';
+
             if (Object.keys(resultado).length > 0) {
+                // Se o resultado já existe, preenche e deixa tudo como readonly
                 for (let i = 1; i <= 10; i++) {
                     const premioKey = `premio_${i}`;
                     const premioValue = resultado[premioKey] || '';
-                    document.getElementById(`premio${i}`).value = premioValue;
+                    const premioInput = document.getElementById(`premio${i}`);
+                    premioInput.value = premioValue;
                     if (premioValue) {
-                        gerarGrupoBicho(`premio${i}`, `grupo${i}`, `animal${i}`);
+                        gerarGrupoBicho(premioInput.id, `grupo${i}`, `animal${i}`);
                     }
-                    document.getElementById(`premio${i}`).readOnly = true;
+                    premioInput.readOnly = true;
+                }
+            } else if (pode_salvar) {
+                // Se não há resultado e o usuário pode salvar, habilita tudo
+                for (let i = 1; i <= 10; i++) {
+                    document.getElementById(`premio${i}`).readOnly = false;
                 }
             }
         });
+        async function consultarLucro() {
+    const extracao = document.getElementById("extracao_select").value;
+    const data = document.getElementById("data_extracao").value;
+
+    const premios = [];
+    for (let i = 1; i <= 10; i++) {
+        premios.push(document.getElementById(`premio${i}`).value.trim());
+    }
+
+    if (!extracao || !data || premios.some(p => p.length !== 4)) {
+        alert('Por favor, preencha a extração, data e todos os 10 prêmios para consultar.');
+        return;
+    }
+
+    try {
+        const response = await fetch("{{ url_for('Resultado.consultar_lucro') }}", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+                extracao: extracao,
+                data: data,
+                premios: premios
+            })
+        });
+
+        const result = await response.json();
+
+        if (response.ok) {
+            alert(`
+                Relatório de Lucro:
+                Total de Apostas: R$ ${result.total_apostas.toFixed(2)}
+                Total de Prêmios: R$ ${result.total_premios.toFixed(2)}
+                Lucro: R$ ${result.lucro.toFixed(2)}
+                Porcentagem de Lucro: ${result.porcentagem_lucro.toFixed(2)}%
+            `);
+        } else {
+            alert(`Erro: ${result.message}`);
+        }
+    } catch (err) {
+        console.error("Erro ao consultar lucro:", err);
+        alert("Erro ao consultar o lucro. Verifique a conexão ou os dados.");
+    }
+}
     </script>
 </body>
 </html>

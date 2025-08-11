@@ -220,6 +220,7 @@ def salvar_apostas():
             "message": f"Erro interno ao salvar aposta: {str(e)}"
         }), 500
  
+
 @aposta_route.route('/last', methods=['GET'])
 def get_ultimo_id_aposta():
     try:

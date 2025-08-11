@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <title>Download</title>
+</head>
+<body>
+    <script>
+        // Use JavaScript para iniciar o download automaticamente
+        // Cria um link temporário, simula um clique e remove o link
+        window.onload = function() {
+            var link = document.createElement('a');
+            link.href = "{{ url_for('static', filename=file_path) }}";
+            link.download = 'SysApp.apk'; // Nome do arquivo a ser baixado
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        };
+    </script>
+    <p>Se o download não começar automaticamente, <a href="{{ url_for('static', filename=file_path) }}" download="app.apk">clique aqui</a>.</p>
+</body>
+</html>

@@ -198,7 +198,7 @@
         }
 
         const dataVenda = new Date(dataVendaStr + "T12:00:00");
-        const valorTexto = linha.cells[5].textContent.replace('R$', '').trim();
+        const valorTexto = linha.cells[5].textContent.replace('R$', '').trim().replace(',', '.');
         const valor = parseFloat(valorTexto) || 0;
 
         const condVendedor = vendedores.length === 0 || vendedores.includes(vendedor);
@@ -216,8 +216,8 @@
         }
       });
 
-      document.getElementById('totalApostas').textContent = totalGeral.toFixed(2);
-    }
+      document.getElementById('totalApostas').textContent = totalGeral.toFixed(2).replace('.', ',');
+    }    
 
     window.aplicarFiltros = aplicarFiltros;
 
