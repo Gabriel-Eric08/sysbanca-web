@@ -146,13 +146,33 @@ def relatorio_vendas_por_modalidade():
 @relatorio_route.route('/vendas', methods=['GET'])
 def relatorio_page1():
     apostas = Aposta.query.order_by(Aposta.data_atual.desc()).all()
-    total_geral = sum(aposta.valor_total for aposta in apostas)
+    vendedores_db = Vendedor.query.all()
+    areas = Area.query.all()
+    extracoes = Extracao.query.all()
 
-    areas= Area.query.all()
-    extracoes=Extracao.query.all()
-    vendedores=Vendedor.query.all()
+    # Cria um dicionário para mapear o nome do vendedor para o username
+    # Isso resolve a inconsistência entre as tabelas
+    vendedor_map = {v.nome: v.username for v in vendedores_db}
+    
+    # Prepara a lista de apostas para o template, adicionando o username
+    apostas_com_username = []
+    for aposta in apostas:
+        aposta_dict = aposta.__dict__
+        # Adiciona o username ao dicionário da aposta.
+        # Usa o nome do vendedor como fallback se não encontrar o username.
+        aposta_dict['vendedor_username'] = vendedor_map.get(aposta.vendedor, aposta.vendedor)
+        apostas_com_username.append(aposta_dict)
+    
+    total_geral = sum(a.valor_total for a in apostas)
 
-    return render_template('relatoriovendas.html', apostas=apostas, total_geral=round(total_geral, 2), areas=areas,extracoes=extracoes,vendedores=vendedores)
+    return render_template(
+        'relatoriovendas.html',
+        apostas=apostas_com_username,
+        total_geral=round(total_geral, 2),
+        areas=areas,
+        extracoes=extracoes,
+        vendedores=vendedores_db
+    )
 
 
 @relatorio_route.route('/apostasexcluidas', methods=['GET'])
