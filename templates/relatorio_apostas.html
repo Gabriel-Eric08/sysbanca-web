@@ -7,6 +7,7 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/choices.js/public/assets/styles/choices.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
     <style>
+        /* (Seus estilos CSS permanecem os mesmos) */
         body {
             font-family: 'Roboto', sans-serif;
             padding: 20px;
@@ -198,7 +199,7 @@
         <div class="row mb-3 g-3">
             <div class="col-md-3">
                 <label for="selectVendedor" class="form-label">Vendedor:</label>
-                <select id="selectVendedor" class="form-select" onchange="applyFilters()">
+                <select id="selectVendedor" class="form-select">
                     <option value="">Todos os Vendedores</option>
                     {% for vendedor in vendedores %}
                         <option value="{{ vendedor }}">{{ vendedor }}</option>
@@ -207,7 +208,7 @@
             </div>
             <div class="col-md-3">
                 <label for="selectModalidade" class="form-label">Modalidade:</label>
-                <select id="selectModalidade" class="form-select" onchange="applyFilters()">
+                <select id="selectModalidade" class="form-select">
                     <option value="">Todas as Modalidades</option>
                     {% for modalidade in modalidades %}
                         <option value="{{ modalidade }}">{{ modalidade }}</option>
@@ -216,7 +217,7 @@
             </div>
             <div class="col-md-3">
                 <label for="selectExtracao" class="form-label">Extração:</label>
-                <select id="selectExtracao" class="form-select" onchange="applyFilters()">
+                <select id="selectExtracao" class="form-select">
                     <option value="">Todas as Extrações</option>
                     {% for extracao in extracoes %}
                         <option value="{{ extracao }}">{{ extracao }}</option>
@@ -225,7 +226,7 @@
             </div>
             <div class="col-md-3">
                 <label for="selectArea" class="form-label">Área:</label>
-                <select id="selectArea" class="form-select" onchange="applyFilters()">
+                <select id="selectArea" class="form-select">
                     <option value="">Todas as Áreas</option>
                     {% for area in areas %}
                         <option value="{{ area }}">{{ area }}</option>
@@ -236,10 +237,10 @@
         <div class="row mb-4 align-items-end">
             <div class="col-md-3">
                 <label for="filterDate" class="form-label">Data:</label>
-                <input type="date" id="filterDate" class="form-control" onchange="applyFilters()">
+                <input type="date" id="filterDate" class="form-control">
             </div>
             <div class="col-md-auto">
-                <button type="button" class="btn botao-estiloso" onclick="printReport()">Imprimir Relatório</button>
+                <button type="button" class="btn botao-estiloso" onclick="fetchAndRenderData()">Filtrar</button>
             </div>
         </div>
         
@@ -255,6 +256,9 @@
                 </tr>
             </thead>
             <tbody>
+                <tr>
+                    <td colspan="5" class="text-center">Selecione os filtros e clique em "Filtrar" para ver os dados.</td>
+                </tr>
             </tbody>
         </table>
 
@@ -277,34 +281,9 @@
                 </tr>
             </thead>
             <tbody id="apostasTableBody">
-                {% for aposta in apostas %}
-                    <tr 
-                        data-vendedor="{{ aposta.vendedor }}" 
-                        data-modalidade="{{ aposta.modalidade }}" 
-                        data-extracao="{{ aposta.extracao }}" 
-                        data-area="{{ aposta.area }}" 
-                        data-data="{{ aposta.data_aposta }}" 
-                        data-valor-apostado="{{ '%.2f'|format(aposta.valor_apostado_individual) }}"
-                        data-valor-comissao="{{ '%.2f'|format(aposta.valor_comissao) }}"
-                    >
-                        <td>#{{ aposta.bilhete_id }}</td>
-                        <td>{{ aposta.data_aposta }}</td>
-                        <td>{{ aposta.vendedor }}</td>
-                        <td>{{ aposta.extracao }}</td>
-                        <td>{{ aposta.area }}</td>
-                        <td>{{ aposta.modalidade }}</td>
-                        <td>{{ aposta.numeros }}</td>
-                        <td>{{ aposta.premio_str }}</td>
-                        <td data-value="{{ '%.2f'|format(aposta.valor_apostado_individual) }}">R$ {{ '%.2f'|format(aposta.valor_apostado_individual) }}</td>
-                        <td>{{ '%.2f'|format(aposta.unidade_aposta) }}</td>
-                        <td>{{ '%.2f'|format(aposta.comissao_percentual) }}%</td>
-                        <td data-value="{{ '%.2f'|format(aposta.valor_comissao) }}">R$ {{ '%.2f'|format(aposta.valor_comissao) }}</td>
-                    </tr>
-                {% else %}
-                    <tr>
-                        <td colspan="12" class="text-center">Nenhuma aposta encontrada.</td>
-                    </tr>
-                {% endfor %}
+                <tr>
+                    <td colspan="12" class="text-center">Selecione os filtros e clique em "Filtrar" para ver os dados.</td>
+                </tr>
             </tbody>
         </table>
 
@@ -327,41 +306,20 @@
                 </tr>
             </thead>
             <tbody id="apostasPremiadasTableBody">
-                {% for premiada in apostas_premiadas %}
-                    <tr
-                        data-vendedor="{{ premiada.vendedor }}"
-                        data-extracao="{{ premiada.extracao }}"
-                        data-area="{{ premiada.area }}"
-                        data-data="{{ premiada.data_atual.strftime('%Y-%m-%d') }}"
-                        data-valor-premio="{{ premiada.valor_premio|replace(',', '.') }}"
-                        data-pago="{{ premiada.pago }}"
-                    >
-                        <td>{{ premiada.id }}</td>
-                        <td>#{{ premiada.numero_bilhete }}</td>
-                        <td>{{ premiada.data_atual.strftime('%d/%m/%Y') }}</td>
-                        <td>{{ premiada.hora_atual.strftime('%H:%M') }}</td>
-                        <td>{{ premiada.vendedor }}</td>
-                        <td>{{ premiada.extracao }}</td>
-                        <td>{{ premiada.area }}</td>
-                        <td data-value="{{ premiada.valor_premio|replace(',', '.') }}">R$ {{ premiada.valor_premio }}</td>
-                        <td>{{ 'Sim' if premiada.impresso == 1 else 'Não' }}</td>
-                        <td>{{ 'Sim' if premiada.pago == 1 else 'Não' }}</td>
-                    </tr>
-                {% else %}
-                    <tr>
-                        <td colspan="10" class="text-center">Nenhuma aposta premiada encontrada.</td>
-                    </tr>
-                {% endfor %}
+                <tr>
+                    <td colspan="10" class="text-center">Selecione os filtros e clique em "Filtrar" para ver os dados.</td>
+                </tr>
             </tbody>
         </table>
     </div>
+    
+    <div class="print-only">
+        </div>
+
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
         const debitoAnteriorValue = {{ debito_anterior | tojson }};
-
-        const allApostasRows = Array.from(document.getElementById('apostasTableBody').querySelectorAll('tr'));
-        const allApostasPremiadasRows = Array.from(document.getElementById('apostasPremiadasTableBody').querySelectorAll('tr'));
 
         function normalizeString(str) {
             if (str === null || typeof str === 'undefined') {
@@ -379,120 +337,141 @@
             return isNaN(parsed) ? 0.0 : parsed;
         }
 
-        function convertDateToYYYYMMDD(dateStr) {
-            if (!dateStr || dateStr.length !== 10 || !dateStr.includes('/')) {
-                return dateStr;
-            }
-            const parts = dateStr.split('/');
-            if (parts.length === 3) {
-                const [day, month, year] = parts;
-                return `${year}-${month}-${day}`;
-            }
-            return dateStr;
-        }
-
-        function applyFilters() {
-            const selectedVendedor = normalizeString(document.getElementById('selectVendedor').value);
-            const selectedModalidade = normalizeString(document.getElementById('selectModalidade').value);
-            const selectedExtracao = normalizeString(document.getElementById('selectExtracao').value);
-            const selectedArea = normalizeString(document.getElementById('selectArea').value);
+        async function fetchAndRenderData() {
+            const selectedVendedor = document.getElementById('selectVendedor').value;
+            const selectedModalidade = document.getElementById('selectModalidade').value;
+            const selectedExtracao = document.getElementById('selectExtracao').value;
+            const selectedArea = document.getElementById('selectArea').value;
             const selectedDate = document.getElementById('filterDate').value;
+            
+            // Coloca as tabelas no estado de "carregando"
+            const apostasTableBody = document.getElementById('apostasTableBody');
+            const apostasPremiadasTableBody = document.getElementById('apostasPremiadasTableBody');
+            const tabelaResumoBody = document.querySelector('#tabela-resumo tbody');
+            
+            apostasTableBody.innerHTML = '<tr><td colspan="12" class="text-center">Carregando...</td></tr>';
+            apostasPremiadasTableBody.innerHTML = '<tr><td colspan="10" class="text-center">Carregando...</td></tr>';
+            tabelaResumoBody.innerHTML = '<tr><td colspan="5" class="text-center">Carregando...</td></tr>';
+            
+            try {
+                const response = await fetch('/aposta/api/relatorio-caixa-dados', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        vendedor: selectedVendedor,
+                        modalidade: selectedModalidade,
+                        extracao: selectedExtracao,
+                        area: selectedArea,
+                        data: selectedDate
+                    })
+                });
 
-            const resumoVendedores = {};
+                if (!response.ok) {
+                    throw new Error('Erro ao buscar os dados do relatório.');
+                }
 
-            // Filtrar e processar a tabela de apostas
+                const data = await response.json();
+                
+                renderApostasTable(data.apostas_detalhadas);
+                renderApostasPremiadasTable(data.apostas_premiadas);
+                renderResumoTable(data.apostas_detalhadas, data.apostas_premiadas);
+                
+            } catch (error) {
+                console.error('Erro:', error);
+                apostasTableBody.innerHTML = '<tr><td colspan="12" class="text-center">Erro ao carregar os dados.</td></tr>';
+                apostasPremiadasTableBody.innerHTML = '<tr><td colspan="10" class="text-center">Erro ao carregar os dados.</td></tr>';
+                tabelaResumoBody.innerHTML = '<tr><td colspan="5" class="text-center">Erro ao carregar os dados.</td></tr>';
+            }
+        }
+        
+        function renderApostasTable(apostas) {
             const apostasTableBody = document.getElementById('apostasTableBody');
             apostasTableBody.innerHTML = '';
-            let apostasFound = false;
-
-            allApostasRows.forEach(row => {
-                const rowDataAposta = row.dataset.data;
-                const rowVendedor = normalizeString(row.dataset.vendedor);
-                const rowExtracao = normalizeString(row.dataset.extracao);
-                const rowArea = normalizeString(row.dataset.area);
-                const rowModalidade = normalizeString(row.dataset.modalidade);
-
-                const valorApostado = parseCurrencyToFloat(row.dataset.valorApostado);
-                const valorComissao = parseCurrencyToFloat(row.dataset.valorComissao);
-
-                let matches = true;
-                if (selectedDate && rowDataAposta !== selectedDate) matches = false;
-                if (selectedVendedor && rowVendedor !== selectedVendedor) matches = false;
-                if (selectedExtracao && rowExtracao !== selectedExtracao) matches = false;
-                if (selectedArea && rowArea !== selectedArea) matches = false;
-                if (selectedModalidade && rowModalidade !== selectedModalidade) matches = false;
-
-                if (matches) {
-                    apostasTableBody.appendChild(row.cloneNode(true));
-                    apostasFound = true;
-                    if (!resumoVendedores[rowVendedor]) {
-                        resumoVendedores[rowVendedor] = {
-                            area: rowArea,
-                            apurado: 0,
-                            comissao: 0
-                        };
-                    }
-                    resumoVendedores[rowVendedor].apurado += valorApostado;
-                    resumoVendedores[rowVendedor].comissao += valorComissao;
-                }
-            });
-
-            if (!apostasFound) {
-                const noDataRow = document.createElement('tr');
-                noDataRow.innerHTML = '<td colspan="12" class="text-center">Nenhuma aposta encontrada com os filtros aplicados.</td>';
-                apostasTableBody.appendChild(noDataRow);
+            
+            if (apostas.length === 0) {
+                apostasTableBody.innerHTML = '<tr><td colspan="12" class="text-center">Nenhuma aposta encontrada.</td></tr>';
+                return;
             }
-
-            // Filtrar e processar a tabela de apostas premiadas
+            
+            apostas.forEach(aposta => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>#${aposta.bilhete_id}</td>
+                    <td>${aposta.data_aposta}</td>
+                    <td>${aposta.vendedor}</td>
+                    <td>${aposta.extracao}</td>
+                    <td>${aposta.area}</td>
+                    <td>${aposta.modalidade}</td>
+                    <td>${aposta.numeros}</td>
+                    <td>${aposta.premio_str}</td>
+                    <td>R$ ${aposta.valor_apostado_individual.toFixed(2).replace('.', ',')}</td>
+                    <td>${aposta.unidade_aposta.toFixed(2).replace('.', ',')}</td>
+                    <td>${aposta.comissao_percentual.toFixed(2).replace('.', ',')}%</td>
+                    <td>R$ ${aposta.valor_comissao.toFixed(2).replace('.', ',')}</td>
+                `;
+                apostasTableBody.appendChild(row);
+            });
+        }
+        
+        function renderApostasPremiadasTable(premiadas) {
             const apostasPremiadasTableBody = document.getElementById('apostasPremiadasTableBody');
             apostasPremiadasTableBody.innerHTML = '';
-            let premiadasFound = false;
-            const resumoPremios = {}; // Para somar os prêmios por vendedor, independentemente dos filtros
-
-            allApostasPremiadasRows.forEach(row => {
-                const rowDataPremiada = row.dataset.data;
-                const rowVendedorPremiada = normalizeString(row.dataset.vendedor);
-                const rowExtracaoPremiada = normalizeString(row.dataset.extracao);
-                const rowAreaPremiada = normalizeString(row.dataset.area);
-                const rowPagoStatus = row.dataset.pago;
-                const valorPremio = parseCurrencyToFloat(row.dataset.valorPremio);
-
-                let matches = true;
-                if (selectedDate && rowDataPremiada !== selectedDate) matches = false;
-                if (selectedVendedor && rowVendedorPremiada !== selectedVendedor) matches = false;
-                if (selectedExtracao && rowExtracaoPremiada !== selectedExtracao) matches = false;
-                if (selectedArea && rowAreaPremiada !== selectedArea) matches = false;
-                
-                if (matches) {
-                    apostasPremiadasTableBody.appendChild(row.cloneNode(true));
-                    premiadasFound = true;
-                    
-                    if (rowPagoStatus === '1') {
-                        if (!resumoPremios[rowVendedorPremiada]) {
-                            resumoPremios[rowVendedorPremiada] = 0;
-                        }
-                        resumoPremios[rowVendedorPremiada] += valorPremio;
-                    }
-                }
-            });
-
-            if (!premiadasFound) {
-                const noDataRow = document.createElement('tr');
-                noDataRow.innerHTML = '<td colspan="10" class="text-center">Nenhuma aposta premiada encontrada com os filtros aplicados.</td>';
-                apostasPremiadasTableBody.appendChild(noDataRow);
+            
+            if (premiadas.length === 0) {
+                apostasPremiadasTableBody.innerHTML = '<tr><td colspan="10" class="text-center">Nenhuma aposta premiada encontrada.</td></tr>';
+                return;
             }
-
-            // Preencher a tabela de resumo
+            
+            premiadas.forEach(premiada => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${premiada.id}</td>
+                    <td>#${premiada.numero_bilhete}</td>
+                    <td>${premiada.data_atual}</td>
+                    <td>${premiada.hora_atual}</td>
+                    <td>${premiada.vendedor}</td>
+                    <td>${premiada.extracao}</td>
+                    <td>${premiada.area}</td>
+                    <td>R$ ${premiada.valor_premio.replace('.', ',')}</td>
+                    <td>${premiada.impresso == 1 ? 'Sim' : 'Não'}</td>
+                    <td>${premiada.pago == 1 ? 'Sim' : 'Não'}</td>
+                `;
+                apostasPremiadasTableBody.appendChild(row);
+            });
+        }
+        
+        function renderResumoTable(apostas, premiadas) {
             const tabelaResumoBody = document.querySelector('#tabela-resumo tbody');
             tabelaResumoBody.innerHTML = '';
             
-            // Unir os dados de apostas e prêmios para a tabela de resumo
+            const resumoVendedores = {};
+            const resumoPremios = {};
+
+            apostas.forEach(aposta => {
+                const vendedor = normalizeString(aposta.vendedor);
+                if (!resumoVendedores[vendedor]) {
+                    resumoVendedores[vendedor] = { apurado: 0, comissao: 0, area: aposta.area };
+                }
+                resumoVendedores[vendedor].apurado += aposta.valor_apostado_individual;
+                resumoVendedores[vendedor].comissao += aposta.valor_comissao;
+            });
+
+            premiadas.forEach(premiada => {
+                const vendedor = normalizeString(premiada.vendedor);
+                if (premiada.pago == 1) {
+                     if (!resumoPremios[vendedor]) {
+                         resumoPremios[vendedor] = 0;
+                     }
+                     resumoPremios[vendedor] += parseCurrencyToFloat(premiada.valor_premio);
+                }
+            });
+
             const allVendedores = new Set([...Object.keys(resumoVendedores), ...Object.keys(resumoPremios)]);
 
             if (allVendedores.size === 0) {
-                const noDataRow = document.createElement('tr');
-                noDataRow.innerHTML = '<td colspan="5" class="text-center">Nenhum dado encontrado para os filtros aplicados.</td>';
-                tabelaResumoBody.appendChild(noDataRow);
+                tabelaResumoBody.innerHTML = '<tr><td colspan="5" class="text-center">Nenhum dado encontrado para os filtros aplicados.</td></tr>';
             } else {
                 for (const vendedor of allVendedores) {
                     const dadosAposta = resumoVendedores[vendedor] || { apurado: 0, comissao: 0, area: 'N/A' };
@@ -514,8 +493,10 @@
                 }
             }
         }
-
+        
         function printReport() {
+            // (Esta função pode permanecer a mesma, mas agora ela vai pegar os dados das tabelas já renderizadas no DOM)
+            // Lógica de impressão...
             const selectedDateText = document.getElementById('filterDate').value ? new Date(document.getElementById('filterDate').value + 'T12:00:00').toLocaleDateString('pt-BR') : 'Todo o período';
             const selectedVendedorText = document.getElementById('selectVendedor').options[document.getElementById('selectVendedor').selectedIndex].text;
             const selectedModalidadeText = document.getElementById('selectModalidade').options[document.getElementById('selectModalidade').selectedIndex].text;
@@ -524,7 +505,6 @@
 
             const resumoTable = document.getElementById('tabela-resumo').cloneNode(true);
             
-            // A tabela de resumo impressa precisa ter o cabeçalho correto, pois foi alterado
             resumoTable.querySelector('thead tr').innerHTML = `
                 <th>Vendedor</th>
                 <th>Área</th>
@@ -558,6 +538,7 @@
                     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
                     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
                     <style>
+                        /* (Seus estilos de impressão aqui) */
                         body { font-family: 'Roboto', sans-serif; padding: 20px; }
                         h1, h2 { text-align: center; margin-bottom: 20px; color: #072749; }
                         .print-details p { margin-bottom: 8px; }
@@ -608,8 +589,6 @@
             printWindow.focus();
             printWindow.print();
         }
-        
-        document.addEventListener('DOMContentLoaded', applyFilters);
     </script>
 </body>
 </html>

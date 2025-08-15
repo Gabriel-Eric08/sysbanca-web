@@ -1,5 +1,11 @@
 gcloud config set project sysbanca-461408
 
-gcloud builds submit --tag gcr.io/sysbanca-461408/clesperanca-iowa:v3a .
+gcloud builds submit --tag gcr.io/sysbanca-461408/sysbanca-iowa:v36a .
 
-gcloud run deploy clesperanca-iowa --image gcr.io/sysbanca-461408/clesperanca-iowa:v3a --platform managed --region us-central1 --allow-unauthenticated --set-env-vars DB_USER=clesperanca,DB_PASSWORD=Tns22062010#,DB_NAME=clesperanca,DB_HOST=clesperanca.mysql.dbaas.com.br,DB_PORT=3306
+gcloud run deploy sysbanca-iowa --image gcr.io/sysbanca-461408/sysbanca-iowa:v36a --platform managed --region us-central1 --allow-unauthenticated --set-env-vars DB_USER=dbsysbanca,DB_PASSWORD=Tns22062010#,DB_NAME=dbsysbanca,DB_HOST=dbsysbanca.mysql.dbaas.com.br,DB_PORT=3306
+
+
+dbsysbanca
+clesperanca
+dbnordestina
+saopaulope

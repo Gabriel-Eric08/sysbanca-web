@@ -56,13 +56,45 @@ def salvar_apostas():
         data_atual_str = data.get('data_atual')
         hora_atual_str = data.get('hora_atual')
         pre_datar = data.get('pre_datar', False)
-        vendedor = data.get('vendedor')
+        vendedor_username = data.get('vendedor')
 
+        # 1. Obter o objeto Vendedor
+        vendedor_obj = Vendedor.query.filter_by(username=vendedor_username).first()
+        if not vendedor_obj:
+            return jsonify({
+                "success": False,
+                "message": f"Vendedor '{vendedor_username}' não encontrado."
+            }), 400
+
+        # Obter o limite de venda diário do vendedor
+        limite_venda = vendedor_obj.limite_venda if vendedor_obj.limite_venda is not None else float('inf')
+
+        # Obter a data atual da aposta para a verificação diária
+        data_atual = datetime.strptime(data_atual_str, "%d/%m/%Y").date()
+        
+        # Obter o valor total da nova aposta
+        valor_nova_aposta = float(data.get('valor_total', 0))
+
+        # 2. Calcular o total de vendas do vendedor para a data atual
+        total_venda_dia = db.session.query(func.sum(Aposta.valor_total)).filter(
+            Aposta.vendedor == vendedor_username,
+            Aposta.data_atual == data_atual
+        ).scalar() or 0.0
+
+        # 3. Verificar se a nova aposta ultrapassa o limite diário
+        if (total_venda_dia + valor_nova_aposta) > limite_venda:
+            return jsonify({
+                "success": False,
+                "message": (f"Venda recusada. O valor de R$ {total_venda_dia:.2f} já foi atingido hoje."
+                            f" Seu limite diário de venda é de R$ {limite_venda:.2f}.")
+            }), 403
+
+        # 4. Inicializar data_agendada (Correção do erro anterior)
         data_agendada = None
+        
         if pre_datar and data_agendada_str and data_agendada_str != "00/00/00":
             data_agendada = datetime.strptime(data_agendada_str, "%d/%m/%Y").date()
 
-        data_atual = datetime.strptime(data_atual_str, "%d/%m/%Y").date()
         hora_atual = datetime.strptime(hora_atual_str, "%H:%M").time()
 
         apostas_para_salvar = []
@@ -143,24 +175,49 @@ def salvar_apostas():
 
             premio_total_calculado = valor_total_aposta * cotacao_utilizada
 
-            # Lógica de Descarrego: verifica o valor unitário de cada número da aposta
-            if unidade_aposta > limite_descarrego:
-                excedente_unitario = unidade_aposta - limite_descarrego
-                premio_excedente_unitario = excedente_unitario * cotacao_utilizada
+            # ---- NOVA LÓGICA DE DESCARREGO POR NÚMERO ----
+            
+            # Itera sobre cada número da aposta para verificar individualmente
+            for numero in numeros:
+                # 5. Consulta para verificar se o número já teve um descarrego hoje
+                descarrego_existente = Descarrego.query.join(Aposta, Descarrego.bilhete == Aposta.id).filter(
+                    # Filtra por área, extração, modalidade e data
+                    db.func.lower(Aposta.area) == normalized_area,
+                    db.func.lower(Descarrego.extracao) == normalized_extracao,
+                    db.func.lower(Descarrego.modalidade) == normalized_modalidade_name,
+                    Aposta.data_atual == data_atual,
+                    # Verifica se o número existe na coluna 'numeros' do descarrego
+                    # Assume que 'numeros' é um JSON de lista de strings, ex: ["1234"]
+                    db.func.lower(Descarrego.numeros).like(f'%"{numero}"%')
+                ).first()
 
-                for numero in numeros:
-                    descarregos_para_salvar.append({
-                        "bilhete_id": None,
-                        "extracao": extracao,
-                        "valor_apostado": unidade_aposta,  # Valor unitário apostado
-                        "valor_excedente": excedente_unitario,
-                        "numeros": [numero],  # Salva cada número individualmente
-                        "data": datetime.now(),
-                        "modalidade": modalidade_nome,
-                        "premio_total": unidade_aposta * cotacao_utilizada,
-                        "premio_excedente": premio_excedente_unitario,
-                        "tipo_premio": premio_str
-                    })
+                if descarrego_existente:
+                    # Se o número já foi descarregado hoje, descarrega o valor TOTAL da aposta
+                    valor_excedente = unidade_aposta
+                    premio_excedente = unidade_aposta * cotacao_utilizada
+                elif unidade_aposta > limite_descarrego:
+                    # Se não houve descarrego anterior, verifica se a aposta atual excede o limite
+                    valor_excedente = unidade_aposta - limite_descarrego
+                    premio_excedente = valor_excedente * cotacao_utilizada
+                else:
+                    # Nenhuma das condições de descarrego foi atendida para este número
+                    continue # Pula para o próximo número
+
+                # Adiciona o descarrego à lista para salvar
+                descarregos_para_salvar.append({
+                    "bilhete_id": None,
+                    "extracao": extracao,
+                    "valor_apostado": unidade_aposta,
+                    "valor_excedente": valor_excedente,
+                    "numeros": [numero],
+                    "data": datetime.now(),
+                    "modalidade": modalidade_nome,
+                    "premio_total": unidade_aposta * cotacao_utilizada,
+                    "premio_excedente": premio_excedente,
+                    "tipo_premio": premio_str
+                })
+
+            # ---- FIM DA NOVA LÓGICA DE DESCARREGO ----
 
             nome_aposta = f"Aposta {contador_apostas}"
             apostas_para_salvar.append([
@@ -175,10 +232,10 @@ def salvar_apostas():
             contador_apostas += 1
 
         aposta_obj = Aposta(
-            vendedor=vendedor,
+            vendedor=vendedor_username,
             data_atual=data_atual,
             hora_atual=hora_atual,
-            valor_total=float(data.get('valor_total', 0)),
+            valor_total=valor_nova_aposta,
             extracao=extracao,
             apostas=json.dumps(apostas_para_salvar),
             pre_datar=pre_datar,
@@ -568,97 +625,162 @@ def normalize_string(s):
 
 @aposta_route.route('/relatorio-geral-caixa', methods=['GET'])
 def relatorio_apostas_detalhado():
-    todas_apostas_db = Aposta.query.order_by(Aposta.id.desc()).all()
-    
-    apostas_detalhadas = []
-    for aposta_principal in todas_apostas_db:
-        try:
-            apostas_json = json.loads(aposta_principal.apostas)
-        except json.JSONDecodeError:
-            print(f"Erro ao decodificar JSON para o bilhete {aposta_principal.id}: {aposta_principal.apostas}")
-            apostas_json = []
+    """
+    Renderiza a página de relatório com os campos de filtro.
+    Não carrega os dados das apostas e prêmios.
+    """
+    vendedores_nomes = [v[0] for v in Vendedor.query.with_entities(Vendedor.nome).distinct().order_by(Vendedor.nome).all()]
+    modalidades_nomes = [m[0] for m in Modalidade.query.with_entities(Modalidade.modalidade).distinct().order_by(Modalidade.modalidade).all()]
+    extracoes_nomes = [e[0] for e in Extracao.query.with_entities(Extracao.extracao).distinct().order_by(Extracao.extracao).all()]
+    areas_nomes = [a[0] for a in Area.query.with_entities(Area.regiao_area).distinct().order_by(Area.regiao_area).all()]
 
-        for aposta_individual in apostas_json:
-            if len(aposta_individual) >= 6:
-                modalidade_nome = aposta_individual[2]
-                valor_apostado_individual = aposta_individual[4]
-                vendedor_nome = aposta_principal.vendedor
-                area_nome = aposta_principal.area
-                extracao_nome = aposta_principal.extracao
+    return render_template(
+        'relatorio_apostas.html',
+        vendedores=vendedores_nomes,
+        modalidades=modalidades_nomes,
+        extracoes=extracoes_nomes,
+        areas=areas_nomes,
+        debito_anterior=0.00
+    )
 
-                comissao_aplicada = 0.0
 
-                normalized_area = normalize_string(area_nome)
-                normalized_modalidade = normalize_string(modalidade_nome)
-                normalized_vendedor = normalize_string(vendedor_nome)
-                normalized_extracao = normalize_string(extracao_nome)
+@aposta_route.route('/api/relatorio-caixa-dados', methods=['POST'])
+def get_relatorio_caixa_dados():
+    """
+    Recebe os filtros do frontend e retorna os dados de apostas e prêmios.
+    """
+    try:
+        filtros = request.get_json()
+        if not filtros:
+            print("Erro: Nenhum filtro recebido na requisição.")
+            return jsonify({"error": "Nenhum filtro recebido"}), 400
 
-                comissao_especifica = ComissaoArea.query.filter(
-                    db.func.lower(ComissaoArea.area) == normalized_area,
-                    db.func.lower(ComissaoArea.modalidade) == normalized_modalidade,
-                    db.func.lower(ComissaoArea.vendedor) == normalized_vendedor,
-                    db.func.lower(ComissaoArea.extracao) == normalized_extracao,
-                    ComissaoArea.ativar == 'sim'
-                ).first()
+        print(f"Filtros recebidos: {filtros}")
 
-                if comissao_especifica:
-                    comissao_aplicada = float(comissao_especifica.comissao)
-                else:
-                    vendedor_obj = Vendedor.query.filter(
-                        db.func.lower(Vendedor.nome) == normalized_vendedor
+        query_apostas = Aposta.query
+        query_apostas_premiadas = ApostaPremiada.query
+
+        if filtros.get('vendedor'):
+            normalized_vendedor = normalize_string(filtros['vendedor'])
+            query_apostas = query_apostas.filter(func.lower(Aposta.vendedor) == normalized_vendedor)
+            query_apostas_premiadas = query_apostas_premiadas.filter(func.lower(ApostaPremiada.vendedor) == normalized_vendedor)
+
+        if filtros.get('extracao'):
+            normalized_extracao = normalize_string(filtros['extracao'])
+            query_apostas = query_apostas.filter(func.lower(Aposta.extracao) == normalized_extracao)
+            query_apostas_premiadas = query_apostas_premiadas.filter(func.lower(ApostaPremiada.extracao) == normalized_extracao)
+
+        if filtros.get('area'):
+            normalized_area = normalize_string(filtros['area'])
+            query_apostas = query_apostas.filter(func.lower(Aposta.area) == normalized_area)
+            query_apostas_premiadas = query_apostas_premiadas.filter(func.lower(ApostaPremiada.area) == normalized_area)
+        
+        if filtros.get('data'):
+            query_apostas = query_apostas.filter(Aposta.data_atual == filtros['data'])
+            query_apostas_premiadas = query_apostas_premiadas.filter(ApostaPremiada.data_atual == filtros['data'])
+
+        print("Executando consultas filtradas...")
+        apostas_filtradas_db = query_apostas.order_by(Aposta.id.desc()).all()
+        apostas_premiadas_filtradas_db = query_apostas_premiadas.order_by(ApostaPremiada.id.desc()).all()
+        
+        print(f"Número de apostas encontradas: {len(apostas_filtradas_db)}")
+        print(f"Número de apostas premiadas encontradas: {len(apostas_premiadas_filtradas_db)}")
+
+        apostas_detalhadas = []
+        for aposta_principal in apostas_filtradas_db:
+            try:
+                apostas_json = json.loads(aposta_principal.apostas)
+            except json.JSONDecodeError:
+                print(f"Erro ao decodificar JSON para o bilhete {aposta_principal.id}. JSON: {aposta_principal.apostas}")
+                continue # Pula para o próximo bilhete
+
+            for aposta_individual in apostas_json:
+                if len(aposta_individual) >= 6:
+                    modalidade_nome = aposta_individual[2]
+                    
+                    if filtros.get('modalidade') and normalize_string(modalidade_nome) != normalize_string(filtros['modalidade']):
+                        continue
+
+                    valor_apostado_individual = aposta_individual[4]
+                    vendedor_nome = aposta_principal.vendedor
+                    area_nome = aposta_principal.area
+                    extracao_nome = aposta_principal.extracao
+                    
+                    comissao_aplicada = 0.0
+                    normalized_area = normalize_string(area_nome)
+                    normalized_modalidade = normalize_string(modalidade_nome)
+                    normalized_vendedor = normalize_string(vendedor_nome)
+                    normalized_extracao = normalize_string(extracao_nome)
+
+                    # Tenta encontrar comissão específica
+                    comissao_especifica = ComissaoArea.query.filter(
+                        func.lower(ComissaoArea.area) == normalized_area,
+                        func.lower(ComissaoArea.modalidade) == normalized_modalidade,
+                        func.lower(ComissaoArea.vendedor) == normalized_vendedor,
+                        func.lower(ComissaoArea.extracao) == normalized_extracao,
+                        ComissaoArea.ativar == 'sim'
                     ).first()
 
-                    if vendedor_obj and vendedor_obj.comissao is not None:
-                        comissao_aplicada = float(vendedor_obj.comissao)
+                    if comissao_especifica:
+                        comissao_aplicada = float(comissao_especifica.comissao)
+                    else:
+                        # Tenta encontrar comissão geral do vendedor
+                        vendedor_obj = Vendedor.query.filter(
+                            func.lower(Vendedor.nome) == normalized_vendedor
+                        ).first()
+                        if vendedor_obj and vendedor_obj.comissao is not None:
+                            comissao_aplicada = float(vendedor_obj.comissao)
+                        else:
+                            # Se não encontrar, a comissão permanece 0.0
+                            print(f"Aviso: Não foi possível encontrar a comissão para o vendedor {vendedor_nome}.")
+                            comissao_aplicada = 0.0
 
-                valor_comissao = (valor_apostado_individual * comissao_aplicada) / 100
+                    valor_comissao = (valor_apostado_individual * comissao_aplicada) / 100
 
-                apostas_detalhadas.append({
-                    "bilhete_id": aposta_principal.id,
-                    "data_aposta": aposta_principal.data_atual.strftime('%d/%m/%Y'),
-                    "vendedor": vendedor_nome,
-                    "extracao": extracao_nome,
-                    "area": area_nome,
-                    "modalidade": modalidade_nome,
-                    "numeros": ", ".join(aposta_individual[1]),
-                    "premio_str": aposta_individual[3],
-                    "valor_apostado_individual": valor_apostado_individual,
-                    "unidade_aposta": aposta_individual[5],
-                    "valor_total_bilhete": aposta_principal.valor_total,
-                    "comissao_percentual": comissao_aplicada,
-                    "valor_comissao": valor_comissao
-                })
-            else:
-                print(f"Formato inesperado da aposta individual no bilhete {aposta_principal.id}: {aposta_individual}")
+                    apostas_detalhadas.append({
+                        "bilhete_id": aposta_principal.id,
+                        "data_aposta": aposta_principal.data_atual.strftime('%d/%m/%Y'),
+                        "vendedor": vendedor_nome,
+                        "extracao": extracao_nome,
+                        "area": area_nome,
+                        "modalidade": modalidade_nome,
+                        "numeros": ", ".join(aposta_individual[1]),
+                        "premio_str": aposta_individual[3],
+                        "valor_apostado_individual": valor_apostado_individual,
+                        "unidade_aposta": aposta_individual[5],
+                        "valor_total_bilhete": aposta_principal.valor_total,
+                        "comissao_percentual": comissao_aplicada,
+                        "valor_comissao": valor_comissao
+                    })
+                else:
+                    print(f"Formato inesperado da aposta individual no bilhete {aposta_principal.id}: {aposta_individual}")
 
-    apostas_premiadas = ApostaPremiada.query.order_by(ApostaPremiada.id.desc()).all()
 
-    # --- Novas consultas para os selects ---
-    vendedores = Vendedor.query.with_entities(Vendedor.nome).distinct().order_by(Vendedor.nome).all()
-    # Extrai apenas os nomes e os converte para uma lista de strings
-    vendedores_nomes = [v[0] for v in vendedores]
-
-    modalidades = Modalidade.query.with_entities(Modalidade.modalidade).distinct().order_by(Modalidade.modalidade).all()
-    modalidades_nomes = [m[0] for m in modalidades]
-
-    extracoes = Extracao.query.with_entities(Extracao.extracao).distinct().order_by(Extracao.extracao).all()
-    extracoes_nomes = [e[0] for e in extracoes]
-
-    areas = Area.query.with_entities(Area.regiao_area).distinct().order_by(Area.regiao_area).all()
-    areas_nomes = [a[0] for a in areas]
-    # --- Fim das novas consultas ---
-
-    debito_anterior = 0.00
-
-    return render_template('relatorio_apostas.html', 
-                           apostas=apostas_detalhadas,
-                           apostas_premiadas=apostas_premiadas,
-                           vendedores=vendedores_nomes,
-                           modalidades=modalidades_nomes,
-                           extracoes=extracoes_nomes,
-                           areas=areas_nomes,
-                           debito_anterior=debito_anterior)
-
+        apostas_premiadas = []
+        for premiada in apostas_premiadas_filtradas_db:
+            apostas_premiadas.append({
+                "id": premiada.id,
+                "numero_bilhete": premiada.numero_bilhete,
+                "data_atual": premiada.data_atual.strftime('%d/%m/%Y'),
+                "hora_atual": premiada.hora_atual.strftime('%H:%M'),
+                "vendedor": premiada.vendedor,
+                "extracao": premiada.extracao,
+                "area": premiada.area,
+                "valor_premio": premiada.valor_premio,
+                "impresso": premiada.impresso,
+                "pago": premiada.pago,
+            })
+        
+        return jsonify({
+            "apostas_detalhadas": apostas_detalhadas,
+            "apostas_premiadas": apostas_premiadas,
+        })
+        
+    except Exception as e:
+        # Erro genérico para qualquer outra falha no backend
+        print(f"!!! Erro fatal no backend em /api/relatorio-caixa-dados: {e}")
+        # Retorna um erro 500 com a mensagem de erro para o frontend
+        return jsonify({"error": f"Erro interno do servidor: {e}"}), 500
 @aposta_route.route('/relatorio-apostas-json', methods=['POST'])
 def relatorio_apostas_json():
     data = request.get_json()
@@ -801,56 +923,99 @@ def relatorio_apostas_json():
 
 @aposta_route.route('/relatorio-financeiro', methods=['GET'])
 def relatorio_agrupado_area():
+    print("Iniciando a rota /relatorio-financeiro...")
+
     # Obtém os filtros da requisição
     data_inicial_str = request.args.get('data_inicial')
     data_final_str = request.args.get('data_final')
     extracao_filtro = request.args.get('extracao')
     area_filtro = request.args.get('area')
     vendedor_filtro = request.args.get('vendedor')
+    modalidade_filtro = request.args.get('modalidade')
+
+    print(f"Filtros recebidos: data_inicial={data_inicial_str}, data_final={data_final_str}, extracao={extracao_filtro}, area={area_filtro}, vendedor={vendedor_filtro}, modalidade={modalidade_filtro}")
 
     # Define as datas padrão se não forem fornecidas
     if not data_inicial_str:
         data_inicial_str = datetime.now().strftime('%Y-%m-%d')
     if not data_final_str:
         data_final_str = datetime.now().strftime('%Y-%m-%d')
-
-    data_inicial = datetime.strptime(data_inicial_str, '%Y-%m-%d').date()
-    data_final = datetime.strptime(data_final_str, '%Y-%m-%d').date()
+    
+    try:
+        data_inicial = datetime.strptime(data_inicial_str, '%Y-%m-%d').date()
+        data_final = datetime.strptime(data_final_str, '%Y-%m-%d').date()
+        print(f"Datas de pesquisa formatadas: {data_inicial} a {data_final}")
+    except ValueError as e:
+        print(f"ERRO: Formato de data inválido. data_inicial={data_inicial_str}, data_final={data_final_str}. Erro: {e}")
+        return "Erro no formato da data.", 400
 
     # Monta a consulta para as apostas principais
-    query_apostas = Aposta.query.filter(
-        Aposta.data_atual.between(data_inicial, data_final)
-    )
-    if extracao_filtro:
-        query_apostas = query_apostas.filter(Aposta.extracao == extracao_filtro)
-    if area_filtro:
-        query_apostas = query_apostas.filter(Aposta.area == area_filtro)
-    if vendedor_filtro:
-        query_apostas = query_apostas.filter(Aposta.vendedor == vendedor_filtro)
-    
-    todas_apostas_db = query_apostas.order_by(Aposta.id.desc()).all()
+    try:
+        query_apostas = Aposta.query.filter(
+            Aposta.data_atual.between(data_inicial, data_final)
+        )
+        if extracao_filtro:
+            query_apostas = query_apostas.filter(Aposta.extracao == extracao_filtro)
+        if area_filtro:
+            query_apostas = query_apostas.filter(Aposta.area == area_filtro)
+        if vendedor_filtro:
+            query_apostas = query_apostas.filter(Aposta.vendedor == vendedor_filtro)
+        
+        print(f"Consulta SQL para Apostas: {query_apostas.statement}")
+        todas_apostas_db = query_apostas.order_by(Aposta.id.desc()).all()
+        print(f"Número de apostas principais encontradas: {len(todas_apostas_db)}")
+    except Exception as e:
+        print(f"ERRO ao consultar apostas: {e}")
+        return f"Erro ao consultar apostas: {e}", 500
 
     # Monta a consulta para as apostas premiadas
-    query_premiadas = ApostaPremiada.query.filter(
-        ApostaPremiada.data_atual.between(data_inicial, data_final)
-    )
-    if extracao_filtro:
-        query_premiadas = query_premiadas.filter(ApostaPremiada.extracao == extracao_filtro)
-    if area_filtro:
-        query_premiadas = query_premiadas.filter(ApostaPremiada.area == area_filtro)
-    if vendedor_filtro:
-        query_premiadas = query_premiadas.filter(ApostaPremiada.vendedor == vendedor_filtro)
-    
-    todas_apostas_premiadas = query_premiadas.order_by(ApostaPremiada.id.desc()).all()
+    try:
+        query_premiadas = ApostaPremiada.query.filter(
+            ApostaPremiada.data_atual.between(data_inicial, data_final)
+        )
+        if extracao_filtro:
+            query_premiadas = query_premiadas.filter(ApostaPremiada.extracao == extracao_filtro)
+        if area_filtro:
+            query_premiadas = query_premiadas.filter(ApostaPremiada.area == area_filtro)
+        if vendedor_filtro:
+            query_premiadas = query_premiadas.filter(ApostaPremiada.vendedor == vendedor_filtro)
+        
+        print(f"Consulta SQL para Apostas Premiadas: {query_premiadas.statement}")
+        todas_apostas_premiadas = query_premiadas.order_by(ApostaPremiada.id.desc()).all()
+        print(f"Número de apostas premiadas encontradas: {len(todas_apostas_premiadas)}")
+    except Exception as e:
+        print(f"ERRO ao consultar apostas premiadas: {e}")
+        return f"Erro ao consultar apostas premiadas: {e}", 500
 
     relatorio_por_area = {}
+
+    # --- INÍCIO DA OTIMIZAÇÃO: PRÉ-CARREGAMENTO DE DADOS ---
+    print("Pré-carregando dados de comissão para otimizar...")
+    comissoes_por_chave = {}
+    for comissao in ComissaoArea.query.filter(ComissaoArea.ativar == 'sim').all():
+        chave = (
+            normalize_string(comissao.area),
+            normalize_string(comissao.modalidade),
+            normalize_string(comissao.vendedor),
+            normalize_string(comissao.extracao)
+        )
+        comissoes_por_chave[chave] = float(comissao.comissao)
+
+    comissoes_vendedor = {
+        normalize_string(v.nome): float(v.comissao)
+        for v in Vendedor.query.all() if v.comissao is not None
+    }
+    print("Pré-carregamento concluído.")
+    # --- FIM DA OTIMIZAÇÃO ---
     
     # Processa apostas e comissões
+    print("Iniciando o processamento das apostas principais...")
     for aposta_principal in todas_apostas_db:
+        print(f"Processando bilhete ID: {aposta_principal.id}, Vendedor: {aposta_principal.vendedor}, Área: {aposta_principal.area}")
         try:
             apostas_json = json.loads(aposta_principal.apostas)
         except json.JSONDecodeError:
-            print(f"Erro ao decodificar JSON para o bilhete {aposta_principal.id}")
+            print(f"ERRO: JSON inválido para o bilhete {aposta_principal.id}. Dados: {aposta_principal.apostas}")
             continue
 
         for aposta_individual in apostas_json:
@@ -861,8 +1026,7 @@ def relatorio_agrupado_area():
                 modalidade_nome = aposta_individual[2]
                 valor_apostado_individual = aposta_individual[4]
                 
-                # Se houver filtro de modalidade e não corresponder, pula
-                if request.args.get('modalidade') and modalidade_nome != request.args.get('modalidade'):
+                if modalidade_filtro and modalidade_nome != modalidade_filtro:
                     continue
 
                 comissao_aplicada = 0.0
@@ -871,23 +1035,17 @@ def relatorio_agrupado_area():
                 normalized_vendedor = normalize_string(vendedor_nome)
                 normalized_extracao = normalize_string(extracao_nome)
 
-                comissao_especifica = ComissaoArea.query.filter(
-                    db.func.lower(ComissaoArea.area) == normalized_area,
-                    db.func.lower(ComissaoArea.modalidade) == normalized_modalidade,
-                    db.func.lower(ComissaoArea.vendedor) == normalized_vendedor,
-                    db.func.lower(ComissaoArea.extracao) == normalized_extracao,
-                    ComissaoArea.ativar == 'sim'
-                ).first()
-
-                if comissao_especifica:
-                    comissao_aplicada = float(comissao_especifica.comissao)
+                # --- INÍCIO DA LÓGICA OTIMIZADA ---
+                chave_comissao = (normalized_area, normalized_modalidade, normalized_vendedor, normalized_extracao)
+                
+                if chave_comissao in comissoes_por_chave:
+                    comissao_aplicada = comissoes_por_chave[chave_comissao]
+                elif normalized_vendedor in comissoes_vendedor:
+                    comissao_aplicada = comissoes_vendedor[normalized_vendedor]
                 else:
-                    vendedor_obj = Vendedor.query.filter(
-                        db.func.lower(Vendedor.nome) == normalized_vendedor
-                    ).first()
-                    if vendedor_obj and vendedor_obj.comissao is not None:
-                        comissao_aplicada = float(vendedor_obj.comissao)
-
+                    print(f"AVISO: Nenhuma comissão encontrada para o vendedor '{vendedor_nome}'. Comissão padrão de 0% aplicada.")
+                # --- FIM DA LÓGICA OTIMIZADA ---
+                
                 valor_comissao = (valor_apostado_individual * comissao_aplicada) / 100
                 
                 if area_nome not in relatorio_por_area:
@@ -898,8 +1056,11 @@ def relatorio_agrupado_area():
                 
                 relatorio_por_area[area_nome]['vendedores'][vendedor_nome]['apurado'] += valor_apostado_individual
                 relatorio_por_area[area_nome]['vendedores'][vendedor_nome]['comissao'] += valor_comissao
+    
+    print("Processamento de apostas principais finalizado.")
 
     # Processa os prêmios
+    print("Iniciando o processamento das apostas premiadas...")
     for premiada in todas_apostas_premiadas:
         if premiada.pago == 1:
             if area_filtro and premiada.area != area_filtro: continue
@@ -908,12 +1069,18 @@ def relatorio_agrupado_area():
             
             vendedor_nome = premiada.vendedor
             area_nome = premiada.area
-            valor_premio = float(premiada.valor_premio.replace(',', '.'))
+            
+            try:
+                valor_premio = float(str(premiada.valor_premio).replace(',', '.'))
+            except (ValueError, TypeError) as e:
+                print(f"ERRO: Valor de prêmio inválido para o ID {premiada.id}. Valor: {premiada.valor_premio}. Erro: {e}")
+                continue
             
             if area_nome in relatorio_por_area and vendedor_nome in relatorio_por_area[area_nome]['vendedores']:
                 relatorio_por_area[area_nome]['vendedores'][vendedor_nome]['premio'] += valor_premio
+                print(f"Adicionando prêmio de R${valor_premio} ao vendedor '{vendedor_nome}' da área '{area_nome}'")
     
-    # ... (o restante do código para calcular os totais e formatar a lista final é o mesmo)
+    print("Processamento de apostas premiadas finalizado.")
 
     # Coleta todos os valores únicos para os filtros
     extracao_valores = [ext.extracao for ext in Extracao.query.all()]
@@ -921,17 +1088,15 @@ def relatorio_agrupado_area():
     vendedor_valores = [vend.nome for vend in Vendedor.query.all()]
     modalidade_valores = [mod.modalidade for mod in Modalidade.query.all()]
     
-    # Adicione a variável de filtros selecionados para manter o estado no HTML
     filtros = {
         'data_inicial': data_inicial_str,
         'data_final': data_final_str,
         'extracao': extracao_filtro,
         'area': area_filtro,
         'vendedor': vendedor_filtro,
-        'modalidade': request.args.get('modalidade') # Adiciona o filtro de modalidade
+        'modalidade': modalidade_filtro
     }
 
-    # Calcula os totais finais para o relatório
     relatorio_final_agrupado = []
     total_geral_apurado = 0
     total_geral_comissao = 0
@@ -983,6 +1148,7 @@ def relatorio_agrupado_area():
 
     relatorio_final_agrupado.sort(key=lambda x: x['area'])
 
+    print("Processamento de totais finalizado. Renderizando template...")
     return render_template('relatorio_agrupado.html',
                            relatorio_agrupado=relatorio_final_agrupado,
                            filtros=filtros,

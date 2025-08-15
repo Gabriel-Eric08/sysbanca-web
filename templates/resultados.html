@@ -34,8 +34,8 @@
         <div class="mb-2">
             <label>1º Prêmio:</label>
             <input type="text" id="premio1" maxlength="4" class="form-control d-inline-block w-auto premio-input"
-                   {% if not pode_salvar %}readonly{% endif %}
-                   oninput="gerarAutomaticos()">
+                    {% if not pode_salvar %}readonly{% endif %}
+                    oninput="gerarAutomaticos(); gerarGrupoBicho(this.id, 'grupo1', 'animal1');">
             Grupo:
             <input type="text" id="grupo1" maxlength="2" class="form-control d-inline-block w-auto" readonly>
             Bicho:
@@ -44,8 +44,8 @@
         <div class="mb-2">
             <label>2º Prêmio:</label>
             <input type="text" id="premio2" maxlength="4" class="form-control d-inline-block w-auto premio-input"
-                   {% if not pode_salvar %}readonly{% endif %}
-                   oninput="gerarAutomaticos()">
+                    {% if not pode_salvar %}readonly{% endif %}
+                    oninput="gerarAutomaticos(); gerarGrupoBicho(this.id, 'grupo2', 'animal2');">
             Grupo:
             <input type="text" id="grupo2" maxlength="2" class="form-control d-inline-block w-auto" readonly>
             Bicho:
@@ -54,8 +54,8 @@
         <div class="mb-2">
             <label>3º Prêmio:</label>
             <input type="text" id="premio3" maxlength="4" class="form-control d-inline-block w-auto premio-input"
-                   {% if not pode_salvar %}readonly{% endif %}
-                   oninput="gerarAutomaticos()">
+                    {% if not pode_salvar %}readonly{% endif %}
+                    oninput="gerarAutomaticos(); gerarGrupoBicho(this.id, 'grupo3', 'animal3');">
             Grupo:
             <input type="text" id="grupo3" maxlength="2" class="form-control d-inline-block w-auto" readonly>
             Bicho:
@@ -64,8 +64,8 @@
         <div class="mb-2">
             <label>4º Prêmio:</label>
             <input type="text" id="premio4" maxlength="4" class="form-control d-inline-block w-auto premio-input"
-                   {% if not pode_salvar %}readonly{% endif %}
-                   oninput="gerarAutomaticos()">
+                    {% if not pode_salvar %}readonly{% endif %}
+                    oninput="gerarAutomaticos(); gerarGrupoBicho(this.id, 'grupo4', 'animal4');">
             Grupo:
             <input type="text" id="grupo4" maxlength="2" class="form-control d-inline-block w-auto" readonly>
             Bicho:
@@ -74,8 +74,8 @@
         <div class="mb-2">
             <label>5º Prêmio:</label>
             <input type="text" id="premio5" maxlength="4" class="form-control d-inline-block w-auto premio-input"
-                   {% if not pode_salvar %}readonly{% endif %}
-                   oninput="gerarAutomaticos()">
+                    {% if not pode_salvar %}readonly{% endif %}
+                    oninput="gerarAutomaticos(); gerarGrupoBicho(this.id, 'grupo5', 'animal5');">
             Grupo:
             <input type="text" id="grupo5" maxlength="2" class="form-control d-inline-block w-auto" readonly>
             Bicho:
@@ -162,41 +162,37 @@
         }
 
         function gerarAutomaticos() {
-            // Atualiza os grupos e bichos dos 5 primeiros prêmios
-            for (let idx = 1; idx <= 5; idx++) {
-                gerarGrupoBicho(`premio${idx}`, `grupo${idx}`, `animal${idx}`);
+            const premiosManuais = [];
+            for (let i = 1; i <= 5; i++) {
+                const input = document.getElementById(`premio${i}`);
+                premiosManuais.push(input.value.trim());
+                gerarGrupoBicho(input.id, `grupo${i}`, `animal${i}`);
             }
 
-            const premios = [
-                document.getElementById('premio1').value,
-                document.getElementById('premio2').value,
-                document.getElementById('premio3').value,
-                document.getElementById('premio4').value,
-                document.getElementById('premio5').value
-            ];
-
-            // Lógica para os prêmios 6 a 9, com preenchimento incremental
+            // Gera os prêmios automáticos 6 a 9
+            const premiosAutomaticos = [];
             for (let i = 0; i < 4; i++) {
-                const premioAuto = document.getElementById(`premio${i + 6}`);
-                const novoValor = (premios[0][i] || '') + (premios[1][i] || '') + (premios[2][i] || '') + (premios[3][i] || '');
-                premioAuto.value = novoValor;
-                gerarGrupoBicho(premioAuto.id, `grupo${i + 6}`, `animal${i + 6}`);
+                const digitos = premiosManuais.slice(0, 4).map(p => p[i]).filter(Boolean).join('');
+                document.getElementById(`premio${i + 6}`).value = digitos;
+                premiosAutomaticos.push(digitos);
+                gerarGrupoBicho(`premio${i + 6}`, `grupo${i + 6}`, `animal${i + 6}`);
             }
 
-            // Lógica para o prêmio 10, que se baseia na soma dos 5 primeiros prêmios
-            const premio10 = document.getElementById('premio10');
-            const todosCompletos = premios.every(p => p.length === 4);
-
-            if (todosCompletos) {
-                const soma = premios.reduce((acc, p) => acc + parseInt(p), 0);
+            // Gera o 10º prêmio
+            const todosPremiosParaSoma = premiosManuais.filter(Boolean).concat(premiosAutomaticos.filter(Boolean));
+            if (todosPremiosParaSoma.length > 0) {
+                const soma = todosPremiosParaSoma.reduce((acc, p) => acc + parseInt(p), 0);
                 const somaFormatada = String(soma % 10000).padStart(4, '0');
-                premio10.value = somaFormatada;
+                document.getElementById('premio10').value = somaFormatada;
+                gerarGrupoBicho('premio10', 'grupo10', 'animal10');
             } else {
-                premio10.value = '';
+                // Limpa o 10º prêmio se não houver dados
+                document.getElementById('premio10').value = '';
+                document.getElementById('grupo10').value = '';
+                document.getElementById('animal10').innerText = '';
             }
-            gerarGrupoBicho(premio10.id, 'grupo10', 'animal10');
         }
-
+        
         function gerarNumeros() {
             for (let idx = 1; idx <= 5; idx++) {
                 const numero = String(Math.floor(1000 + Math.random() * 9000));
@@ -258,17 +254,21 @@
             try {
                 const response = await fetch(`/resultado/consultar_json/${extracao}/${data}/`);
                 
-                // Limpa todos os campos e define como readonly (se for o caso)
+                // Limpa todos os campos
                 for (let i = 1; i <= 10; i++) {
-                    const premioInput = document.getElementById(`premio${i}`);
-                    premioInput.value = '';
+                    document.getElementById(`premio${i}`).value = '';
                     document.getElementById(`grupo${i}`).value = '';
                     document.getElementById(`animal${i}`).innerText = '';
-                    premioInput.readOnly = !pode_salvar;
                 }
 
                 if (response.status === 404) {
                     alert('Nenhum resultado encontrado para a data e extração selecionadas. Os campos estão liberados para preenchimento.');
+                    // Permite a edição de todos os campos de prêmio se pode_salvar for verdadeiro
+                    if (pode_salvar) {
+                        for (let i = 1; i <= 10; i++) {
+                            document.getElementById(`premio${i}`).readOnly = false;
+                        }
+                    }
                     return;
                 }
 
@@ -281,8 +281,10 @@
                 for (let i = 1; i <= 10; i++) {
                     const premioKey = `premio_${i}`;
                     const premioInput = document.getElementById(`premio${i}`);
+                    
                     if (premios[premioKey]) {
-                        premioInput.value = premios[premioKey];
+                        const valorFormatado = String(premios[premioKey]).padStart(4, '0');
+                        premioInput.value = valorFormatado;
                         gerarGrupoBicho(premioInput.id, `grupo${i}`, `animal${i}`);
                     }
                     // Após preencher com dados do servidor, todos os campos ficam somente para leitura
@@ -301,7 +303,6 @@
             const pode_salvar = "{{ pode_salvar }}" === 'True';
 
             if (Object.keys(resultado).length > 0) {
-                // Se o resultado já existe, preenche e deixa tudo como readonly
                 for (let i = 1; i <= 10; i++) {
                     const premioKey = `premio_${i}`;
                     const premioValue = resultado[premioKey] || '';
@@ -313,57 +314,62 @@
                     premioInput.readOnly = true;
                 }
             } else if (pode_salvar) {
-                // Se não há resultado e o usuário pode salvar, habilita tudo
+                // Se o usuário pode salvar e não há dados, todos os campos são editáveis
                 for (let i = 1; i <= 10; i++) {
                     document.getElementById(`premio${i}`).readOnly = false;
                 }
+            } else {
+                for (let i = 1; i <= 10; i++) {
+                    document.getElementById(`premio${i}`).readOnly = true;
+                }
             }
         });
+
         async function consultarLucro() {
-    const extracao = document.getElementById("extracao_select").value;
-    const data = document.getElementById("data_extracao").value;
+            const extracao = document.getElementById("extracao_select").value;
+            const data = document.getElementById("data_extracao").value;
 
-    const premios = [];
-    for (let i = 1; i <= 10; i++) {
-        premios.push(document.getElementById(`premio${i}`).value.trim());
-    }
+            const premios = [];
+            for (let i = 1; i <= 10; i++) {
+                premios.push(document.getElementById(`premio${i}`).value.trim());
+            }
 
-    if (!extracao || !data || premios.some(p => p.length !== 4)) {
-        alert('Por favor, preencha a extração, data e todos os 10 prêmios para consultar.');
-        return;
-    }
+            if (!extracao || !data || premios.some(p => p.length !== 4)) {
+                alert('Por favor, preencha a extração, data e todos os 10 prêmios para consultar.');
+                return;
+            }
 
-    try {
-        const response = await fetch("{{ url_for('Resultado.consultar_lucro') }}", {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json"
-            },
-            body: JSON.stringify({
-                extracao: extracao,
-                data: data,
-                premios: premios
-            })
-        });
+            try {
+                const response = await fetch("{{ url_for('Resultado.consultar_lucro') }}", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify({
+                        extracao: extracao,
+                        data: data,
+                        premios: premios
+                    })
+                });
 
-        const result = await response.json();
+                const result = await response.json();
 
-        if (response.ok) {
-            alert(`
-                Relatório de Lucro:
-                Total de Apostas: R$ ${result.total_apostas.toFixed(2)}
-                Total de Prêmios: R$ ${result.total_premios.toFixed(2)}
-                Lucro: R$ ${result.lucro.toFixed(2)}
-                Porcentagem de Lucro: ${result.porcentagem_lucro.toFixed(2)}%
-            `);
-        } else {
-            alert(`Erro: ${result.message}`);
+                if (response.ok) {
+                    alert(`
+                        Relatório de Lucro:
+                        Total de Apostas: R$ ${result.total_apostas.toFixed(2)}
+                        Total de Prêmios: R$ ${result.total_premios.toFixed(2)}
+                        Lucro: R$ ${result.lucro.toFixed(2)}
+                        Porcentagem de Lucro: ${result.porcentagem_lucro.toFixed(2)}%
+                    `);
+                } else {
+                    alert(`Erro: ${result.message}`);
+                }
+            } catch (err) {
+                console.error("Erro ao consultar lucro:", err);
+                alert("Erro ao consultar o lucro. Verifique a conexão ou os dados.");
+            }
         }
-    } catch (err) {
-        console.error("Erro ao consultar lucro:", err);
-        alert("Erro ao consultar o lucro. Verifique a conexão ou os dados.");
-    }
-}
     </script>
 </body>
 </html>
