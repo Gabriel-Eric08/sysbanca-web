@@ -32,9 +32,12 @@ def resultado_page():
                             data_selecionada=None,
                             pode_salvar=True)
     
-    
 @resultado_route.route('/json')
 def json_resultados():
+    """
+    Retorna uma lista de resultados em formato JSON.
+    Garante que todos os valores de prêmio sejam strings.
+    """
     resultados = Resultado.query.all()
     resultado_list = []
 
@@ -216,3 +219,73 @@ def consultar_lucro():
             "success": False,
             "message": f"Erro interno ao consultar o lucro: {str(e)}"
         }), 500
+    
+@resultado_route.route('/7premios')
+def resultado_7premios_page():
+    check_result = checkCreds()
+    if not check_result['success']:
+        return check_result['message'], 401
+    
+    user = check_result['user']
+    try:
+        if int(user.acesso_modalidade) != 1:
+            return "Usuário não autorizado", 403
+    except (AttributeError, ValueError):
+        return "Configuração de permissão inválida", 500
+
+    extracoes = Extracao.query.all()
+    return render_template('resultados_7premios.html', 
+                           extracoes=extracoes, 
+                           resultado=None,
+                           extracao_selecionada=None, 
+                           data_selecionada=None,
+                           pode_salvar=True)
+
+# Nova Rota para salvar 7 prêmios
+@resultado_route.route('/salvar_7premios', methods=['POST'])
+def salvar_7premios():
+    data = request.get_json()
+
+    extracao = data.get('extracao')
+    data_str = data.get('data')
+    premios = data.get('premios')  # Lista com 7 elementos
+
+    if not extracao or not data_str or not premios or len(premios) != 7:
+        return jsonify({'message': 'Dados inválidos. Esperados 7 prêmios.'}), 400
+
+    try:
+        data_formatada = datetime.strptime(data_str, '%Y-%m-%d')
+        
+        # Verifica se já existe um resultado para a data e extração
+        resultado_existente = Resultado.query.filter_by(
+            extracao=extracao, 
+            data=data_formatada
+        ).first()
+
+        if resultado_existente:
+            return jsonify({'message': 'Resultado já cadastrado para esta data e extração. Use a função de consulta para editar.'}), 409
+
+        # Cria a nova entrada com 7 prêmios e os últimos 3 como NULL
+        novo_resultado = Resultado(
+            extracao=extracao,
+            data=data_formatada,
+            premio_1=premios[0],
+            premio_2=premios[1],
+            premio_3=premios[2],
+            premio_4=premios[3],
+            premio_5=premios[4],
+            premio_6=premios[5],
+            premio_7=premios[6],
+            premio_8=None, # Salva como NULL no banco
+            premio_9=None, # Salva como NULL no banco
+            premio_10=None # Salva como NULL no banco
+        )
+
+        db.session.add(novo_resultado)
+        db.session.commit()
+
+        return jsonify({'message': 'Resultado de 7 prêmios salvo com sucesso!'})
+    
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'message': f'Erro ao salvar: {str(e)}'}), 500

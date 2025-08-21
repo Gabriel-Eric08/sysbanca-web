@@ -37,6 +37,7 @@ def adicionar_vendedores():
         comissoes = data.get('comissao', [])
         cancelar_poules = data.get('cancelar_poule', [])
         exibe_comissoes = data.get('exibe_comissao', [])
+        exibe_premiacoes = data.get('exibe_premiacao', []) # Novo campo
         limites_venda = data.get('limite_venda', [])
         tipos_limite = data.get('tipo_limite', [])
         grades = data.get('grade', [])
@@ -53,6 +54,7 @@ def adicionar_vendedores():
         comissoes = request.form.getlist('comissao[]')
         cancelar_poules = request.form.getlist('cancelar_poule[]')
         exibe_comissoes = request.form.getlist('exibe_comissao[]')
+        exibe_premiacoes = request.form.getlist('exibe_premiacao[]') # Novo campo
         limites_venda = request.form.getlist('limite_venda[]')
         tipos_limite = request.form.getlist('tipo_limite[]')
         grades = request.form.getlist('grade[]')
@@ -70,6 +72,9 @@ def adicionar_vendedores():
         existente = Vendedor.query.filter_by(username=logins[i]).first()
         if existente:
             continue
+        
+        exibe_comissao_val = 1 if exibe_comissoes[i].lower() == 'sim' else 0 if exibe_comissoes[i].lower() == 'nao' else None
+        exibe_premiacao_val = 1 if exibe_premiacoes[i].lower() == 'sim' else 0 if exibe_premiacoes[i].lower() == 'nao' else None
 
         novo = Vendedor(
             nome=nomes[i],
@@ -80,7 +85,8 @@ def adicionar_vendedores():
             senha=senhas[i],
             comissao=comissoes[i] or None,
             cancelar_poule=cancelar_poules[i] or None,
-            exibe_comissao=exibe_comissoes[i] or None,
+            exibe_comissao=exibe_comissao_val,
+            exibe_premiacao=exibe_premiacao_val, # Novo campo
             limite_venda=limites_venda[i] or None,
             tipo_limite=tipos_limite[i] or None,
             grade=grades[i] or None,
@@ -110,7 +116,6 @@ def adicionar_vendedores():
         return jsonify({"success": True, "message": f"{salvos} novos vendedores salvos."})
     return redirect(url_for('Vendedores.vendedores_page'))
 
-
 @vendedor_route.route('/editar', methods=['POST'])
 def editar_vendedor():
     data = request.get_json()
@@ -119,6 +124,9 @@ def editar_vendedor():
     vendedor = Vendedor.query.filter_by(username=username).first()
     if not vendedor:
         return jsonify({"success": False, "message": "Vendedor não encontrado"}), 404
+    
+    exibe_comissao_val = 1 if data.get("exibe_comissao", "").lower() == 'sim' else 0 if data.get("exibe_comissao", "").lower() == 'nao' else None
+    exibe_premiacao_val = 1 if data.get("exibe_premiacao", "").lower() == 'sim' else 0 if data.get("exibe_premiacao", "").lower() == 'nao' else None
 
     vendedor.nome = data.get("nome")
     vendedor.regiao = data.get("regiao")
@@ -127,7 +135,8 @@ def editar_vendedor():
     vendedor.senha = data.get("senha")
     vendedor.comissao = data.get("comissao")
     vendedor.cancelar_poule = data.get("cancelar_poule")
-    vendedor.exibe_comissao = data.get("exibe_comissao")
+    vendedor.exibe_comissao = exibe_comissao_val
+    vendedor.exibe_premiacao = exibe_premiacao_val # Novo campo
     vendedor.limite_venda = data.get("limite_venda")
     vendedor.tipo_limite = data.get("tipo_limite")
     vendedor.grade = data.get("grade")

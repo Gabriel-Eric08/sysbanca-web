@@ -98,7 +98,7 @@ def validate_credentials():
     if user.serial.strip() != deviceId:
         return {
             "Validate": False,
-            "message": "Device não autorizado!"
+            "message": "Device não autorizado!" 
         }, 403
 
     return {
@@ -108,8 +108,8 @@ def validate_credentials():
         "Comissao":user.comissao,
         "Nome_banca": "BANCA NORDESTINA",
         "cancelar_poule": user.cancelar_poule,
-        "area": user.area
-
+        "area": user.area,
+        "exibe_premiacao": user.exibe_premiacao
     }, 200
 
 @auth_route.route('/validate/download', methods=['GET'])

@@ -170,6 +170,7 @@
             <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="administracaoDropdown">
               <!-- <li><a class="dropdown-item" href="#">Programação de Extração</a></li> -->
               <li><a class="dropdown-item" href="{{ url_for('Resultado.resultado_page') }}">Programação de resultados</a></li>
+              <li><a class="dropdown-item" href="{{ url_for('Resultado.resultado_7premios_page') }}">Programação de resultados 7 prêmios</a></li>
             </ul>
           </li>
 
@@ -195,6 +196,7 @@
               <li><a class="dropdown-item" href="{{ url_for('Resultado1.resultado1_page') }}">Resultado</a></li>
               <li><a class="dropdown-item" href=" {{ url_for('Aposta.relatorio_apostas_detalhado') }} ">Relatório Geral Caixa</a></li>
               <li><a class="dropdown-item" href=" {{ url_for('Aposta.relatorio_agrupado_area') }} ">Relatório Financeiro</a></li>
+              <li><a class="dropdown-item" href=" {{ url_for('Coletor.coleta_page') }} ">Cadastrar coleta</a></li>
             </ul>
           </li>
 

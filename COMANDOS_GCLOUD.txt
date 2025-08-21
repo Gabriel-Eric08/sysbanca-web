@@ -1,11 +1,12 @@
 gcloud config set project sysbanca-461408
 
-gcloud builds submit --tag gcr.io/sysbanca-461408/sysbanca-iowa:v36a .
+gcloud builds submit --tag gcr.io/sysbanca-461408/sysbanca-iowa:v76a .
 
-gcloud run deploy sysbanca-iowa --image gcr.io/sysbanca-461408/sysbanca-iowa:v36a --platform managed --region us-central1 --allow-unauthenticated --set-env-vars DB_USER=dbsysbanca,DB_PASSWORD=Tns22062010#,DB_NAME=dbsysbanca,DB_HOST=dbsysbanca.mysql.dbaas.com.br,DB_PORT=3306
+gcloud run deploy sysbanca-iowa --image gcr.io/sysbanca-461408/sysbanca-iowa:v76a --platform managed --region us-central1 --allow-unauthenticated --set-env-vars DB_USER=dbsysbanca,DB_PASSWORD=Tns22062010#,DB_NAME=dbsysbanca,DB_HOST=dbsysbanca.mysql.dbaas.com.br,DB_PORT=3306
 
 
-dbsysbanca
-clesperanca
+dbsysbanca 
+clesperanca ok
 dbnordestina
-saopaulope
+saopaulope Ok
+sysbancateste ( sysbancadbnew ) ok

@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <title>Resultados 7 Prêmios</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        .animal-nome {
+            color: red;
+            font-weight: bold;
+        }
+    </style>
+</head>
+
+<body class="container py-4">
+    <h2 class="mb-4">Resultados 7 Prêmios</h2>
+
+    <div class="mb-3">
+        <label class="form-label">Extração</label>
+        <select id="extracao_select" class="form-select w-auto d-inline-block me-3">
+            {% for extrac in extracoes %}
+                <option value="{{ extrac.extracao }}" {% if extracao_selecionada == extrac.extracao %}selected{% endif %}>
+                    {{ extrac.extracao }}
+                </option>
+            {% endfor %}
+        </select>
+        
+        <input type="date" id="data_extracao" class="form-control d-inline-block w-auto me-3" value="{{ data_selecionada or '' }}">
+        <button class="btn btn-primary" onclick="buscarEPreencher_7premios()">Consultar</button>
+    </div>
+
+    <div class="mb-4">
+        {% for i in range(1, 8) %}
+        <div class="mb-2">
+            <label>{{ i }}º Prêmio:</label>
+            <input type="text" id="premio{{ i }}" maxlength="4" class="form-control d-inline-block w-auto premio-input"
+                     {% if not pode_salvar %}readonly{% endif %}
+                     oninput="gerarGrupoBicho(this.id, 'grupo{{ i }}', 'animal{{ i }}');">
+            Grupo:
+            <input type="text" id="grupo{{ i }}" maxlength="2" class="form-control d-inline-block w-auto" readonly>
+            Bicho:
+            <span id="animal{{ i }}" class="animal-nome"></span>
+        </div>
+        {% endfor %}
+    </div>
+
+    <div class="mb-4">
+        <a href="{{ url_for('Home.home') }}" class="btn btn-success">Voltar</a>
+        {% if pode_salvar %}
+            <button class="btn btn-primary" onclick="salvarTabela_7premios()">Salvar</button>
+        {% endif %}
+    </div>
+
+    <script>
+        // Mapeamento de grupos e animais
+        const animais = [
+            'AVESTRUZ', 'ÁGUIA', 'BURRO', 'BORBOLETA', 'CACHORRO', 'CABRA',
+            'CARNEIRO', 'CAMELO', 'COBRA', 'COELHO', 'CAVALO', 'ELEFANTE',
+            'GALO', 'GATO', 'JACARÉ', 'LEÃO', 'MACACO', 'PORCO', 'PAVÃO',
+            'PERU', 'TOURO', 'TIGRE', 'URSO', 'VEADO', 'VACA'
+        ];
+
+        function gerarGrupoBicho(inputId, grupoId, animalId) {
+            const valor = document.getElementById(inputId).value.trim();
+            if (/^\d{3,4}$/.test(valor)) {
+                let ultimosDois = valor.slice(-2);
+                let numero = parseInt(ultimosDois, 10);
+                if (numero === 0) numero = 100;
+                const grupo = Math.ceil(numero / 4);
+                document.getElementById(grupoId).value = String(grupo).padStart(2, '0');
+                document.getElementById(animalId).innerText = animais[grupo - 1] || '';
+            } else {
+                document.getElementById(grupoId).value = '';
+                document.getElementById(animalId).innerText = '';
+            }
+        }
+        
+        async function salvarTabela_7premios() {
+            const extracao = document.getElementById("extracao_select").value;
+            const data = document.getElementById("data_extracao").value;
+
+            const premios = [];
+            let todosValidos = true;
+
+            for (let i = 1; i <= 6; i++) {
+                const premioValue = document.getElementById(`premio${i}`).value.trim();
+                // Prêmios 1 a 6 devem ter 4 dígitos
+                if (!/^\d{4}$/.test(premioValue)) {
+                    todosValidos = false;
+                    break;
+                }
+                premios.push(premioValue);
+            }
+
+            // O 7º prêmio pode ter 3 ou 4 dígitos
+            const premio7Value = document.getElementById('premio7').value.trim();
+            if (!/^\d{3,4}$/.test(premio7Value)) {
+                todosValidos = false;
+            } else {
+                premios.push(premio7Value);
+            }
+
+            if (!extracao || !data || !todosValidos) {
+                showCustomAlert('Por favor, preencha a data, a extração, os primeiros 6 prêmios com 4 dígitos e o 7º prêmio com 3 ou 4 dígitos.');
+                return;
+            }
+
+            try {
+                const response = await fetch("{{ url_for('Resultado.salvar_7premios') }}", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify({
+                        extracao: extracao,
+                        data: data,
+                        premios: premios
+                    })
+                });
+
+                const result = await response.json();
+                showCustomAlert(result.message);
+                if (response.ok) {
+                    for (let i = 1; i <= 7; i++) {
+                        document.getElementById(`premio${i}`).value = '';
+                        document.getElementById(`grupo${i}`).value = '';
+                        document.getElementById(`animal${i}`).innerText = '';
+                    }
+                }
+            } catch (err) {
+                console.error("Erro ao salvar:", err);
+                showCustomAlert("Erro ao salvar os dados.");
+            }
+        }
+        
+        // ... (o resto das funções permanece igual)
+        // Lembre-se de manter a função `gerarGrupoBicho` atualizada para 3 ou 4 dígitos também
+        function gerarGrupoBicho(inputId, grupoId, animalId) {
+            const valor = document.getElementById(inputId).value.trim();
+            if (/^\d{3,4}$/.test(valor)) {
+                // ...
+            } else {
+                // ...
+            }
+        }
+        
+        async function buscarEPreencher_7premios() {
+            const extracao = document.getElementById("extracao_select").value;
+            const data = document.getElementById("data_extracao").value;
+            const pode_salvar = "{{ pode_salvar }}" === 'True';
+
+            if (!extracao || !data) {
+                showCustomAlert("Por favor, selecione uma extração e uma data.");
+                return;
+            }
+
+            try {
+                const response = await fetch(`/resultado/consultar_json/${extracao}/${data}/`);
+                
+                for (let i = 1; i <= 7; i++) {
+                    document.getElementById(`premio${i}`).value = '';
+                    document.getElementById(`grupo${i}`).value = '';
+                    document.getElementById(`animal${i}`).innerText = '';
+                }
+
+                if (response.status === 404) {
+                    showCustomAlert('Nenhum resultado encontrado para a data e extração selecionadas. Os campos estão liberados para preenchimento.');
+                    if (pode_salvar) {
+                        for (let i = 1; i <= 7; i++) {
+                            document.getElementById(`premio${i}`).readOnly = false;
+                        }
+                    }
+                    return;
+                }
+
+                if (!response.ok) {
+                    throw new Error('Erro ao consultar os dados.');
+                }
+
+                const premios = await response.json();
+                
+                for (let i = 1; i <= 7; i++) {
+                    const premioKey = `premio_${i}`;
+                    const premioInput = document.getElementById(`premio${i}`);
+                    
+                    if (premios[premioKey] !== null && premios[premioKey] !== undefined) {
+                         // Apenas preenche e formata se o valor existir
+                        premioInput.value = premios[premioKey];
+                        gerarGrupoBicho(premioInput.id, `grupo${i}`, `animal${i}`);
+                    }
+                    premioInput.readOnly = true;
+                }
+                
+                showCustomAlert('Dados carregados com sucesso!');
+            } catch (error) {
+                console.error('Erro na requisição:', error);
+                showCustomAlert('Erro ao consultar os dados.');
+            }
+        }
+        
+        document.addEventListener('DOMContentLoaded', () => {
+            const resultado = {{ resultado|tojson|safe if resultado else '{}' }};
+            const pode_salvar = "{{ pode_salvar }}" === 'True';
+            
+            if (Object.keys(resultado).length > 0) {
+                for (let i = 1; i <= 7; i++) {
+                    const premioKey = `premio_${i}`;
+                    const premioValue = resultado[premioKey] || '';
+                    const premioInput = document.getElementById(`premio${i}`);
+                    premioInput.value = premioValue;
+                    if (premioValue) {
+                        gerarGrupoBicho(premioInput.id, `grupo${i}`, `animal${i}`);
+                    }
+                    premioInput.readOnly = true;
+                }
+            } else if (pode_salvar) {
+                for (let i = 1; i <= 7; i++) {
+                    document.getElementById(`premio${i}`).readOnly = false;
+                }
+            } else {
+                for (let i = 1; i <= 7; i++) {
+                    document.getElementById(`premio${i}`).readOnly = true;
+                }
+            }
+        });
+
+        // Custom modal implementation to replace alert()
+        function showCustomAlert(message) {
+          const modalId = 'customAlertModal';
+          let modalElement = document.getElementById(modalId);
+          if (!modalElement) {
+            modalElement = document.createElement('div');
+            modalElement.id = modalId;
+            modalElement.className = 'modal fade';
+            modalElement.setAttribute('tabindex', '-1');
+            modalElement.innerHTML = `
+              <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content">
+                  <div class="modal-header">
+                    <h5 class="modal-title">Aviso</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                  </div>
+                  <div class="modal-body" id="customAlertMessage"></div>
+                  <div class="modal-footer">
+                    <button type="button" class="btn btn-primary" data-bs-dismiss="modal">OK</button>
+                  </div>
+                </div>
+              </div>
+            `;
+            document.body.appendChild(modalElement);
+          }
+          document.getElementById('customAlertMessage').innerText = message;
+          const bootstrapModal = new bootstrap.Modal(modalElement);
+          bootstrapModal.show();
+        }
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

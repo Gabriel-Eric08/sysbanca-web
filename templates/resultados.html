@@ -85,7 +85,7 @@
         <div class="mb-2">
             <label>6º Prêmio:</label>
             <input type="text" id="premio6" maxlength="4" class="form-control d-inline-block w-auto premio-input"
-                   oninput="gerarGrupoBicho(this.id, 'grupo6', 'animal6')">
+                    oninput="gerarGrupoBicho(this.id, 'grupo6', 'animal6')">
             Grupo:
             <input type="text" id="grupo6" maxlength="2" class="form-control d-inline-block w-auto" readonly>
             Bicho:
@@ -94,7 +94,7 @@
         <div class="mb-2">
             <label>7º Prêmio:</label>
             <input type="text" id="premio7" maxlength="4" class="form-control d-inline-block w-auto premio-input"
-                   oninput="gerarGrupoBicho(this.id, 'grupo7', 'animal7')">
+                    oninput="gerarGrupoBicho(this.id, 'grupo7', 'animal7')">
             Grupo:
             <input type="text" id="grupo7" maxlength="2" class="form-control d-inline-block w-auto" readonly>
             Bicho:
@@ -103,7 +103,7 @@
         <div class="mb-2">
             <label>8º Prêmio:</label>
             <input type="text" id="premio8" maxlength="4" class="form-control d-inline-block w-auto premio-input"
-                   oninput="gerarGrupoBicho(this.id, 'grupo8', 'animal8')">
+                    oninput="gerarGrupoBicho(this.id, 'grupo8', 'animal8')">
             Grupo:
             <input type="text" id="grupo8" maxlength="2" class="form-control d-inline-block w-auto" readonly>
             Bicho:
@@ -112,7 +112,7 @@
         <div class="mb-2">
             <label>9º Prêmio:</label>
             <input type="text" id="premio9" maxlength="4" class="form-control d-inline-block w-auto premio-input"
-                   oninput="gerarGrupoBicho(this.id, 'grupo9', 'animal9')">
+                    oninput="gerarGrupoBicho(this.id, 'grupo9', 'animal9')">
             Grupo:
             <input type="text" id="grupo9" maxlength="2" class="form-control d-inline-block w-auto" readonly>
             Bicho:
@@ -121,7 +121,7 @@
         <div class="mb-2">
             <label>10º Prêmio:</label>
             <input type="text" id="premio10" maxlength="4" class="form-control d-inline-block w-auto premio-input"
-                   oninput="gerarGrupoBicho(this.id, 'grupo10', 'animal10')">
+                    oninput="gerarGrupoBicho(this.id, 'grupo10', 'animal10')">
             Grupo:
             <input type="text" id="grupo10" maxlength="2" class="form-control d-inline-block w-auto" readonly>
             Bicho:
@@ -139,6 +139,7 @@
     </div>
 
     <script>
+        // Mapeamento de grupos e animais
         const animais = [
             'AVESTRUZ', 'ÁGUIA', 'BURRO', 'BORBOLETA', 'CACHORRO', 'CABRA',
             'CARNEIRO', 'CAMELO', 'COBRA', 'COELHO', 'CAVALO', 'ELEFANTE',
@@ -146,8 +147,10 @@
             'PERU', 'TOURO', 'TIGRE', 'URSO', 'VEADO', 'VACA'
         ];
 
+        // Função para gerar o grupo e bicho a partir do prêmio
         function gerarGrupoBicho(inputId, grupoId, animalId) {
             const valor = document.getElementById(inputId).value.trim();
+            // A propriedade .value de um input de texto sempre retorna uma string
             if (/^\d{4}$/.test(valor)) {
                 let ultimosDois = valor.slice(2);
                 let numero = parseInt(ultimosDois, 10);
@@ -161,6 +164,7 @@
             }
         }
 
+        // Função para gerar os prêmios automáticos
         function gerarAutomaticos() {
             const premiosManuais = [];
             for (let i = 1; i <= 5; i++) {
@@ -181,8 +185,10 @@
             // Gera o 10º prêmio
             const todosPremiosParaSoma = premiosManuais.filter(Boolean).concat(premiosAutomaticos.filter(Boolean));
             if (todosPremiosParaSoma.length > 0) {
+                // Ao usar parseInt, os valores string são convertidos para números para o cálculo
                 const soma = todosPremiosParaSoma.reduce((acc, p) => acc + parseInt(p), 0);
                 const somaFormatada = String(soma % 10000).padStart(4, '0');
+                // O resultado da soma é convertido de volta para string antes de ser atribuído ao input
                 document.getElementById('premio10').value = somaFormatada;
                 gerarGrupoBicho('premio10', 'grupo10', 'animal10');
             } else {
@@ -193,6 +199,7 @@
             }
         }
         
+        // Gera números aleatórios para os primeiros 5 prêmios
         function gerarNumeros() {
             for (let idx = 1; idx <= 5; idx++) {
                 const numero = String(Math.floor(1000 + Math.random() * 9000));
@@ -201,17 +208,20 @@
             gerarAutomaticos();
         }
 
+        // Função para salvar a tabela, enviando os dados como strings
         async function salvarTabela() {
             const extracao = document.getElementById("extracao_select").value;
             const data = document.getElementById("data_extracao").value;
 
+            // Coleta os valores dos inputs. A propriedade .value já retorna uma string.
             const premios = [];
             for (let i = 1; i <= 10; i++) {
                 premios.push(document.getElementById(`premio${i}`).value.trim());
             }
 
             if (!extracao || !data || premios.some(p => p.length !== 4)) {
-                alert('Por favor, preencha todos os 10 prêmios de 4 dígitos antes de salvar.');
+                // Substituindo o alert nativo por uma função customizada para aprimorar a UX
+                showCustomAlert('Por favor, preencha todos os 10 prêmios de 4 dígitos antes de salvar.');
                 return;
             }
 
@@ -224,11 +234,12 @@
                     body: JSON.stringify({
                         extracao: extracao,
                         data: data,
+                        // O array de prêmios já contém strings, e JSON.stringify() os mantém como strings.
                         premios: premios
                     })
                 });
                 const result = await response.json();
-                alert(result.message);
+                showCustomAlert(result.message);
                 if (response.ok) {
                     for (let i = 1; i <= 5; i++) {
                         document.getElementById(`premio${i}`).value = '';
@@ -237,17 +248,18 @@
                 }
             } catch (err) {
                 console.error("Erro ao salvar:", err);
-                alert("Erro ao salvar os dados.");
+                showCustomAlert("Erro ao salvar os dados.");
             }
         }
 
+        // Função para buscar e preencher os dados
         async function buscarEPreencher() {
             const extracao = document.getElementById("extracao_select").value;
             const data = document.getElementById("data_extracao").value;
             const pode_salvar = "{{ pode_salvar }}" === 'True';
 
             if (!extracao || !data) {
-                alert("Por favor, selecione uma extração e uma data.");
+                showCustomAlert("Por favor, selecione uma extração e uma data.");
                 return;
             }
 
@@ -262,8 +274,7 @@
                 }
 
                 if (response.status === 404) {
-                    alert('Nenhum resultado encontrado para a data e extração selecionadas. Os campos estão liberados para preenchimento.');
-                    // Permite a edição de todos os campos de prêmio se pode_salvar for verdadeiro
+                    showCustomAlert('Nenhum resultado encontrado para a data e extração selecionadas. Os campos estão liberados para preenchimento.');
                     if (pode_salvar) {
                         for (let i = 1; i <= 10; i++) {
                             document.getElementById(`premio${i}`).readOnly = false;
@@ -287,14 +298,13 @@
                         premioInput.value = valorFormatado;
                         gerarGrupoBicho(premioInput.id, `grupo${i}`, `animal${i}`);
                     }
-                    // Após preencher com dados do servidor, todos os campos ficam somente para leitura
                     premioInput.readOnly = true;
                 }
                 
-                alert('Dados carregados com sucesso!');
+                showCustomAlert('Dados carregados com sucesso!');
             } catch (error) {
                 console.error('Erro na requisição:', error);
-                alert('Erro ao consultar os dados.');
+                showCustomAlert('Erro ao consultar os dados.');
             }
         }
         
@@ -314,7 +324,6 @@
                     premioInput.readOnly = true;
                 }
             } else if (pode_salvar) {
-                // Se o usuário pode salvar e não há dados, todos os campos são editáveis
                 for (let i = 1; i <= 10; i++) {
                     document.getElementById(`premio${i}`).readOnly = false;
                 }
@@ -335,7 +344,7 @@
             }
 
             if (!extracao || !data || premios.some(p => p.length !== 4)) {
-                alert('Por favor, preencha a extração, data e todos os 10 prêmios para consultar.');
+                showCustomAlert('Por favor, preencha a extração, data e todos os 10 prêmios para consultar.');
                 return;
             }
 
@@ -355,21 +364,51 @@
                 const result = await response.json();
 
                 if (response.ok) {
-                    alert(`
-                        Relatório de Lucro:
-                        Total de Apostas: R$ ${result.total_apostas.toFixed(2)}
-                        Total de Prêmios: R$ ${result.total_premios.toFixed(2)}
-                        Lucro: R$ ${result.lucro.toFixed(2)}
-                        Porcentagem de Lucro: ${result.porcentagem_lucro.toFixed(2)}%
+                    showCustomAlert(`
+Relatório de Lucro:
+Total de Apostas: R$ ${result.total_apostas.toFixed(2)}
+Total de Prêmios: R$ ${result.total_premios.toFixed(2)}
+Lucro: R$ ${result.lucro.toFixed(2)}
+Porcentagem de Lucro: ${result.porcentagem_lucro.toFixed(2)}%
                     `);
                 } else {
-                    alert(`Erro: ${result.message}`);
+                    showCustomAlert(`Erro: ${result.message}`);
                 }
             } catch (err) {
                 console.error("Erro ao consultar lucro:", err);
-                alert("Erro ao consultar o lucro. Verifique a conexão ou os dados.");
+                showCustomAlert("Erro ao consultar o lucro. Verifique a conexão ou os dados.");
             }
         }
+        // Custom modal implementation to replace alert()
+        function showCustomAlert(message) {
+          const modalId = 'customAlertModal';
+          let modalElement = document.getElementById(modalId);
+          if (!modalElement) {
+            modalElement = document.createElement('div');
+            modalElement.id = modalId;
+            modalElement.className = 'modal fade';
+            modalElement.setAttribute('tabindex', '-1');
+            modalElement.innerHTML = `
+              <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content">
+                  <div class="modal-header">
+                    <h5 class="modal-title">Aviso</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                  </div>
+                  <div class="modal-body" id="customAlertMessage"></div>
+                  <div class="modal-footer">
+                    <button type="button" class="btn btn-primary" data-bs-dismiss="modal">OK</button>
+                  </div>
+                </div>
+              </div>
+            `;
+            document.body.appendChild(modalElement);
+          }
+          document.getElementById('customAlertMessage').innerText = message;
+          const bootstrapModal = new bootstrap.Modal(modalElement);
+          bootstrapModal.show();
+        }
     </script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>

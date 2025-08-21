@@ -75,6 +75,13 @@
             </div>
         </div>
         <div class="row g-2 mb-2">
+            <div class="col-12 col-md">
+                <select class="form-control" id="exibe_premiacao">
+                    <option disabled selected>Exibe Premiação</option>
+                    <option value="sim">Sim</option>
+                    <option value="nao">Não</option>
+                </select>
+            </div>
             <div class="col-12 col-md"><input type="text" class="form-control" placeholder="Limite Venda" id="limite_venda"></div>
             <div class="col-12 col-md">
                 <select class="form-control" id="tipo_limite">
@@ -84,22 +91,24 @@
                     <option value="Acumulado + Crédito">Acumulado + Crédito</option>
                 </select>
             </div>
-            <div class="col-12 col-md"><input type="text" class="form-control" placeholder="Grade" id="grade"></div>
         </div>
         <div class="row g-2 mt-2">
+            <div class="col-12 col-md-3"><input type="text" class="form-control" placeholder="Grade" id="grade"></div>
             <div class="col-12 col-md-3"><input type="text" class="form-control" placeholder="Teste" id="teste"></div>
             <div class="col-12 col-md-3"><input type="text" class="form-control" placeholder="Comissão Retida" id="comissao_retida"></div>
             <div class="col-12 col-md-3"><input type="text" class="form-control" placeholder="Serial Máquina" id="serial_maquina"></div>
-            <div class="col-12 col-md-3 d-flex flex-column flex-md-row justify-content-between align-items-stretch">
-                <button type="button" class="botao-estiloso w-100 mb-2 mb-md-0" onclick="adicionarLinhaOperador()">➕ Adicionar</button>
-            </div>
         </div>
         <div class="row g-2 mt-2">
             <div class="col-12 col-md-6 d-flex flex-column flex-md-row justify-content-between align-items-stretch">
-                <button type="submit" class="botao-voltar w-100 mb-2 mb-md-0">💾 Salvar</button>
+                <button type="button" class="botao-estiloso w-100 mb-2 mb-md-0" onclick="adicionarLinhaOperador()">➕ Adicionar</button>
             </div>
-            <div class="col-12 col-md-6 d-flex flex-column flex-md-row justify-content-between align-items-stretch">
+             <div class="col-12 col-md-6 d-flex flex-column flex-md-row justify-content-between align-items-stretch">
                 <a href="{{ url_for('Home.home') }}" class="botao-salvar w-100 text-center text-decoration-none">❌ Sair</a>
+            </div>
+        </div>
+        <div class="row g-2 mt-2">
+             <div class="col-12 d-flex justify-content-center">
+                <button type="submit" class="botao-voltar w-50">💾 Salvar</button>
             </div>
         </div>
         
@@ -116,6 +125,7 @@
                         <th>Comissão</th>
                         <th>Cancelar Poule</th>
                         <th>Exibe Comissão</th>
+                        <th>Exibe Premiação</th>
                         <th>Limite Venda</th>
                         <th>Tipo Limite</th>
                         <th>Grade</th>
@@ -136,7 +146,8 @@
                             <td>{{ v.senha }}</td>
                             <td>{{ v.comissao or '' }}</td>
                             <td>{{ v.cancelar_poule or '' }}</td>
-                            <td>{{ v.exibe_comissao or '' }}</td>
+                            <td>{{ 'Sim' if v.exibe_comissao == 1 else 'Não' if v.exibe_comissao == 0 else '' }}</td>
+                            <td>{{ 'Sim' if v.exibe_premiacao == 1 else 'Não' if v.exibe_premiacao == 0 else '' }}</td>
                             <td>{{ v.limite_venda or '' }}</td>
                             <td>{{ v.tipo_limite or '' }}</td>
                             <td>{{ v.grade or '' }}</td>
@@ -161,20 +172,27 @@
     function adicionarLinhaOperador() {
         const campos = [
             "nome", "regiao", "ativo", "area", "login", "senha",
-            "comissao", "cancelar_poule", "exibe_comissao", "limite_venda",
+            "comissao", "cancelar_poule", "exibe_comissao", "exibe_premiacao", "limite_venda",
             "tipo_limite", "grade", "teste", "comissao_retida", "serial_maquina"
         ];
         const valores = campos.map(id => document.getElementById(id).value);
 
-        if (valores.some(v => v.trim() === "")) {
+        if (valores.some(v => v.trim() === "" || v.startsWith("Selecione") || v === "Ativo" || v === "Cancelar poule" || v === "Exibe Comissão" || v === "Exibe Premiação")) {
             alert("Preencha todos os campos antes de adicionar.");
             return;
         }
 
         const tbody = document.querySelector("#tabelaOperador tbody");
         const tr = document.createElement("tr");
+        
+        const valoresExibicao = [...valores];
+        const exibeComissaoIndex = campos.indexOf("exibe_comissao");
+        valoresExibicao[exibeComissaoIndex] = valoresExibicao[exibeComissaoIndex] === "sim" ? "Sim" : "Não";
+        
+        const exibePremiacaoIndex = campos.indexOf("exibe_premiacao");
+        valoresExibicao[exibePremiacaoIndex] = valoresExibicao[exibePremiacaoIndex] === "sim" ? "Sim" : "Não";
 
-        valores.forEach(v => {
+        valoresExibicao.forEach(v => {
             const td = document.createElement("td");
             td.textContent = v;
             tr.appendChild(td);
@@ -197,20 +215,53 @@
             hidden.appendChild(input);
         });
 
-        campos.forEach(id => document.getElementById(id).value = "");
+        campos.forEach(id => {
+            const input = document.getElementById(id);
+            if (input.type === "text") {
+                input.value = "";
+            } else if (input.tagName === "SELECT") {
+                input.selectedIndex = 0;
+            }
+        });
     }
 
     function editarLinha(botao) {
         const linha = botao.closest("tr");
         const valores = [];
 
-        for (let i = 0; i < 15; i++) {
-            const valor = linha.cells[i].textContent;
-            valores.push(valor);
-            linha.cells[i].innerHTML = `<input class="form-control" value="${valor}">`;
+        // Armazena os valores atuais da linha antes de transformar em inputs
+        for (let i = 0; i < 16; i++) { // Agora são 16 campos antes das ações
+            valores.push(linha.cells[i].textContent);
         }
 
-        linha.cells[15].innerHTML = `
+        // Converte as células da linha em inputs para edição
+        const campos = [
+            "nome", "regiao", "ativo", "area", "username", "senha", "comissao",
+            "cancelar_poule", "exibe_comissao", "exibe_premiacao", "limite_venda",
+            "tipo_limite", "grade", "teste", "comissao_retida", "serial"
+        ];
+        
+        for (let i = 0; i < 16; i++) { // Agora são 16 campos
+            const valor = linha.cells[i].textContent;
+            let inputHTML;
+
+            if (campos[i] === "regiao" || campos[i] === "area" || campos[i] === "tipo_limite") {
+                inputHTML = `<select class="form-control" id="edit_${campos[i]}">` + 
+                            document.getElementById(campos[i]).innerHTML.replace('disabled selected', '').replace(`value="${valor}"`, `value="${valor}" selected`) +
+                            `</select>`;
+            } else if (campos[i] === "ativo" || campos[i] === "cancelar_poule" || campos[i] === "exibe_comissao" || campos[i] === "exibe_premiacao") {
+                const valorSim = valor === 'Sim' ? 'sim' : 'nao';
+                inputHTML = `<select class="form-control" id="edit_${campos[i]}">` +
+                            `<option value="sim" ${valorSim === 'sim' ? 'selected' : ''}>Sim</option>` +
+                            `<option value="nao" ${valorSim === 'nao' ? 'selected' : ''}>Não</option>` +
+                            `</select>`;
+            } else {
+                inputHTML = `<input class="form-control" value="${valor}">`;
+            }
+            linha.cells[i].innerHTML = inputHTML;
+        }
+
+        linha.cells[16].innerHTML = `
             <button class="botao-voltar" onclick="salvarEdicao(this)">💾 Salvar</button>
             <button class="botao-salvar" onclick='cancelarEdicao(this, ${JSON.stringify(valores)})'>❌ Cancelar</button>
         `;
@@ -218,16 +269,26 @@
 
     function salvarEdicao(botao) {
         const linha = botao.closest("tr");
-        const inputs = linha.querySelectorAll("input");
-
-        const dados = {};
         const campos = [
             "nome", "regiao", "ativo", "area", "username", "senha", "comissao",
-            "cancelar_poule", "exibe_comissao", "limite_venda", "tipo_limite",
-            "grade", "teste", "comissao_retida", "serial"
+            "cancelar_poule", "exibe_comissao", "exibe_premiacao", "limite_venda",
+            "tipo_limite", "grade", "teste", "comissao_retida", "serial"
         ];
 
-        campos.forEach((c, i) => dados[c] = inputs[i].value);
+        const dados = {};
+        for (let i = 0; i < 16; i++) {
+            const cell = linha.cells[i];
+            const input = cell.querySelector('input') || cell.querySelector('select');
+            if (input) {
+                dados[campos[i]] = input.value;
+            }
+        }
+        
+        ['ativo', 'cancelar_poule', 'exibe_comissao', 'exibe_premiacao'].forEach(campo => {
+            if (dados[campo]) {
+                dados[campo] = dados[campo] === 'Sim' ? 'sim' : dados[campo] === 'Não' ? 'nao' : dados[campo];
+            }
+        });
 
         fetch('/vendedor/editar', {
             method: 'POST',
@@ -237,23 +298,39 @@
         .then(r => r.json())
         .then(data => {
             if (data.success) {
-                inputs.forEach((input, i) => linha.cells[i].textContent = input.value);
-                linha.cells[15].innerHTML = `
+                // Atualiza as células da tabela com os novos valores
+                for (let i = 0; i < 16; i++) {
+                    const cell = linha.cells[i];
+                    const input = cell.querySelector('input') || cell.querySelector('select');
+                    if (input) {
+                        if (campos[i] === 'exibe_comissao' || campos[i] === 'exibe_premiacao') {
+                            cell.textContent = input.value === 'sim' ? 'Sim' : 'Não';
+                        } else {
+                            cell.textContent = input.value;
+                        }
+                    }
+                }
+                linha.cells[16].innerHTML = `
                     <button type="button" class="botao-estiloso" onclick="editarLinha(this)">✏️ Editar</button>
                     <button type="button" class="botao-salvar" onclick="excluirOperador(this, '${dados.username}')">🗑️ Excluir</button>
                 `;
             } else {
                 alert(data.message);
+                const valoresOriginais = [];
+                for(let i=0; i<16; i++) {
+                    valoresOriginais.push(linha.cells[i].textContent);
+                }
+                cancelarEdicao(botao, valoresOriginais);
             }
         });
     }
 
     function cancelarEdicao(botao, valores) {
         const linha = botao.closest("tr");
-        for (let i = 0; i < 15; i++) {
+        for (let i = 0; i < 16; i++) {
             linha.cells[i].textContent = valores[i];
         }
-        linha.cells[15].innerHTML = `
+        linha.cells[16].innerHTML = `
             <button type="button" class="botao-estiloso" onclick="editarLinha(this)">✏️ Editar</button>
             <button type="button" class="botao-salvar" onclick="excluirOperador(this, '${valores[4]}')">🗑️ Excluir</button>
         `;
@@ -273,5 +350,6 @@
         });
     }
 </script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>

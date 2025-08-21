@@ -249,3 +249,19 @@ def extracao_cotacao_premiacao():
         }
 
     return jsonify(resultado)
+
+@extracao_route.route('/json/all', methods=['GET'])
+def json_todas_extracoes():
+    extracoes = Extracao.query.all()
+    resultado = []
+    for m in extracoes:
+        linha = {
+            'id': m.id,
+            'extracao': m.extracao,
+            'fechamento': m.fechamento.strftime("%H:%M") if m.fechamento else None,
+            'premiacao': m.premiacao,
+            'dias_extracao': m.dias_extracao,
+            'ativo': "sim" if m.ativo else "não"
+        }
+        resultado.append(linha)
+    return jsonify(resultado)

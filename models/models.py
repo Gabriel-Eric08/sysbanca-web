@@ -270,13 +270,15 @@ class Vendedor(db.Model):
     ativo = db.Column(db.Enum('sim', 'nao'), nullable=True)
     comissao = db.Column(db.Float, nullable=True)
     cancelar_poule = db.Column(db.Enum('sim', 'nao'), nullable=True)
-    exibe_comissao = db.Column(db.Enum('sim', 'nao'), nullable=True)
+    exibe_comissao = db.Column(db.Integer, nullable=True)
+    # ATUALIZAÇÃO: Adicione a nova coluna
+    exibe_premiacao = db.Column(db.Integer, nullable=True)
     limite_venda = db.Column(db.Numeric(10, 2), nullable=True)
     tipo_limite = db.Column(db.String(50), nullable=True)
     grade = db.Column(db.String(50), nullable=True)
     teste = db.Column(db.String(100), nullable=True)
     comissao_retida = db.Column(db.Numeric(5, 2), nullable=True)
-
+    
 class Relatorio(db.Model):
     __tablename__ = 'tb_Relatorios'
 

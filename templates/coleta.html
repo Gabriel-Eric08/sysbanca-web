@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cadastro de Coletas</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        /* CSS styles remain the same as the original */
+        .botao-estiloso, .botao-voltar, .botao-salvar {
+            font-size: 18px; color: white; border-radius: 8px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+            transition: all 0.3s ease; position: relative; overflow: hidden;
+            border: none; padding: 6px 20px; cursor: pointer;
+            display: inline-flex; align-items: center; gap: 8px; vertical-align: middle;
+        }
+        .botao-estiloso { background-color: #072749; }
+        .botao-estiloso:hover { background-color: #0056b3; }
+        .botao-voltar { background-color: #1fa53c; }
+        .botao-voltar:hover { background-color: #128d2e; }
+        .botao-salvar { background-color: #be0d0d; }
+        .botao-salvar:hover { background-color: #ec5050; }
+        .botao-estiloso::after, .botao-voltar::after, .botao-salvar::after {
+            content: ""; position: absolute; top: 0; left: -100%;
+            width: 100%; height: 100%;
+            background: rgba(255, 255, 255, 0.2); transform: skewX(-20deg);
+            transition: left 0.5s ease;
+        }
+        .botao-estiloso:hover::after, .botao-voltar:hover::after, .botao-salvar:hover::after {
+            left: 100%;
+        }
+    </style>
+</head>
+<body class="bg-light p-4">
+    <div class="container">
+        <h2 class="mb-4">Registro de Coletas</h2>
+
+        <form id="formColeta" class="mb-4">
+            <div class="row g-3 align-items-end">
+                <div class="col-md-3">
+                    <label for="coletor_nome" class="form-label">Nome do Coletor</label>
+                    <select class="form-select" id="coletor_nome" required>
+                        <option value="">Selecione...</option>
+                        {% for coletor in coletores %}
+                            <option value="{{ coletor.login }}" data-senha="{{ coletor.senha }}" {% if coletor.login == coletor_login %}selected{% endif %}>{{ coletor.nome_coletor }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                
+                <div class="col-md-3">
+                    <label for="data_coleta" class="form-label">Data</label>
+                    <input type="date" class="form-control" id="data_coleta" required>
+                </div>
+                
+                <div class="col-md-3">
+                    <label for="vendedor_nome" class="form-label">Nome do Vendedor</label>
+                    <select class="form-select" id="vendedor_nome" required onchange="getUltimoDebito()">
+                        <option value="">Selecione...</option>
+                        {% for vendedor in vendedores %}
+                            <option value="{{ vendedor.nome }}">{{ vendedor.nome }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="col-md-3">
+                    <label for="valor_coletado" class="form-label">Valor Coletado</label>
+                    <input type="number" class="form-control" id="valor_coletado" min="0" step="0.01" required>
+                </div>
+                
+                <div class="col-md-3">
+                    <label for="ultimo_debito_display" class="form-label">Débito Atual</label>
+                    <input type="text" class="form-control" id="ultimo_debito_display" disabled>
+                </div>
+            </div>
+            
+            <div class="mt-4">
+                <button type="button" class="botao-estiloso" onclick="salvarColeta()">
+                    💾 Salvar Coleta
+                </button>
+                <a href="{{ url_for('Home.home') }}" class="btn botao-salvar d-inline-flex align-items-center">
+                    ❌ Sair
+                </a>
+            </div>
+        </form>
+
+        <hr>
+
+        <h3 class="mt-5 mb-3">Histórico de Coletas</h3>
+        <div class="table-responsive">
+            <table class="table table-bordered table-hover bg-white" id="tabela-coletas">
+                <thead class="table-success">
+                    <tr>
+                        <th>ID</th>
+                        <th>Coletor</th>
+                        <th>Vendedor</th>
+                        <th>Data</th>
+                        <th>Valor Coletado</th>
+                        <th>Valor Débito</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% if coletas %}
+                        {% for coleta in coletas %}
+                            <tr>
+                                <td>{{ coleta.id }}</td>
+                                <td>{{ coleta.coletor }}</td>
+                                <td>{{ coleta.vendedor }}</td>
+                                <td>{{ coleta.data.strftime('%d/%m/%Y') }}</td>
+                                <td>R$ {{ "%.2f"|format(coleta.valor_coleta) }}</td>
+                                <td>R$ {{ "%.2f"|format(coleta.valor_debito) }}</td>
+                            </tr>
+                        {% endfor %}
+                    {% else %}
+                        <tr><td colspan="6" class="text-center">Nenhum registro de coleta encontrado.</td></tr>
+                    {% endif %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        function salvarColeta() {
+            const coletorSelect = document.getElementById('coletor_nome');
+            const coletor = coletorSelect.value;
+            const senha = coletorSelect.options[coletorSelect.selectedIndex].dataset.senha;
+
+            const dataInput = document.getElementById('data_coleta').value;
+            const vendedor = document.getElementById('vendedor_nome').value;
+            const valorColetado = document.getElementById('valor_coletado').value;
+
+            if (!coletor || !dataInput || !vendedor || !valorColetado) {
+                alert('Por favor, preencha todos os campos obrigatórios.');
+                return;
+            }
+
+            const [year, month, day] = dataInput.split('-');
+            const dataFormatada = `${day}/${month}/${year}`;
+
+            const dados = {
+                Coletor: coletor,
+                Senha: senha,
+                Data: dataFormatada,
+                Vendedor: vendedor,
+                Valor_coletado: parseFloat(valorColetado),
+            };
+
+            fetch('{{ url_for("Coletor.salvar_coleta") }}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(dados),
+            })
+            .then(response => {
+                if (!response.ok) {
+                    return response.json().then(err => { throw new Error(err.message); });
+                }
+                return response.json();
+            })
+            .then(data => {
+                alert(data.message);
+                window.location.reload();
+            })
+            .catch((error) => {
+                console.error('Erro:', error);
+                alert(`Erro ao salvar a coleta: ${error.message}`);
+            });
+        }
+    
+        function getUltimoDebito() {
+            const vendedor_nome = document.getElementById('vendedor_nome').value;
+            const debitoDisplay = document.getElementById('ultimo_debito_display');
+            
+            if (vendedor_nome === "") {
+                debitoDisplay.value = "";
+                return;
+            }
+
+            fetch(`/coletor/ultimo-debito/${vendedor_nome}`, {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json',
+                }
+            })
+            .then(response => {
+                if (!response.ok) {
+                    debitoDisplay.value = "R$ 0.00";
+                    return;
+                }
+                return response.json();
+            })
+            .then(data => {
+                if (data && data.Debito_anterior !== undefined) {
+                    debitoDisplay.value = `R$ ${data.Debito_anterior.toFixed(2)}`;
+                } else {
+                    debitoDisplay.value = "R$ 0.00";
+                }
+            })
+            .catch((error) => {
+                console.error('Erro ao buscar o débito:', error);
+                debitoDisplay.value = "Erro";
+            });
+        }
+    </script>
+</body>
+</html>
