@@ -109,7 +109,8 @@ def validate_credentials():
         "Nome_banca": "BANCA NORDESTINA",
         "cancelar_poule": user.cancelar_poule,
         "area": user.area,
-        "exibe_premiacao": user.exibe_premiacao
+        "exibe_premiacao": user.exibe_premiacao,
+        "token":"APP_USR-346827673990734-061217-601acb62a6e3508d7899754e331a138c-1480226774"
     }, 200
 
 @auth_route.route('/validate/download', methods=['GET'])

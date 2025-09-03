@@ -326,6 +326,73 @@ def salvar_apostas():
             "message": f"Erro interno ao salvar aposta: {str(e)}"
         }), 500
  
+@aposta_route.route('/cotacao', methods=['POST'])
+def get_cotacao():
+    try:
+        data = request.get_json()
+        area = data.get('area')
+        extracao = data.get('extracao')
+        modalidade_nome = data.get('modalidade')
+
+        if not area or not extracao or not modalidade_nome:
+            return jsonify({
+                "success": False,
+                "message": "Parâmetros obrigatórios: area, extracao e modalidade"
+            }), 400
+
+        # Normaliza strings
+        normalized_area = normalize_string(area)
+        normalized_extracao = normalize_string(extracao)
+        normalized_modalidade = normalize_string(modalidade_nome)
+
+        # Busca modalidade
+        modalidade_obj = Modalidade.query.filter_by(modalidade=modalidade_nome).first()
+        if not modalidade_obj:
+            return jsonify({
+                "success": False,
+                "message": f"Modalidade '{modalidade_nome}' não encontrada."
+            }), 404
+
+        # Procura cotação específica em AreaCotacao
+        area_cotacao_obj = AreaCotacao.query.filter(
+            db.or_(
+                db.func.lower(AreaCotacao.area).like(f"%, {normalized_area},%"),
+                db.func.lower(AreaCotacao.area).like(f"{normalized_area},%"),
+                db.func.lower(AreaCotacao.area).like(f"%,{normalized_area}"),
+                db.func.lower(AreaCotacao.area) == normalized_area
+            ),
+            db.or_(
+                db.func.lower(AreaCotacao.extracao).like(f"%, {normalized_extracao},%"),
+                db.func.lower(AreaCotacao.extracao).like(f"{normalized_extracao},%"),
+                db.func.lower(AreaCotacao.extracao).like(f"%,{normalized_extracao}"),
+                db.func.lower(AreaCotacao.extracao) == normalized_extracao
+            ),
+            db.or_(
+                db.func.lower(AreaCotacao.modalidade).like(f"%, {normalized_modalidade},%"),
+                db.func.lower(AreaCotacao.modalidade).like(f"{normalized_modalidade},%"),
+                db.func.lower(AreaCotacao.modalidade).like(f"%,{normalized_modalidade}"),
+                db.func.lower(AreaCotacao.modalidade) == normalized_modalidade
+            )
+        ).first()
+
+        if area_cotacao_obj:
+            cotacao = float(area_cotacao_obj.cotacao)
+            origem = "area_cotacao"
+        else:
+            cotacao = float(modalidade_obj.cotacao)
+            origem = "modalidade"
+
+        return jsonify({
+            "success": True,
+            "cotacao": cotacao,
+            "origem": origem
+        }), 200
+
+    except Exception as e:
+        return jsonify({
+            "success": False,
+            "message": f"Erro interno ao buscar cotação: {str(e)}"
+        }), 500
 
 @aposta_route.route('/last', methods=['GET'])
 def get_ultimo_id_aposta():

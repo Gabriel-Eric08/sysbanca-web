@@ -6,8 +6,16 @@ from models.models import Resultado, Extracao, Aposta, Modalidade, ApostaPremiad
 from datetime import datetime
 from decimal import Decimal
 import json
+from sqlalchemy import func
 
 resultado_route = Blueprint('Resultado', __name__)
+
+def normalize_string(s):
+    import unicodedata
+    if s is None:
+        return ""
+    s = unicodedata.normalize('NFKD', s).encode('ascii', 'ignore').decode('utf-8')
+    return s.strip().lower()
 
 @resultado_route.route('/')
 def resultado_page():
@@ -79,6 +87,78 @@ def json_resultados():
         resultado_list.append(linha)
 
     return jsonify(resultado_list)
+
+@resultado_route.route('/api/resultados-por-filtro', methods=['POST'])
+def get_resultados_por_filtro():
+    """
+    Busca e retorna os resultados de uma extração específica e data,
+    recebidos no corpo de uma requisição JSON (método POST).
+    """
+    try:
+        # Tenta pegar os dados do JSON no corpo da requisição
+        data = request.get_json()
+
+        # 1. Validação de que o JSON foi enviado
+        if not data:
+            return jsonify({"error": "Requisição inválida. O corpo deve ser um JSON."}), 400
+
+        # 2. Extrai os dados do JSON e valida a existência dos campos
+        extracao_nome = data.get('Extracao')
+        data_param = data.get('Data')
+
+        if not extracao_nome or not data_param:
+            return jsonify({"error": "Os campos 'Extracao' e 'Data' são obrigatórios."}), 400
+
+        # 3. Converte a data do formato DD-MM-YYYY para o formato YYYY-MM-DD
+        try:
+            data_obj = datetime.strptime(data_param, '%d-%m-%Y').date()
+        except (ValueError, TypeError):
+            return jsonify({"error": "Formato de data inválido. Use o formato DD-MM-YYYY."}), 400
+        
+        normalized_extracao = normalize_string(extracao_nome)
+
+        # 4. Executa a consulta no banco de dados com filtro
+        resultados_query = Resultado.query.filter(
+            func.lower(Resultado.extracao) == normalized_extracao,
+            Resultado.data == data_obj
+        ).all()
+
+        if not resultados_query:
+            return jsonify({"success": False, "message": "Nenhum resultado encontrado para os critérios informados."}), 404
+
+        # 5. Extrai os dados dos resultados
+        resultados_list = []
+        for r in resultados_query:
+            linha = {
+                'id': r.id,
+                'extracao': r.extracao,
+                'data': r.data.strftime('%Y-%m-%d'),
+                'premios': {
+                    'premio_1': r.premio_1,
+                    'premio_2': r.premio_2,
+                    'premio_3': r.premio_3,
+                    'premio_4': r.premio_4,
+                    'premio_5': r.premio_5,
+                    'premio_6': r.premio_6,
+                    'premio_7': r.premio_7,
+                    'premio_8': r.premio_8,
+                    'premio_9': r.premio_9,
+                    'premio_10': r.premio_10,
+                }
+            }
+            resultados_list.append(linha)
+
+        # 6. Retorna a resposta JSON
+        return jsonify({
+            "success": True,
+            "extracao": extracao_nome,
+            "data": data_param,
+            "resultados": resultados_list
+        }), 200
+
+    except Exception as e:
+        print(f"ERRO FATAL: Falha ao buscar resultados por filtro. Erro: {e}")
+        return jsonify({"error": f"Erro interno do servidor: {e}"}), 500
 
 @resultado_route.route('/salvar', methods=['POST'])
 def salvar():

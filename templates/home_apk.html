@@ -1,0 +1,437 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SysBanca - Menu Principal</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #6c5ce7, #a29bfe);
+            color: #333;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+        
+        .container {
+            width: 100%;
+            max-width: 500px;
+            background: #f8f9fa;
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+            border: 1px solid #e9ecef;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .container::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 5px;
+            background: linear-gradient(90deg, #4fc3f7, #29b6f6, #ffeb3b, #ffc107, #ffd700, #daa520, #66bb6a, #4caf50, #ba68c8, #9c27b0);
+        }
+        
+        .header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 30px;
+            gap: 15px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+        
+        .logo-placeholder {
+            width: 300px;
+            height: 80px;
+            background: linear-gradient(135deg, #6c5ce7, #a29bfe);
+            border-radius: 10px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: white;
+            font-weight: bold;
+            font-size: 24px;
+            box-shadow: 0 5px 15px rgba(108, 92, 231, 0.3);
+        }
+        
+        h1 {
+            font-size: 32px;
+            color: #6c5ce7;
+            text-align: center;
+            text-shadow: 0 2px 4px rgba(108, 92, 231, 0.2);
+            letter-spacing: 1px;
+            margin-bottom: 10px;
+            width: 100%;
+        }
+        
+        .subtitle {
+            color: #6c757d;
+            font-size: 16px;
+            margin-bottom: 30px;
+            text-align: center;
+            font-weight: 500;
+        }
+        
+        .menu {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            margin-bottom: 40px;
+        }
+        
+        .menu-item {
+            background: rgba(255, 255, 255, 0.9);
+            padding: 18px 22px;
+            border-radius: 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: all 0.3s ease;
+            border: 1px solid #e9ecef;
+            cursor: pointer;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .menu-item::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
+            transition: left 0.7s ease;
+        }
+        
+        .menu-item:hover::after {
+            left: 100%;
+        }
+        
+        .menu-item:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+        }
+        
+        .menu-item:active {
+            transform: scale(0.98);
+        }
+        
+        .menu-item-content {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        
+        .menu-item-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 10px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 20px;
+            color: white;
+        }
+        
+        .menu-item-text {
+            font-size: 18px;
+            font-weight: 500;
+            color: #495057;
+        }
+        
+        .menu-item .arrow {
+            color: #adb5bd;
+            font-weight: bold;
+            font-size: 22px;
+            transition: transform 0.3s ease;
+        }
+        
+        .menu-item:hover .arrow {
+            transform: translateX(5px);
+            color: #6c5ce7;
+        }
+        
+        /* Cores para os botões */
+        .apostas .menu-item-icon {
+            background: linear-gradient(135deg, #4fc3f7, #29b6f6);
+        }
+        
+        .resultados .menu-item-icon {
+            background: linear-gradient(135deg, #ffeb3b, #ffc107);
+        }
+        
+        .consultas .menu-item-icon {
+            background: linear-gradient(135deg, #ffd700, #daa520);
+        }
+        
+        .movimento .menu-item-icon {
+            background: linear-gradient(135deg, #66bb6a, #4caf50);
+        }
+        
+        .financeiro .menu-item-icon {
+            background: linear-gradient(135deg, #ba68c8, #9c27b0);
+        }
+        
+        .coleta-btn {
+            background: linear-gradient(135deg, #f44336, #d32f2f);
+            padding: 18px 22px;
+            border-radius: 15px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            transition: all 0.3s ease;
+            border: none;
+            cursor: pointer;
+            margin-top: 10px;
+            font-size: 20px;
+            font-weight: 600;
+            color: white;
+            box-shadow: 0 5px 15px rgba(244, 67, 54, 0.3);
+        }
+        
+        .coleta-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 20px rgba(244, 67, 54, 0.4);
+            background: linear-gradient(135deg, #ef5350, #f44336);
+        }
+        
+        .coleta-btn:active {
+            transform: scale(0.98);
+        }
+        
+        .coleta-btn i {
+            margin-right: 12px;
+            font-size: 22px;
+        }
+        
+        .footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 25px;
+            padding-top: 20px;
+            border-top: 1px solid #e9ecef;
+        }
+        
+        .user {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        
+        .user-icon {
+            width: 42px;
+            height: 42px;
+            background: linear-gradient(135deg, #6c5ce7, #a29bfe);
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: white;
+            font-size: 18px;
+        }
+        
+        .user-info {
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .username {
+            font-weight: 500;
+            font-size: 16px;
+            color: #495057;
+        }
+        
+        .date {
+            color: #6c757d;
+            font-size: 15px;
+            font-weight: 500;
+        }
+        
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: #4caf50;
+            color: white;
+            padding: 15px 25px;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+            transform: translateX(100%);
+            opacity: 0;
+            transition: all 0.5s ease;
+            z-index: 1000;
+        }
+        
+        .notification.show {
+            transform: translateX(0);
+            opacity: 1;
+        }
+        
+        @media (max-width: 480px) {
+            .container {
+                padding: 20px 15px;
+            }
+            
+            .header {
+                flex-direction: column;
+                text-align: center;
+            }
+            
+            .logo-placeholder {
+                width: 250px;
+                height: 70px;
+                font-size: 20px;
+            }
+            
+            h1 {
+                font-size: 28px;
+            }
+            
+            .menu-item, .coleta-btn {
+                padding: 16px 18px;
+            }
+            
+            .menu-item-text {
+                font-size: 16px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="logo-placeholder">SYSBANCA</div>
+            <h1>SysBanca</h1>
+            <div class="subtitle">Sistema de Gerenciamento de Apostas</div>
+        </div>
+        
+        <div class="menu">
+            <div class="menu-item apostas" id="apostas-btn">
+                <div class="menu-item-content">
+                    <div class="menu-item-icon">
+                        <i class="fas fa-dice"></i>
+                    </div>
+                    <div class="menu-item-text">APOSTAS</div>
+                </div>
+                <span class="arrow">›</span>
+            </div>
+            
+            <div class="menu-item resultados">
+                <div class="menu-item-content">
+                    <div class="menu-item-icon">
+                        <i class="fas fa-trophy"></i>
+                    </div>
+                    <div class="menu-item-text">RESULTADOS</div>
+                </div>
+                <span class="arrow">›</span>
+            </div>
+            
+            <div class="menu-item consultas">
+                <div class="menu-item-content">
+                    <div class="menu-item-icon">
+                        <i class="fas fa-search"></i>
+                    </div>
+                    <div class="menu-item-text">CONSULTAS</div>
+                </div>
+                <span class="arrow">›</span>
+            </div>
+            
+            <div class="menu-item movimento">
+                <div class="menu-item-content">
+                    <div class="menu-item-icon">
+                        <i class="fas fa-chart-line"></i>
+                    </div>
+                    <div class="menu-item-text">MOVIMENTO</div>
+                </div>
+                <span class="arrow">›</span>
+            </div>
+            
+            <div class="menu-item financeiro">
+                <div class="menu-item-content">
+                    <div class="menu-item-icon">
+                        <i class="fas fa-dollar-sign"></i>
+                    </div>
+                    <div class="menu-item-text">FINANCEIRO</div>
+                </div>
+                <span class="arrow">›</span>
+            </div>
+            
+            <div class="coleta-btn">
+                <i class="fas fa-money-bill-wave"></i>
+                <span>COLETA</span>
+            </div>
+        </div>
+        
+        <div class="footer">
+            <div class="user">
+                <div class="user-icon">
+                    <i class="fas fa-user"></i>
+                </div>
+                <div class="user-info">
+                    <div class="username">admin</div>
+                </div>
+            </div>
+            <div class="date">27/08/2025</div>
+        </div>
+    </div>
+
+    <div class="notification" id="notification">Redirecionando para Apostas...</div>
+
+    <script>
+        // Adicionar interação aos itens do menu
+        document.querySelectorAll('.menu-item').forEach(item => {
+            item.addEventListener('click', function() {
+                // Efeito de clique
+                this.style.transform = 'scale(0.98)';
+                setTimeout(() => {
+                    this.style.transform = '';
+                }, 150);
+                
+                // Simular ação de redirecionamento (apenas para demonstração)
+                const menuText = this.querySelector('.menu-item-text').textContent;
+                console.log(`Navegando para: ${menuText}`);
+            });
+        });
+        
+        // Adicionar interação ao botão de coleta
+        document.querySelector('.coleta-btn').addEventListener('click', function() {
+            this.style.transform = 'scale(0.98)';
+            setTimeout(() => {
+                this.style.transform = '';
+            }, 150);
+            
+            console.log('Botão COLETA pressionado');
+            alert('Função de COLETA acionada!');
+        });
+
+        // Redirecionamento para a página de apostas
+        document.getElementById('apostas-btn').addEventListener('click', function() {
+            // Mostrar notificação
+            const notification = document.getElementById('notification');
+            notification.classList.add('show');
+            
+            // Redirecionar após um breve delay para mostrar a notificação
+            setTimeout(() => {
+                window.location.href = 'Apostas.html';
+            }, 800);
+        });
+    </script>
+</body>
+</html>
