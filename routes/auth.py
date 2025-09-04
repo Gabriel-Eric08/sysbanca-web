@@ -1,6 +1,7 @@
 from flask import  Flask, Blueprint, render_template, request, redirect, url_for, flash, make_response
 from models.models import Vendedor, User
 from db_config import db
+import os
 
 auth_route = Blueprint('Auth', __name__)
 
@@ -100,17 +101,18 @@ def validate_credentials():
             "Validate": False,
             "message": "Device não autorizado!" 
         }, 403
-
+    nome_banca = os.environ.get("NOME_BANCA", "BANCA PADRÃO")
+    token = os.environ.get("APP_TOKEN", "token-padrao-do-app")
     return {
         "message": "success!",
         "Validate": True,
         "Nome":user.nome,
         "Comissao":user.comissao,
-        "Nome_banca": "BANCA NORDESTINA",
+        "Nome_banca": nome_banca,
         "cancelar_poule": user.cancelar_poule,
         "area": user.area,
         "exibe_premiacao": user.exibe_premiacao,
-        "token":"APP_USR-346827673990734-061217-601acb62a6e3508d7899754e331a138c-1480226774"
+        "token": token
     }, 200
 
 @auth_route.route('/validate/download', methods=['GET'])
