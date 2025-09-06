@@ -6,10 +6,10 @@ def checkCreds(username=None, senha=None):
     Função para verificar credenciais de usuário ou vendedor.
     Recebe username e senha como argumentos.
     """
-    # Se username e senha não foram passados, tenta pegá-los do request
+    # Se username e senha não foram passados, tenta pegá-los dos cookies
     if username is None and senha is None:
-        username = request.form.get("username")
-        senha = request.form.get("senha")
+        username = request.cookies.get("username")
+        senha = request.cookies.get("senha")
 
     # Adicionando prints para verificar os dados que chegam à função
     print(f"Dentro de checkCreds - Username recebido: '{username}', Senha recebida: '{senha}'")
