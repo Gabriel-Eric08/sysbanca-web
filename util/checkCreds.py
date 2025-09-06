@@ -1,10 +1,16 @@
-from models.models import Vendedor, User
+from flask import request
+from models.models import User, Vendedor
 
-def checkCreds(username, senha):
+def checkCreds(username=None, senha=None):
     """
     Função para verificar credenciais de usuário ou vendedor.
     Recebe username e senha como argumentos.
     """
+    # Se username e senha não foram passados, tenta pegá-los do request
+    if username is None and senha is None:
+        username = request.form.get("username")
+        senha = request.form.get("senha")
+
     # Adicionando prints para verificar os dados que chegam à função
     print(f"Dentro de checkCreds - Username recebido: '{username}', Senha recebida: '{senha}'")
 
