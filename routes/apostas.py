@@ -7,6 +7,20 @@ from datetime import time, date, datetime
 
 aposta_route = Blueprint('Aposta', __name__)
 
+@aposta_route.route('/homeapk2')
+def apostas_apk():
+    # Consulta todos os registros das tabelas
+    # O .query.all() retorna uma lista de objetos
+    modalidades = Modalidade.query.all()
+    extracoes = Extracao.query.all()
+    
+    # Renderiza o template e passa as listas como variáveis
+    return render_template(
+        'apostas_apk.html',
+        modalidades=modalidades,
+        extracoes=extracoes
+    )
+
 @aposta_route.route('/vendedor/<string:vendedor_username>/<string:data_str>', methods=['GET'])
 def get_apostas_por_vendedor_e_data(vendedor_username, data_str):
     try:
@@ -107,6 +121,12 @@ def salvar_apostas():
         pre_datar = data.get('pre_datar', False)
         vendedor_username = data.get('vendedor')
 
+        # --- Camada de Depuração 1: Log de Dados Recebidos ---
+        print("--- DEBUG: Dados recebidos na rota /aposta ---")
+        print(f"Dados JSON: {data}")
+        print("---------------------------------------------")
+        # ----------------------------------------------------
+
         # 1. Obter o objeto Vendedor
         vendedor_obj = Vendedor.query.filter_by(username=vendedor_username).first()
         if not vendedor_obj:
@@ -143,8 +163,15 @@ def salvar_apostas():
         
         if pre_datar and data_agendada_str and data_agendada_str != "00/00/00":
             data_agendada = datetime.strptime(data_agendada_str, "%d/%m/%Y").date()
-
-        hora_atual = datetime.strptime(hora_atual_str, "%H:%M").time()
+        
+        # --- Camada de Depuração 2: Log antes da conversão da hora ---
+        print("--- DEBUG: Tentando converter a hora ---")
+        print(f"Valor de hora_atual_str: '{hora_atual_str}'")
+        # -----------------------------------------------------------
+        if len(hora_atual_str) == 8:  # Formato "HH:MM:SS"
+            hora_atual = datetime.strptime(hora_atual_str, "%H:%M:%S").time()
+        else:  # Assume formato "HH:MM"
+            hora_atual = datetime.strptime(hora_atual_str, "%H:%M").time()
 
         apostas_para_salvar = []
         descarregos_para_salvar = []
@@ -156,6 +183,14 @@ def salvar_apostas():
             premio_str = aposta.get('premio')
             valor_total_aposta = float(aposta.get('valorTotalAposta', 0))
             unidade_aposta = float(aposta.get('unidadeAposta', 0))
+            
+            # --- Camada de Depuração 3: Log dentro do loop de apostas ---
+            print(f"--- DEBUG: Processando aposta {contador_apostas} ---")
+            print(f"Números: {numeros}")
+            print(f"Modalidade: {modalidade_nome}")
+            print(f"Valor total da aposta: {valor_total_aposta}")
+            print("---------------------------------------------")
+            # ------------------------------------------------------------
 
             modalidade_obj = Modalidade.query.filter_by(modalidade=modalidade_nome).first()
             if not modalidade_obj:
@@ -686,7 +721,10 @@ def salvar_aposta_premiada():
             return jsonify({"success": False, "message": "Campo 'hora_atual' é obrigatório."}), 400
 
         data_atual = datetime.strptime(data_atual_str, "%d/%m/%Y").date()
-        hora_atual = datetime.strptime(hora_atual_str, "%H:%M").time()
+        if len(hora_atual_str) == 8:  # Formato "HH:MM:SS"
+            hora_atual = datetime.strptime(hora_atual_str, "%H:%M:%S").time()
+        else:  # Assume formato "HH:MM"
+            hora_atual = datetime.strptime(hora_atual_str, "%H:%M").time()
 
         apostas_json = json.dumps(apostas_raw)
 

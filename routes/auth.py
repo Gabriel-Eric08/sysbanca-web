@@ -45,22 +45,31 @@ def login():
     data = request.get_json()
 
     username = data.get('username')
-    senha = data.get('password')
+    senha = data.get('password') # Lembre-se que o campo de senha no modelo é 'senha'
 
     if not username or not senha:
         return {"message": "Usuário e senha são obrigatórios!"}, 400
 
+    # 1. Tenta autenticar como um Vendedor primeiro
+    vendedor = Vendedor.query.filter_by(username=username).first()
+    if vendedor and vendedor.senha == senha:
+        # Se for um vendedor, define os cookies e redireciona
+        response = make_response(redirect(url_for('Home.home')))
+        response.set_cookie('username', username)
+        response.set_cookie('senha', senha)
+        return response
+
+    # 2. Se não for um vendedor, tenta autenticar como um usuário comum
     user = User.query.filter_by(username=username).first()
+    if user and user.senha == senha:
+        # Se for um usuário comum, define os cookies e redireciona
+        response = make_response(redirect(url_for('Home.home')))
+        response.set_cookie('username', username)
+        response.set_cookie('senha', senha)
+        return response
 
-    if not user or user.senha != senha:
-        return {"message": "Credenciais inválidas!"}, 401
-
-    # Credenciais válidas — define os cookies e redireciona
-    response = make_response(redirect(url_for('Home.home')))
-    response.set_cookie('username', username)
-    response.set_cookie('senha', senha)
-
-    return response
+    # Se nenhuma das verificações acima for bem-sucedida, retorna erro 401
+    return {"message": "Credenciais inválidas!"}, 401
 
 @auth_route.route('/validate', methods=['POST'])
 def validate_credentials():
