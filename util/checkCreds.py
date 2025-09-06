@@ -30,7 +30,8 @@ def checkCreds(username=None, senha=None):
             return {
                 "success": True, 
                 "message": "Login de vendedor bem-sucedido!",
-                "is_vendedor": True
+                "is_vendedor": True,
+                "user": vendedor  # Adicionado o objeto vendedor à resposta
             }
         else:
             print("Falha: Senha de vendedor incorreta.")
@@ -50,7 +51,8 @@ def checkCreds(username=None, senha=None):
             return {
                 "success": True, 
                 "message": "Login de usuário bem-sucedido!",
-                "is_vendedor": False
+                "is_vendedor": False,
+                "user": user # Adicionado o objeto user à resposta
             }
         else:
             print("Falha: Senha de usuário comum incorreta.")
