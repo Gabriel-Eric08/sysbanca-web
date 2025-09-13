@@ -1,5 +1,5 @@
 from flask import Blueprint, render_template, request, redirect, url_for, jsonify
-from models.models import Vendedor, Area, Regiao, Relatorio
+from models.models import Vendedor, Area, Regiao, Relatorio, CotacaoDefinida
 from db_config import db
 from util.checkCreds import checkCreds
 from datetime import datetime
@@ -22,7 +22,9 @@ def vendedores_page():
     regioes = Regiao.query.all()
     areas = Area.query.all()
     vendedores = Vendedor.query.all()
-    return render_template('cadastroOperador.html', vendedores=vendedores, regioes=regioes, areas=areas)
+    cotacoes_definidas = CotacaoDefinida.query.all() # Nova consulta para popular o select
+    return render_template('cadastroOperador.html', vendedores=vendedores, regioes=regioes, areas=areas, cotacoes_definidas=cotacoes_definidas)
+
 
 @vendedor_route.route('/', methods=['POST'])
 def adicionar_vendedores():
@@ -37,13 +39,14 @@ def adicionar_vendedores():
         comissoes = data.get('comissao', [])
         cancelar_poules = data.get('cancelar_poule', [])
         exibe_comissoes = data.get('exibe_comissao', [])
-        exibe_premiacoes = data.get('exibe_premiacao', []) # Novo campo
+        exibe_premiacoes = data.get('exibe_premiacao', [])
         limites_venda = data.get('limite_venda', [])
         tipos_limite = data.get('tipo_limite', [])
         grades = data.get('grade', [])
         testes = data.get('teste', [])
         comissoes_retidas = data.get('comissao_retida', [])
         seriais = data.get('serial_maquina', [])
+        cotacoes_definidas = data.get('cotacao_definida', []) # Novo campo
     else:
         nomes = request.form.getlist('nome[]')
         regioes = request.form.getlist('regiao[]')
@@ -54,13 +57,14 @@ def adicionar_vendedores():
         comissoes = request.form.getlist('comissao[]')
         cancelar_poules = request.form.getlist('cancelar_poule[]')
         exibe_comissoes = request.form.getlist('exibe_comissao[]')
-        exibe_premiacoes = request.form.getlist('exibe_premiacao[]') # Novo campo
+        exibe_premiacoes = request.form.getlist('exibe_premiacao[]')
         limites_venda = request.form.getlist('limite_venda[]')
         tipos_limite = request.form.getlist('tipo_limite[]')
         grades = request.form.getlist('grade[]')
         testes = request.form.getlist('teste[]')
         comissoes_retidas = request.form.getlist('comissao_retida[]')
         seriais = request.form.getlist('serial_maquina[]')
+        cotacoes_definidas = request.form.getlist('cotacao_definida[]') # Novo campo
 
     usuario = request.cookies.get('username', 'Desconhecido')
 
@@ -86,13 +90,14 @@ def adicionar_vendedores():
             comissao=comissoes[i] or None,
             cancelar_poule=cancelar_poules[i] or None,
             exibe_comissao=exibe_comissao_val,
-            exibe_premiacao=exibe_premiacao_val, # Novo campo
+            exibe_premiacao=exibe_premiacao_val,
             limite_venda=limites_venda[i] or None,
             tipo_limite=tipos_limite[i] or None,
             grade=grades[i] or None,
             teste=testes[i] or None,
             comissao_retida=comissoes_retidas[i] or None,
-            serial=seriais[i] or None
+            serial=seriais[i] or None,
+            cotacao_definida=cotacoes_definidas[i] or None # Novo campo
         )
 
         db.session.add(novo)
@@ -136,13 +141,14 @@ def editar_vendedor():
     vendedor.comissao = data.get("comissao")
     vendedor.cancelar_poule = data.get("cancelar_poule")
     vendedor.exibe_comissao = exibe_comissao_val
-    vendedor.exibe_premiacao = exibe_premiacao_val # Novo campo
+    vendedor.exibe_premiacao = exibe_premiacao_val
     vendedor.limite_venda = data.get("limite_venda")
     vendedor.tipo_limite = data.get("tipo_limite")
     vendedor.grade = data.get("grade")
     vendedor.teste = data.get("teste")
     vendedor.comissao_retida = data.get("comissao_retida")
     vendedor.serial = data.get("serial")
+    vendedor.cotacao_definida = data.get("cotacao_definida") # Novo campo
 
     db.session.commit()
     return jsonify({"success": True, "message": "Vendedor atualizado com sucesso!"})

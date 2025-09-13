@@ -1,6 +1,6 @@
 from flask import Blueprint, request, jsonify, render_template, redirect, url_for
 from sqlalchemy import func
-from models.models import Aposta, AreaCotacao, Modalidade, Descarrego, CadastroDescarrego, ApostaExcluida, ApostaPremiada, ComissaoArea, Vendedor, Extracao, Area, Coleta
+from models.models import Aposta, AreaCotacao, Modalidade, Descarrego, CadastroDescarrego, CotacaoDefinida, ApostaExcluida, ApostaPremiada, ComissaoArea, Vendedor, Extracao, Area, Coleta
 from db_config import db
 import json
 from datetime import time, date, datetime
@@ -229,33 +229,67 @@ def salvar_apostas():
                 limite_descarrego = float(descarregos_cadastrados.limite)
             else:
                 limite_descarrego = float(modalidade_obj.limite_descarrego) if modalidade_obj.limite_descarrego else 10_000_000_000
-
+            
+            # --- INÍCIO DA NOVA LÓGICA DE COTAÇÃO ---
+            
             cotacao_utilizada = None
-            area_cotacao_obj = AreaCotacao.query.filter(
-                db.or_(
-                    db.func.lower(AreaCotacao.area).like(f"%, {normalized_area},%"),
-                    db.func.lower(AreaCotacao.area).like(f"{normalized_area},%"),
-                    db.func.lower(AreaCotacao.area).like(f"%,{normalized_area}"),
-                    db.func.lower(AreaCotacao.area) == normalized_area
-                ),
-                db.or_(
-                    db.func.lower(AreaCotacao.extracao).like(f"%, {normalized_extracao},%"),
-                    db.func.lower(AreaCotacao.extracao).like(f"{normalized_extracao},%"),
-                    db.func.lower(AreaCotacao.extracao).like(f"%,{normalized_extracao}"),
-                    db.func.lower(AreaCotacao.extracao) == normalized_extracao
-                ),
-                db.or_(
-                    db.func.lower(AreaCotacao.modalidade).like(f"%, {normalized_modalidade_name},%"),
-                    db.func.lower(AreaCotacao.modalidade).like(f"{normalized_modalidade_name},%"),
-                    db.func.lower(AreaCotacao.modalidade).like(f"%,{normalized_modalidade_name}"),
-                    db.func.lower(AreaCotacao.modalidade) == normalized_modalidade_name
-                )
-            ).first()
+            
+            # 1. Define as modalidades que usam a cotação definida do vendedor
+            modalidades_cotacao_definida = ['Milhar', 'Centena', 'Dezena', 'Grupo', 'Terno de Grupo', 'Terno de Dezena']
+            
+            # 2. Checa se a modalidade da aposta está na lista e se o vendedor tem uma cotação definida
+            if modalidade_nome in modalidades_cotacao_definida and vendedor_obj.cotacao_definida and vendedor_obj.cotacao_definida != 0:
+                print(f"--- DEBUG: Usando cotação definida do vendedor {vendedor_username} ---")
+                
+                # Busca a linha na tabela CotacaoDefinida com base no nome
+                cotacao_definida_obj = CotacaoDefinida.query.filter_by(nome=vendedor_obj.cotacao_definida).first()
+                
+                if cotacao_definida_obj:
+                    # Usa um dicionário para mapear a modalidade à coluna correspondente
+                    cotacao_map = {
+                        'Milhar': cotacao_definida_obj.milhar,
+                        'Centena': cotacao_definida_obj.centena,
+                        'Dezena': cotacao_definida_obj.dezena,
+                        'Grupo': cotacao_definida_obj.grupo,
+                        'Terno de Grupo': cotacao_definida_obj.terno_de_grupo,
+                        'Terno de Dezena': cotacao_definida_obj.terno_de_dezena,
+                    }
+                    # Pega a cotação do dicionário, se não encontrar, usa a da modalidade padrão (fallback)
+                    cotacao_utilizada = float(cotacao_map.get(modalidade_nome))
+                    
+                    if cotacao_utilizada is not None:
+                         print(f"--- DEBUG: Cotação definida encontrada: {cotacao_utilizada} ---")
+                
+            # 3. Se a cotação ainda não foi definida, segue o fluxo padrão (AreaCotacao ou Modalidade)
+            if cotacao_utilizada is None:
+                print("--- DEBUG: Usando o fluxo padrão de cotação (AreaCotacao ou Modalidade) ---")
+                area_cotacao_obj = AreaCotacao.query.filter(
+                    db.or_(
+                        db.func.lower(AreaCotacao.area).like(f"%, {normalized_area},%"),
+                        db.func.lower(AreaCotacao.area).like(f"{normalized_area},%"),
+                        db.func.lower(AreaCotacao.area).like(f"%,{normalized_area}"),
+                        db.func.lower(AreaCotacao.area) == normalized_area
+                    ),
+                    db.or_(
+                        db.func.lower(AreaCotacao.extracao).like(f"%, {normalized_extracao},%"),
+                        db.func.lower(AreaCotacao.extracao).like(f"{normalized_extracao},%"),
+                        db.func.lower(AreaCotacao.extracao).like(f"%,{normalized_extracao}"),
+                        db.func.lower(AreaCotacao.extracao) == normalized_extracao
+                    ),
+                    db.or_(
+                        db.func.lower(AreaCotacao.modalidade).like(f"%, {normalized_modalidade_name},%"),
+                        db.func.lower(AreaCotacao.modalidade).like(f"{normalized_modalidade_name},%"),
+                        db.func.lower(AreaCotacao.modalidade).like(f"%,{normalized_modalidade_name}"),
+                        db.func.lower(AreaCotacao.modalidade) == normalized_modalidade_name
+                    )
+                ).first()
 
-            if area_cotacao_obj:
-                cotacao_utilizada = float(area_cotacao_obj.cotacao)
-            else:
-                cotacao_utilizada = float(modalidade_obj.cotacao)
+                if area_cotacao_obj:
+                    cotacao_utilizada = float(area_cotacao_obj.cotacao)
+                else:
+                    cotacao_utilizada = float(modalidade_obj.cotacao)
+            
+            # --- FIM DA NOVA LÓGICA DE COTAÇÃO ---
 
             premio_total_calculado = valor_total_aposta * cotacao_utilizada
 

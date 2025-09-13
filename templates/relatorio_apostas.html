@@ -233,6 +233,14 @@
                     {% endfor %}
                 </select>
             </div>
+             <div class="col-md-3">
+                <label for="comissaoRetida" class="form-label">Comissão Retida:</label>
+                <select id="comissaoRetida" class="form-select">
+                    <option value="">Todas</option>
+                    <option value="Sim">Sim</option>
+                    <option value="Não">Não</option>
+                </select>
+            </div>
         </div>
         <div class="row mb-4 align-items-end">
             <div class="col-md-3">
@@ -314,8 +322,7 @@
     </div>
     
     <div class="print-only">
-        </div>
-
+    </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
@@ -342,6 +349,7 @@
             const selectedModalidade = document.getElementById('selectModalidade').value;
             const selectedExtracao = document.getElementById('selectExtracao').value;
             const selectedArea = document.getElementById('selectArea').value;
+            const selectedComissaoRetida = document.getElementById('comissaoRetida').value; // NOVO CAMPO
             const selectedDate = document.getElementById('filterDate').value;
             
             // Coloca as tabelas no estado de "carregando"
@@ -364,6 +372,7 @@
                         modalidade: selectedModalidade,
                         extracao: selectedExtracao,
                         area: selectedArea,
+                        comissao_retida: selectedComissaoRetida, // ADICIONA O NOVO CAMPO NO REQUEST
                         data: selectedDate
                     })
                 });
@@ -461,10 +470,10 @@
             premiadas.forEach(premiada => {
                 const vendedor = normalizeString(premiada.vendedor);
                 if (premiada.pago == 1) {
-                     if (!resumoPremios[vendedor]) {
-                         resumoPremios[vendedor] = 0;
-                     }
-                     resumoPremios[vendedor] += parseCurrencyToFloat(premiada.valor_premio);
+                    if (!resumoPremios[vendedor]) {
+                        resumoPremios[vendedor] = 0;
+                    }
+                    resumoPremios[vendedor] += parseCurrencyToFloat(premiada.valor_premio);
                 }
             });
 

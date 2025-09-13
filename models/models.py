@@ -278,6 +278,7 @@ class Vendedor(db.Model):
     grade = db.Column(db.String(50), nullable=True)
     teste = db.Column(db.String(100), nullable=True)
     comissao_retida = db.Column(db.Numeric(5, 2), nullable=True)
+    cotacao_definida = db.Column(db.String(255), nullable=True)
     
 class Relatorio(db.Model):
     __tablename__ = 'tb_Relatorios'
@@ -298,3 +299,15 @@ class AreaExtracao(db.Model):
     area = db.Column('area',db.String(100), nullable=True)
     extracao = db.Column('extracao',db.Text, nullable=True)
     ativar = db.Column('ativar',db.String(10), nullable=True, default="Não")
+
+class CotacaoDefinida(db.Model):
+    __tablename__ = 'cotacao_definida'
+
+    # A chave primária da tabela é a coluna 'nome'
+    nome = db.Column(db.String(255), primary_key=True) 
+    milhar = db.Column(db.Float)
+    centena = db.Column(db.Float)
+    dezena = db.Column(db.Float)
+    grupo = db.Column(db.Float)
+    terno_de_grupo = db.Column(db.Float)
+    terno_de_dezena = db.Column(db.Float)

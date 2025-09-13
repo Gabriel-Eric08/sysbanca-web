@@ -95,19 +95,36 @@
         <div class="row g-2 mt-2">
             <div class="col-12 col-md-3"><input type="text" class="form-control" placeholder="Grade" id="grade"></div>
             <div class="col-12 col-md-3"><input type="text" class="form-control" placeholder="Teste" id="teste"></div>
-            <div class="col-12 col-md-3"><input type="text" class="form-control" placeholder="Comissão Retida" id="comissao_retida"></div>
+            <div class="col-12 col-md-3">
+                <select class="form-control" id="comissao_retida">
+                    <option value="">Selecione...</option>
+                    <option value="SIM">SIM</option>
+                    <option value="NAO">NÃO</option>
+                </select>
+            </div>
             <div class="col-12 col-md-3"><input type="text" class="form-control" placeholder="Serial Máquina" id="serial_maquina"></div>
+        </div>
+        <div class="row g-2 mt-2">
+            <div class="col-12">
+                <select class="form-control" id="cotacao_definida">
+                    <option disabled selected>Selecione a Cotação Definida</option>
+                    <option value="">Padrão</option>
+                    {% for cd in cotacoes_definidas %}
+                        <option value="{{ cd.nome }}">{{ cd.nome }}</option>
+                    {% endfor %}
+                </select>
+            </div>
         </div>
         <div class="row g-2 mt-2">
             <div class="col-12 col-md-6 d-flex flex-column flex-md-row justify-content-between align-items-stretch">
                 <button type="button" class="botao-estiloso w-100 mb-2 mb-md-0" onclick="adicionarLinhaOperador()">➕ Adicionar</button>
             </div>
-             <div class="col-12 col-md-6 d-flex flex-column flex-md-row justify-content-between align-items-stretch">
+            <div class="col-12 col-md-6 d-flex flex-column flex-md-row justify-content-between align-items-stretch">
                 <a href="{{ url_for('Home.home') }}" class="botao-salvar w-100 text-center text-decoration-none">❌ Sair</a>
             </div>
         </div>
         <div class="row g-2 mt-2">
-             <div class="col-12 d-flex justify-content-center">
+            <div class="col-12 d-flex justify-content-center">
                 <button type="submit" class="botao-voltar w-50">💾 Salvar</button>
             </div>
         </div>
@@ -132,7 +149,7 @@
                         <th>Teste</th>
                         <th>Comissão Retida</th>
                         <th>Serial Máquina</th>
-                        <th>Ações</th>
+                        <th>Cotação Definida</th> <th>Ações</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -154,7 +171,7 @@
                             <td>{{ v.teste or '' }}</td>
                             <td>{{ v.comissao_retida or '' }}</td>
                             <td>{{ v.serial or '' }}</td>
-                            <td>
+                            <td>{{ v.cotacao_definida or '' }}</td> <td>
                                 <button type="button" class="botao-estiloso" onclick="editarLinha(this)">✏️ Editar</button>
                                 <button type="button" class="botao-salvar" onclick="excluirOperador(this, '{{ v.username }}')">🗑️ Excluir</button>
                             </td>
@@ -173,7 +190,7 @@
         const campos = [
             "nome", "regiao", "ativo", "area", "login", "senha",
             "comissao", "cancelar_poule", "exibe_comissao", "exibe_premiacao", "limite_venda",
-            "tipo_limite", "grade", "teste", "comissao_retida", "serial_maquina"
+            "tipo_limite", "grade", "teste", "comissao_retida", "serial_maquina", "cotacao_definida"
         ];
         const valores = campos.map(id => document.getElementById(id).value);
 
@@ -230,7 +247,7 @@
         const valores = [];
 
         // Armazena os valores atuais da linha antes de transformar em inputs
-        for (let i = 0; i < 16; i++) { // Agora são 16 campos antes das ações
+        for (let i = 0; i < 17; i++) { // Agora são 17 campos antes das ações
             valores.push(linha.cells[i].textContent);
         }
 
@@ -238,14 +255,14 @@
         const campos = [
             "nome", "regiao", "ativo", "area", "username", "senha", "comissao",
             "cancelar_poule", "exibe_comissao", "exibe_premiacao", "limite_venda",
-            "tipo_limite", "grade", "teste", "comissao_retida", "serial"
+            "tipo_limite", "grade", "teste", "comissao_retida", "serial", "cotacao_definida"
         ];
         
-        for (let i = 0; i < 16; i++) { // Agora são 16 campos
+        for (let i = 0; i < 17; i++) { // Agora são 17 campos
             const valor = linha.cells[i].textContent;
             let inputHTML;
 
-            if (campos[i] === "regiao" || campos[i] === "area" || campos[i] === "tipo_limite") {
+            if (campos[i] === "regiao" || campos[i] === "area" || campos[i] === "tipo_limite" || campos[i] === "cotacao_definida") {
                 inputHTML = `<select class="form-control" id="edit_${campos[i]}">` + 
                             document.getElementById(campos[i]).innerHTML.replace('disabled selected', '').replace(`value="${valor}"`, `value="${valor}" selected`) +
                             `</select>`;
@@ -261,7 +278,7 @@
             linha.cells[i].innerHTML = inputHTML;
         }
 
-        linha.cells[16].innerHTML = `
+        linha.cells[17].innerHTML = `
             <button class="botao-voltar" onclick="salvarEdicao(this)">💾 Salvar</button>
             <button class="botao-salvar" onclick='cancelarEdicao(this, ${JSON.stringify(valores)})'>❌ Cancelar</button>
         `;
@@ -272,11 +289,11 @@
         const campos = [
             "nome", "regiao", "ativo", "area", "username", "senha", "comissao",
             "cancelar_poule", "exibe_comissao", "exibe_premiacao", "limite_venda",
-            "tipo_limite", "grade", "teste", "comissao_retida", "serial"
+            "tipo_limite", "grade", "teste", "comissao_retida", "serial", "cotacao_definida"
         ];
 
         const dados = {};
-        for (let i = 0; i < 16; i++) {
+        for (let i = 0; i < 17; i++) {
             const cell = linha.cells[i];
             const input = cell.querySelector('input') || cell.querySelector('select');
             if (input) {
@@ -299,7 +316,7 @@
         .then(data => {
             if (data.success) {
                 // Atualiza as células da tabela com os novos valores
-                for (let i = 0; i < 16; i++) {
+                for (let i = 0; i < 17; i++) {
                     const cell = linha.cells[i];
                     const input = cell.querySelector('input') || cell.querySelector('select');
                     if (input) {
@@ -310,14 +327,14 @@
                         }
                     }
                 }
-                linha.cells[16].innerHTML = `
+                linha.cells[17].innerHTML = `
                     <button type="button" class="botao-estiloso" onclick="editarLinha(this)">✏️ Editar</button>
                     <button type="button" class="botao-salvar" onclick="excluirOperador(this, '${dados.username}')">🗑️ Excluir</button>
                 `;
             } else {
                 alert(data.message);
                 const valoresOriginais = [];
-                for(let i=0; i<16; i++) {
+                for(let i=0; i<17; i++) {
                     valoresOriginais.push(linha.cells[i].textContent);
                 }
                 cancelarEdicao(botao, valoresOriginais);
@@ -327,10 +344,10 @@
 
     function cancelarEdicao(botao, valores) {
         const linha = botao.closest("tr");
-        for (let i = 0; i < 16; i++) {
+        for (let i = 0; i < 17; i++) {
             linha.cells[i].textContent = valores[i];
         }
-        linha.cells[16].innerHTML = `
+        linha.cells[17].innerHTML = `
             <button type="button" class="botao-estiloso" onclick="editarLinha(this)">✏️ Editar</button>
             <button type="button" class="botao-salvar" onclick="excluirOperador(this, '${valores[4]}')">🗑️ Excluir</button>
         `;
