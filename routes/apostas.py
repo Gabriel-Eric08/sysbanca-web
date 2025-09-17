@@ -692,6 +692,7 @@ def recuperar_aposta_excluida(aposta_excluida_id):
 
     # Cria uma nova aposta com os mesmos dados
     nova_aposta = Aposta(
+        id=aposta_excluida.aposta_id_original,
         vendedor=aposta_excluida.vendedor,
         data_atual=aposta_excluida.data_atual,
         hora_atual=aposta_excluida.hora_atual,
