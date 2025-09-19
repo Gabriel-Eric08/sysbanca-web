@@ -6,7 +6,6 @@
   <title>Tela de Apostas - Sysbanca</title>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <style>
-    /* Estilos anteriores mantidos */
     * {
       box-sizing: border-box;
       margin: 0;
@@ -15,7 +14,7 @@
 
     body {
       font-family: 'Segoe UI', sans-serif;
-      background: linear-gradient(135deg, #004d00, #007300, #00a000);
+      background: linear-gradient(135deg, #070707, #161d16, #00a000);
       color: #fff;
       display: flex;
       justify-content: center;
@@ -43,12 +42,12 @@
 
     .bilhete-container {
       position: relative;
-      width: 450px;
+      width: 400px;
     }
 
     .bilhete {
-      background: #fff;
-      color: #000;
+      background: linear-gradient(135deg, #000000, #1a1a1a, #2d2d2d);
+      color: #fff;
       padding: 15px;
       border-radius: 12px;
       width: 100%;
@@ -61,17 +60,26 @@
       min-height: 400px;
       display: flex;
       align-items: center;
-      border: 1px solid #ccc;
+      border: 1px solid #444;
       overflow: auto;
       transition: all 0.3s ease;
     }
 
     h2 {
       text-align: center;
-      margin-bottom: 30px;
+      margin-bottom: 15px;
       font-size: 30px;
       color: #fff;
       text-shadow: 1px 1px 3px rgba(0,0,0,0.5);
+    }
+
+    .numero-poule {
+      text-align: center;
+      margin-bottom: 20px;
+      font-size: 18px;
+      font-weight: bold;
+      color: #ffcc00;
+      text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
     }
 
     .form-group {
@@ -287,7 +295,7 @@
       top: 0;
       left: 0;
       right: 0;
-      bottom: 0;
+      bottom: 4px;
       background-color: #ccc;
       transition: .4s;
       border-radius: 30px;
@@ -321,6 +329,8 @@
         visibility: visible;
         font-family: 'Helvetica', 'Arial', sans-serif !important;
         font-weight: bold !important;
+        color: #000 !important;
+        background: #fff !important;
       }
       .bilhete {
         position: absolute;
@@ -410,6 +420,8 @@
       justify-content: space-between;
       align-items: center;
       margin-bottom: 15px;
+      padding-bottom: 10px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.2);
     }
 
     .bilhete-actions {
@@ -463,7 +475,7 @@
       color: #000;
       border-radius: 8px;
       box-shadow: 0 4px 15px rgba(0,0,0,0.2);
-      padding: 10px;
+      padding: 0px;
       max-height: 200px;
       overflow-y: auto;
       z-index: 100;
@@ -493,18 +505,64 @@
     
     .aposta-formatada {
       letter-spacing: 0.5px;
+      font-family: 'Courier New', monospace;
+    }
+    
+    .switch-group {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 15px;
+      margin-top: 15px;
+    }
+    
+    .switch-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    
+    .date-picker-container {
+      margin-top: 10px;
+      display: none;
+    }
+    
+    .date-picker {
+      width: 100%;
+      padding: 12px;
+      border-radius: 8px;
+      border: none;
+      background: rgba(255, 255, 255, 0.9);
+      color: #000;
+      font-size: 16px;
+    }
+
+    /* Estilo para o cursor personalizado */
+    .cursor-helper {
+      position: absolute;
+      width: 2px;
+      height: 20px;
+      background-color: #ffcc00;
+      animation: blink 1s infinite;
+      display: none;
+      z-index: 10;
+    }
+    
+    @keyframes blink {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0; }
     }
   </style>
 </head>
 <body>
   <div class="container">
     <h2>🎲 Apostas Sysbanca</h2>
+    <div class="numero-poule" id="numeroPoule1">Poule: {{ poule }}</div>
 
     <div class="form-group">
       <label for="extracao">Escolha a Extração</label>
       <select id="extracao">
         {% for extracao in extracoes %}
-          <option value="{{ extracao.extracao }}">{{ extracao.extracao }}</option>
+        <option value="{{ extracao.extracao }}">{{ extracao.extracao }}</option>
         {% endfor %}
       </select>
     </div>
@@ -513,7 +571,7 @@
       <label for="modalidade">Escolha a Modalidade</label>
       <select id="modalidade" onchange="atualizarValidacaoAposta()">
         {% for modalidade in modalidades %}
-          <option value="{{ modalidade.modalidade }}">{{ modalidade.modalidade }}</option>
+        <option value="{{ modalidade.modalidade }}">{{ modalidade.modalidade }}</option>
         {% endfor %}
       </select>
       <div id="modalidadeInfo" class="modalidade-info"></div>
@@ -521,16 +579,35 @@
 
     <div class="form-group">
       <label for="aposta">Digite a(s) Aposta(s)</label>
-      <textarea id="aposta" class="aposta-formatada" placeholder="Ex: 1234 5678 9012 (separadas por espaço)" oninput="validarAposta()" onkeydown="limitarCaracteres(event)"></textarea>
-      <div id="apostaInfo" class="aposta-info"></div>
+      <div style="position: relative;">
+        <textarea id="aposta" class="aposta-formatada" placeholder="Ex: 1234 5678 9012 (separadas por espaço)" oninput="formatarAposta()" onkeydown="limitarCaracteres(event)" onpaste="handlePaste(event)" onfocus="mostrarCursorHelper()" onblur="esconderCursorHelper()" onkeyup="atualizarCursorHelper()" onclick="atualizarCursorHelper()"></textarea>
+        <div id="cursorHelper" class="cursor-helper"></div>
+      </div>
+      <div id="aposta-info" class="aposta-info"></div>
       <div id="apostaError" class="aposta-error"></div>
       <div id="apostaSuccess" class="aposta-success"></div>
-      <div class="switch-container">
-        <label class="switch">
-          <input type="checkbox" id="repetirAposta">
-          <span class="slider"></span>
-        </label>
-        <span>Repetir aposta com outra premiação</span>
+      
+      <div class="switch-group">
+        <div class="switch-item">
+          <label class="switch">
+            <input type="checkbox" id="repetirAposta">
+            <span class="slider"></span>
+          </label>
+          <span>Repetir aposta com outra premiação</span>
+        </div>
+        
+        <div class="switch-item">
+          <label class="switch">
+            <input type="checkbox" id="apostaPredatada" onchange="toggleDatePicker()">
+            <span class="slider"></span>
+          </label>
+          <span>Aposta Pré-datada</span>
+        </div>
+      </div>
+      
+      <div class="date-picker-container" id="datePickerContainer">
+        <label for="dataAposta">Data da Aposta:</label>
+        <input type="date" id="dataAposta" class="date-picker" onchange="hideDatePicker()">
       </div>
     </div>
 
@@ -538,7 +615,7 @@
       <label for="premiacao">Premiação</label>
       <select id="premiacao" onchange="calcularTotal()">
         <option value="1P">1P</option>
-        <option value="1/2P">1/2P</option>
+        <option value="1/2P">1/2p</option>
         <option value="1/3P">1/3P</option>
         <option value="1/4P">1/4P</option>
         <option value="1/5P">1/5P</option>
@@ -558,13 +635,14 @@
       <label for="valor">Valor Unitário (R$)</label>
       <input type="text" id="valor" class="currency-input" placeholder="0,00" oninput="formatarMoeda(this); calcularTotal()">
       <span class="input-hint">0,00</span>
-      <div class="valor-info">Valores acima de R$ 2,00 em milhar geram brinde</div>
+           
       <div class="valor-sugerido">
         <button class="valor-btn" onclick="definirValor(1)">R$ 1,00</button>
         <button class="valor-btn" onclick="definirValor(2)">R$ 2,00</button>
         <button class="valor-btn" onclick="definirValor(5)">R$ 5,00</button>
         <button class="valor-btn" onclick="definirValor(10)">R$ 10,00</button>
       </div>
+      
       <div class="operacao-group">
         <div class="operacao-btn active" id="btnMultiplicar" onclick="toggleOperacao('multiplicar')">Multiplicar</div>
         <div class="operacao-btn" id="btnDividir" onclick="toggleOperacao('dividir')">Dividir</div>
@@ -572,8 +650,8 @@
     </div>
 
     <div class="form-group">
-      <label for="quantidade">Quantidade de Jogos</label>
-      <input type="number" id="quantidade" readonly>
+        <label for="quantidade">Quantidade de Jogos</label>
+        <input type="number" id="quantidade" readonly>
     </div>
 
     <div class="form-group">
@@ -621,433 +699,1157 @@
     let apostasComMilharBrinde = [];
     let historicoApostas = [];
     let primeiraAposta = true;
-
-    const infoPremiacoes = {
-      "1P": "1º Prêmio",
-      "1/2P": "1º e 2º Prêmio",
-      "1/3P": "1º ao 3º Prêmio",
-      "1/4P": "1º ao 4º Prêmio",
-      "1/5P": "1º ao 5º Prêmio",
-      "1/6P": "1º ao 6º Prêmio",
-      "1/7P": "1º ao 7º Prêmio",
-      "1/8P": "1º ao 8º Prêmio",
-      "1/9P": "1º ao 9º Prêmio",
-      "1/10P": "1º ao 10º Prêmio",
-      "6/10P": "6º ao 10º Prêmio",
-      "1P e 1/5P": "1º Prêmio e 1º ao 5º Prêmio",
-      "1P e 1/10P": "1º Prêmio e 1º ao 10º Prêmio"
-    };
-
+    let formatoDuqueTerno = false;
+    let apostaPredatada = false;
+    let dataApostaSelecionada = "";
+    let numeroPoule = Math.random().toString().substring(2, 10);
+    let ultimoCursorPos = 0;
+    
+    document.getElementById('numeroPoule').innerText = `Poule: ${numeroPoule}`;
+    
     const tabelaCombinacoes = {
-        "123": [3, 6, 0, 6],
-        "112": [3, 3, 0, 3],
-        "1234": [4, 24, 24, 48],
-        "1123": [4, 12, 12, 24],
-        "1122": [4, 6, 6, 12],
-        "1112": [4, 4, 4, 8],
-        "12345": [5, 60, 120, 180],
-        "11234": [5, 33, 60, 93],
-        "11223": [5, 18, 30, 48],
-        "11123": [5, 13, 20, 33],
-        "11122": [5, 8, 10, 18],
-        "11112": [5, 5, 5, 10],
-        "123456": [6, 120, 360, 480],
-        "112345": [6, 66, 180, 246],
-        "112234": [6, 42, 108, 150],
-        "112233": [6, 27, 54, 81],
-        "111234": [6, 26, 60, 86],
-        "111223": [6, 17, 30, 47],
-        "111222": [6, 12, 15, 27]
+      "123": [3, 6, 0, 6],
+      "112": [3, 3, 0, 3],
+      "1234": [4, 24, 24, 48],
+      "1123": [4, 12, 12, 24],
+      "1122": [4, 6, 6, 12],
+      "1112": [4, 4, 4, 8],
+      "12345": [5, 60, 120, 180],
+      "11234": [5, 33, 60, 93],
+      "11223": [5, 18, 30, 48],
+      "11123": [5, 13, 20, 33],
+      "11122": [5, 8, 10, 18],
+      "123456": [6, 120, 360, 480],
+      "112345": [6, 72, 192, 264],
+      "112234": [6, 42, 102, 144],
+      "112233": [6, 24, 54, 78],
+      "111234": [6, 34, 72, 106],
+      "111223": [6, 19, 38, 57],
+      "111222": [6, 8, 14, 22],
+      "1234567": [7, 210, 840, 1050],
+      "1123456": [7, 135, 480, 615],
+      "1122345": [7, 90, 270, 360],
+      "1122334": [7, 51, 150, 201],
+      "1112345": [7, 73, 208, 281],
+      "1122344": [7, 43, 114, 157],
+      "1112233": [7, 25, 70, 95],
+      "1112232": [7, 20, 46, 66],
+      "11112": [5, 0, 5, 5],
+      "111123": [6, 0, 21, 21],
+      "111122": [6, 0, 11, 11],
+      "1112222": [7, 0, 15, 15]
+    };
+    
+    const tabelaCombinacoesTernos = {
+      3: 1,
+      4: 4,
+      5: 10,
+      6: 20,
+      7: 35,
+      8: 56,
+      9: 84,
+      10: 120
     };
 
+    const tabelaCombinacoesDuques = {
+      2: 1,
+      3: 3,
+      4: 6,
+      5: 10,
+      6: 15,
+      7: 21,
+      8: 28,
+      9: 36,
+      10: 45
+    };
+    
     const infoModalidades = {
-      "Milhar": { caracteres: 4, descricao: "Aposta em 4 dígitos." },
-      "Centena": { caracteres: 3, descricao: "Aposta em 3 dígitos." },
-      "Dezena": { caracteres: 2, descricao: "Aposta em 2 dígitos." },
-      "Grupo": { caracteres: 2, descricao: "Aposta em 2 dígitos (01 a 25)." },
-      "Milhar Invertida": { caracteres: [4], descricao: "Aposta em 4 dígitos em qualquer ordem." },
-      "Centena Invertida": { caracteres: [3], descricao: "Aposta em 3 dígitos em qualquer ordem." },
-      "Milhar e Centena Invertida": { caracteres: [3, 4], descricao: "Aposta em 3 ou 4 dígitos invertidos." },
-      "Milhar e Centena": { caracteres: [3, 4], descricao: "Aposta em 3 ou 4 dígitos." },
-      "Dezena Combinada": { caracteres: 2, descricao: "Aposta em 2 dezenas combinadas." },
-      "Dezena Combinada Cercada": { caracteres: 2, descricao: "Aposta em 2 dezenas cercadas." },
-      "Duque de Dezena": { caracteres: 4, descricao: "Aposta em 2 dezenas para um prêmio específico." },
-      "Duque de Dezena Combinado": { caracteres: 4, descricao: "Aposta em 2 dezenas combinadas." },
-      "Terno de Dezena": { caracteres: 6, descricao: "Aposta em 3 dezenas para um prêmio específico." },
-      "Terno de Dezena Combinado": { caracteres: 6, descricao: "Aposta em 3 dezenas combinadas." },
-      "Terno de Dezena Cercado": { caracteres: 6, descricao: "Aposta em 3 dezenas cercadas." },
-      "Grupo Combinado": { caracteres: 4, descricao: "Aposta em 2 grupos combinados." },
-      "Grupo Combinado Cercado": { caracteres: 4, descricao: "Aposta em 2 grupos cercados." },
-      "Duque de Grupo": { caracteres: 4, descricao: "Aposta em 2 grupos." },
-      "Terno de Grupo": { caracteres: 6, descricao: "Aposta em 3 grupos." },
-      "Terno de Grupo Combinado": { caracteres: 6, descricao: "Aposta em 3 grupos combinados." },
-      "Terno de Grupo Cercado": { caracteres: 6, descricao: "Aposta em 3 grupos cercados." },
-      "Passe Vai": { caracteres: 4, descricao: "Aposta em 2 grupos (passe vai)." },
-      "Passe Vai e Vem": { caracteres: 4, descricao: "Aposta em 2 grupos (passe vai e vem)." }
+      "Milhar": "Aposta em 4 dígitos. Ex: 1234",
+      "Centena": "Aposta em 3 dígitos. Ex: 123",
+      "Dezena": "Aposta em 2 dígitos. Ex: 12",
+      "Grupo": "Aposta em 2 dígitos representando um grupo (01-25). Ex: 12",
+      "Milhar Invertida": "Aposta em 3 a 7 dígitos que gera combinações de milhar. Ex: 1234",
+      "Centena Invertida": "Aposta em 3 a 7 dígitos que gera combinações de centena. Ex: 123",
+      "Milhar e Centena Invertida": "Aposta em 3 a 7 dígitos que gera combinações de milhar e centena. Ex: 1234",
+      "Milhar e Centena": "Aposta em 4 dígitos que vale para milhar e centena (cada aposta conta como 2 jogos). Ex: 1234",
+      "Dezena Combinada Cercada": "Dezenas combinadas e cercadas. Ex: 12, 34",
+      "Duque de Dezena": "Par de dezenas. Ex: 12 x 34 (cada 2 dezenas = 1 aposta em 1/5P ou 6/10P)",
+      "Duque de Dezena Combinado": "Pares de dezenas combinados. Ex: 12 x 34, 56 x 78",
+      "Terno de Dezena": "Trio de dezenas. Ex: 12 x 34 x 56 (cada 3 dezenas = 1 aposta em 1/5P ou 6/10P)",
+      "Terno de Dezena Combinado": "Trios de dezenas combinados. Ex: 12 x 34 x 56",
+      "Terno de Dezena Cercado": "Trios de dezenas cercados. Ex: 12 x 34 x 56",
+      "Grupo Combinado": "Combinação de grupos (01-25). Ex: 12, 34",
+      "Grupo Combinado Cercado": "Grupos combinados e cercados. Ex: 12, 34",
+      "Duque de Grupo": "Par de grupos (01-25). Ex: 12 x 34",
+      "Terno de Grupo": "Trio de grupos (01-25). Ex: 12 x 34 x 56",
+      "Terno de Grupo Combinado": "Trios de grupos combinados. Ex: 12 x 34 x 56",
+      "Terno de Grupo Cercado": "Trios de grupos cercados. Ex: 12 x 34 x 56",
+      "Passe Vai": "Aposta em 2 dígitos para passe vai. Ex: 12",
+      "Passe Vai e Vem": "Aposta em 2 dígitos para passe vai e vem. Ex: 12"
     };
-
-    function atualizarValidacaoAposta() {
-      const modalidadeSelect = document.getElementById('modalidade');
-      const apostaInput = document.getElementById('aposta');
-      const modalidadeInfoDiv = document.getElementById('modalidadeInfo');
-      const apostaInfoDiv = document.getElementById('apostaInfo');
-      modalidadeAtual = modalidadeSelect.value;
+    
+    const infoPremiacoes = {
+      "1P": "Prêmio integral - 1 vez o valor",
+      "1/2P": "Meio prêmio - 2 vezes o valor",
+      "1/3P": "Terço do prêmio - 3 vezes o valor",
+      "1/4P": "Quarto do prêmio - 4 vezes o valor",
+      "1/5P": "Quinto do prêmio - 5 vezes o valor (para duques: cada 2 dezenas = 1 aposta, para ternos: cada 3 dezenas = 1 aposta)",
+      "1/6P": "Sexto do prêmio - 6 vezes o valor",
+      "1/7P": "Sétimo do prêmio - 7 vezes o valor",
+      "1/8P": "Oitavo do prêmio - 8 vezes o valor",
+      "1/9P": "Nono do prêmio - 9 vezes o valor",
+      "1/10P": "Décimo do prêmio - 10 vezes o valor",
+      "6/10P": "Seis décimos do prêmio - valor especial (para duques: cada 2 dezenas = 1 aposta, para ternos: cada 3 dezenas = 1 aposta)",
+      "1P e 1/5P": "Prêmio integral mais quinto do prêmio",
+      "1P e 1/10P": "Prêmio integral mais décimo do prêmio"
+    };
+    
+    function formatarMoeda(input) {
+      let value = input.value.replace(/\D/g, '');
+      value = value.padStart(3, '0');
+      const formattedValue = (parseInt(value) / 100).toLocaleString('pt-BR', {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+      });
+      input.value = formattedValue;
+      setTimeout(() => {
+        input.selectionStart = input.selectionEnd = input.value.length;
+      }, 0);
+    }
+    
+    function gerarMilharBrinde() {
+      return Math.floor(Math.random() * 10000).toString().padStart(4, '0');
+    }
+    
+    function identificarPadraoAposta(aposta) {
+      const digitos = aposta.split('');
+      let contador = {};
+      let padrao = '';
       
-      const info = infoModalidades[modalidadeAtual];
-      if (info) {
-        modalidadeInfoDiv.innerText = info.descricao;
-        modalidadeInfoDiv.style.display = 'block';
-        if (Array.isArray(info.caracteres)) {
-          apostaInput.placeholder = `Ex: ${info.caracteres.join(', ')} dígitos`;
-          maxCaracteres = Math.max(...info.caracteres);
-        } else {
-          apostaInput.placeholder = `Ex: ${info.caracteres} dígitos`;
-          maxCaracteres = info.caracteres;
+      for (let i = 0; i < digitos.length; i++) {
+        const digito = digitos[i];
+        if (!contador[digito]) {
+          contador[digito] = Object.keys(contador).length + 1;
+        }
+        padrao += contador[digito];
+      }
+      return padrao;
+    }
+    
+    function calcularCombinacoesPorPadrao(aposta, modalidade) {
+      const padrao = identificarPadraoAposta(aposta);
+      
+      if (tabelaCombinacoes.hasOwnProperty(padrao)) {
+        const [digitos, centenas, milhares, total] = tabelaCombinacoes[padrao];
+        
+        if (modalidade === "Milhar Invertida") {
+          return milhares;
+        } else if (modalidade === "Centena Invertida") {
+          return centenas;
+        } else if (modalidade === "Milhar e Centena Invertida") {
+          return total;
+        }
+      }
+      
+      return aposta.length;
+    }
+    
+    function calcularCombinacoesDuqueTerno(apostas, modalidade) {
+      let numerosApenas = apostas.replace(/\s/g, '').replace(/x/gi, '');
+      
+      let dezenas = [];
+      for (let i = 0; i < numerosApenas.length; i += 2) {
+        if (i + 2 <= numerosApenas.length) {
+          dezenas.push(numerosApenas.substring(i, i + 2));
+        }
+      }
+      
+      let numerosUnicos = [...new Set(dezenas)];
+      const quantidadeNumeros = numerosUnicos.length;
+      
+      if (modalidade.includes('Duque')) {
+        return tabelaCombinacoesDuques[quantidadeNumeros] || 0;
+      } else if (modalidade.includes('Terno')) {
+        return tabelaCombinacoesTernos[quantidadeNumeros] || 0;
+      }
+      
+      return 0;
+    }
+    
+    // Função completamente reformulada para corrigir o problema do cursor
+    function formatarAposta() {
+      const apostaInput = document.getElementById('aposta');
+      const cursorPosition = apostaInput.selectionStart;
+      let texto = apostaInput.value;
+      
+      // Salva a posição do cursor antes de qualquer formatação
+      ultimoCursorPos = cursorPosition;
+      
+      // Remove todos os caracteres não numéricos
+      let textoLimpo = texto.replace(/\D/g, '');
+      
+      let textoFormatado = '';
+      
+      if (formatoDuqueTerno) {
+        if (modalidadeAtual.includes('Duque')) {
+          for (let i = 0; i < textoLimpo.length; i += 4) {
+            if (i > 0) textoFormatado += ' ';
+            if (i + 4 <= textoLimpo.length) {
+              textoFormatado += textoLimpo.substring(i, i + 4);
+            } else {
+              textoFormatado += textoLimpo.substring(i);
+            }
+          }
+        } else if (modalidadeAtual.includes('Terno')) {
+          for (let i = 0; i < textoLimpo.length; i += 6) {
+            if (i > 0) textoFormatado += ' ';
+            if (i + 6 <= textoLimpo.length) {
+              textoFormatado += textoLimpo.substring(i, i + 6);
+            } else {
+              textoFormatado += textoLimpo.substring(i);
+            }
+          }
         }
       } else {
-        modalidadeInfoDiv.style.display = 'none';
-        apostaInput.placeholder = "Ex: 1234, 567, 8910 (separadas por vírgula)";
-        maxCaracteres = 4;
+        const modalidadesCombinadas = ["Dezena Combinada Cercada", "Grupo Combinado", "Grupo Combinado Cercado"];
+        
+        if (modalidadesCombinadas.includes(modalidadeAtual)) {
+          for (let i = 0; i < textoLimpo.length; i += 2) {
+            if (i > 0) textoFormatado += ' ';
+            if (i + 2 <= textoLimpo.length) {
+              textoFormatado += textoLimpo.substring(i, i + 2);
+            } else {
+              textoFormatado += textoLimpo.substring(i);
+            }
+          }
+        } else {
+          for (let i = 0; i < textoLimpo.length; i += maxCaracteres) {
+            if (i > 0) textoFormatado += ' ';
+            if (i + maxCaracteres <= textoLimpo.length) {
+              textoFormatado += textoLimpo.substring(i, i + maxCaracteres);
+            } else {
+              textoFormatado += textoLimpo.substring(i);
+            }
+          }
+        }
       }
-
+      
+      // Atualiza o valor do textarea
+      apostaInput.value = textoFormatado;
+      
+      // Calcula a nova posição do cursor
+      let novaPosicao = calcularNovaPosicaoCursor(texto, textoFormatado, cursorPosition);
+      
+      // Define a nova posição do cursor
+      apostaInput.selectionStart = apostaInput.selectionEnd = novaPosicao;
+      
+      // Atualiza o cursor helper
+      atualizarCursorHelper();
+      
       validarAposta();
-      calcularTotal();
     }
+    
+    // Função auxiliar para calcular a nova posição do cursor
+    function calcularNovaPosicaoCursor(textoAntigo, textoNovo, posicaoAntiga) {
+      // Se o texto está vazio, cursor no início
+      if (!textoAntigo && !textoNovo) return 0;
+      
+      // Conta quantos dígitos existiam antes do cursor na versão antiga
+      const textoAteCursor = textoAntigo.substring(0, posicaoAntiga);
+      const digitosAteCursor = textoAteCursor.replace(/\D/g, '').length;
+      
+      // Encontra a posição no novo texto que corresponde ao mesmo número de dígitos
+      let digitosEncontrados = 0;
+      for (let i = 0; i < textoNovo.length; i++) {
+        if (digitosEncontrados >= digitosAteCursor) {
+          return i;
+        }
+        if (textoNovo[i].match(/\d/)) {
+          digitosEncontrados++;
+        }
+      }
+      
+      // Se chegou ao final, retorna o final do texto
+      return textoNovo.length;
+    }
+    
+    function handlePaste(event) {
+      event.preventDefault();
+      const texto = (event.clipboardData || window.clipboardData).getData('text');
+      const apostaInput = document.getElementById('aposta');
+      
+      const inicio = apostaInput.selectionStart;
+      const fim = apostaInput.selectionEnd;
+      const textoAtual = apostaInput.value;
+      
+      // Insere apenas os dígitos do texto colado
+      const textoColadoLimpo = texto.replace(/\D/g, '');
+      apostaInput.value = textoAtual.substring(0, inicio) + textoColadoLimpo + textoAtual.substring(fim);
+      
+      // Reposiciona o cursor
+      apostaInput.selectionStart = apostaInput.selectionEnd = inicio + textoColadoLimpo.length;
+      
+      formatarAposta();
+    }
+    
+    // Funções para gerenciar o cursor helper personalizado
+    function mostrarCursorHelper() {
+      const cursorHelper = document.getElementById('cursorHelper');
+      cursorHelper.style.display = 'block';
+      atualizarCursorHelper();
+    }
+    
+    function esconderCursorHelper() {
+      const cursorHelper = document.getElementById('cursorHelper');
+      cursorHelper.style.display = 'none';
+    }
+    
+    function atualizarCursorHelper() {
+      const apostaInput = document.getElementById('aposta');
+      const cursorHelper = document.getElementById('cursorHelper');
+      
+      // Obtém a posição do cursor
+      const cursorPosition = apostaInput.selectionStart;
+      
+      // Obtém as coordenadas do cursor
+      const coordinates = getCursorCoordinates(apostaInput, cursorPosition);
+      
+      if (coordinates) {
+        cursorHelper.style.left = coordinates.x + 'px';
+        cursorHelper.style.top = coordinates.y + 'px';
+        cursorHelper.style.height = coordinates.height + 'px';
+      }
+    }
+    
+    // Função para obter as coordenadas do cursor
+    function getCursorCoordinates(input, pos) {
+      // Cria um elemento temporário para medir a posição
+      const tempDiv = document.createElement('div');
+      const style = getComputedStyle(input);
+      
+      // Aplica o mesmo estilo do textarea
+      tempDiv.style.font = style.font;
+      tempDiv.style.padding = style.padding;
+      tempDiv.style.width = input.offsetWidth + 'px';
+      tempDiv.style.whiteSpace = 'pre-wrap';
+      tempDiv.style.wordWrap = 'break-word';
+      tempDiv.style.visibility = 'hidden';
+      tempDiv.style.position = 'absolute';
+      tempDiv.style.top = '0';
+      tempDiv.style.left = '0';
+      
+      // Insere o texto até a posição do cursor
+      const text = input.value.substring(0, pos);
+      tempDiv.textContent = text;
+      
+      // Adiciona ao DOM para calcular as dimensões
+      document.body.appendChild(tempDiv);
+      
+      // Obtém as coordenadas
+      const range = document.createRange();
+      const selection = window.getSelection();
+      range.selectNodeContents(tempDiv);
+      range.collapse(false);
+      selection.removeAllRanges();
+      selection.addRange(range);
+      
+      const rect = range.getBoundingClientRect();
+      const inputRect = input.getBoundingClientRect();
+      
+      // Remove o elemento temporário
+      document.body.removeChild(tempDiv);
+      
+      if (rect) {
+        return {
+          x: rect.left - inputRect.left + input.scrollLeft,
+          y: rect.top - inputRect.top + input.scrollTop,
+          height: rect.height
+        };
+      }
+      
+      return null;
+    }
+    
+    function atualizarValidacaoAposta() {
+      modalidadeAtual = document.getElementById('modalidade').value;
+      
+      document.getElementById('modalidadeInfo').innerText = infoModalidades[modalidadeAtual] || "";
+      document.getElementById('modalidadeInfo').style.display = infoModalidades[modalidadeAtual] ? "block" : "none";
+      
+      const modalidadesInvertidas = ["Milhar Invertida", "Centena Invertida", "Milhar e Centena Invertida"];
+      const modalidadesCombinadas = ["Dezena Combinada Cercada", "Grupo Combinado", "Grupo Combinado Cercado"];
+      const modalidadesDuqueTerno = ["Duque de Dezena", "Duque de Dezena Combinado", "Terno de Dezena", 
+                                   "Terno de Dezena Combinado", "Terno de Dezena Cercado", "Duque de Grupo", 
+                                   "Terno de Grupo", "Terno de Grupo Combinado", "Terno de Grupo Cercado"];
 
+      if (modalidadesCombinadas.includes(modalidadeAtual)) {
+        maxCaracteres = 10;
+        formatoDuqueTerno = false;
+      } 
+      else if (modalidadesInvertidas.includes(modalidadeAtual)) {
+        maxCaracteres = 7;
+        formatoDuqueTerno = false;
+      } 
+      else if (modalidadesDuqueTerno.includes(modalidadeAtual)) {
+        maxCaracteres = 100;
+        formatoDuqueTerno = true;
+      }
+      else {
+        switch(modalidadeAtual) {
+          case 'Milhar':
+          case 'Milhar e Centena':
+            maxCaracteres = 4;
+            formatoDuqueTerno = false;
+            break;
+          case 'Centena':
+            maxCaracteres = 3;
+            formatoDuqueTerno = false;
+            break;
+          case 'Dezena':
+          case 'Grupo':
+          case 'Passe Vai':
+          case 'Passe Vai e Vem':
+            maxCaracteres = 2;
+            formatoDuqueTerno = false;
+            break;
+        }
+      }
+      
+      const premiacaoSelect = document.getElementById('premiacao');
+      if (modalidadeAtual.includes('Duque') || modalidadeAtual.includes('Terno')) {
+        for (let i = 0; i < premiacaoSelect.options.length; i++) {
+          const option = premiacaoSelect.options[i];
+          if (option.value === '1/5P' || option.value === '6/10P') {
+            option.style.display = '';
+          } else {
+            option.style.display = 'none';
+          }
+        }
+        premiacaoSelect.value = '1/5P';
+      } else {
+        for (let i = 0; i < premiacaoSelect.options.length; i++) {
+          premiacaoSelect.options[i].style.display = '';
+        }
+      }
+      
+      document.getElementById('apostaInfo').innerText = getMensagemInfo();
+      
+      formatarAposta();
+    }
+    
+    function getMensagemInfo() {
+      const modalidadesInvertidas = ["Milhar Invertida", "Centena Invertida", "Milhar e Centena Invertida"];
+      const modalidadesCombinadas = ["Dezena Combinada Cercada", "Grupo Combinado", "Grupo Combinado Cercado"];
+      const modalidadesDuqueTerno = ["Duque de Dezena", "Duque de Dezena Combinado", "Terno de Dezena", 
+                                   "Terno de Dezena Combinado", "Terno de Dezena Cercado", "Duque de Grupo", 
+                                   "Terno de Grupo", "Terno de Grupo Combinado", "Terno de Grupo Cercado"];
+
+      if (modalidadesInvertidas.includes(modalidadeAtual)) {
+        return 'Digite números de 3 a 7 dígitos (ex: 123 1234 12345)';
+      }
+      
+      if (modalidadesCombinadas.includes(modalidadeAtual)) {
+        return 'Digite até 10 dígitos (ex: 1234567890).';
+      }
+      
+      if (modalidadesDuqueTerno.includes(modalidadeAtual)) {
+        if (modalidadeAtual.includes('Duque')) {
+          return 'Digite números em pares para duque (ex: 1234 5678). Cada 2 dezenas = 1 aposta em 1/5P ou 6/10P.';
+        } else {
+          return 'Digite números em trios para terno (ex: 123456 789012). Cada 3 dezenas = 1 aposta em 1/5P ou 6/10P.';
+        }
+      }
+      
+      switch(modalidadeAtual) {
+        case 'Milhar': 
+          return 'Digite números de 4 dígitos (ex: 1234 5678).';
+        case 'Milhar e Centena':
+          return 'Digite números de 4 dígitos (ex: 1234 5678). Cada aposta conta como 2 jogos.';
+        case 'Centena':
+          return 'Digite números de 3 dígitos (ex: 123 456).';
+        case 'Dezena':
+          return 'Digite números de 2 dígitos (ex: 12 34).';
+        case 'Grupo':
+          return 'Digite números de 2 dígitos (01-25) representando grupos (ex: 12 34).';
+        case 'Passe Vai':
+        case 'Passe Vai e Vem':
+          return 'Digite números de 2 dígitos (ex: 12 34).';
+        default: return '';
+      }
+    }
+    
+    function limitarCaracteres(event) {
+      const apostaInput = document.getElementById('aposta');
+      const cursorPosition = apostaInput.selectionStart;
+      let texto = apostaInput.value;
+      
+      if (event.key === 'Backspace' || event.key === 'Delete' || event.key === 'Tab') {
+        return true;
+      }
+      
+      if (event.ctrlKey || event.altKey || event.metaKey) {
+        return true;
+      }
+      
+      if (event.key === 'ArrowLeft' || event.key === 'ArrowRight' || event.key === 'ArrowUp' || event.key === 'ArrowDown') {
+        return true;
+      }
+      
+      if (!/^\d$/.test(event.key)) {
+        event.preventDefault();
+        return false;
+      }
+      
+      if (!formatoDuqueTerno) {
+        const textoAteCursor = texto.substring(0, cursorPosition);
+        const ultimoEspaco = textoAteCursor.lastIndexOf(' ');
+        const inicioApostaAtual = ultimoEspaco !== -1 ? ultimoEspaco + 1 : 0;
+        const apostaAtual = texto.substring(inicioApostaAtual, cursorPosition).replace(/\D/g, '');
+        
+        if (apostaAtual.length >= maxCaracteres) {
+          event.preventDefault();
+          const newText = texto.substring(0, cursorPosition) + ' ' + texto.substring(cursorPosition);
+          apostaInput.value = newText;
+          apostaInput.selectionStart = apostaInput.selectionEnd = cursorPosition + 1;
+          return false;
+        }
+      }
+      
+      return true;
+    }
+    
     function validarAposta() {
       const apostaInput = document.getElementById('aposta');
-      const apostaErrorDiv = document.getElementById('apostaError');
-      const apostaSuccessDiv = document.getElementById('apostaSuccess');
-      const apostaInfoDiv = document.getElementById('apostaInfo');
+      const apostaError = document.getElementById('apostaError');
+      const apostaInfo = document.getElementById('apostaInfo');
+      const apostaSuccess = document.getElementById('apostaSuccess');
+      const btnConfirmar = document.getElementById('btnConfirmar');
       
-      const apostas = apostaInput.value.split(/\s+|,|;|\./).filter(n => n).map(n => n.trim());
-      const modalidade = document.getElementById('modalidade').value;
-      let valid = true;
-      let mensagemErro = "";
+      apostaInfo.innerText = getMensagemInfo();
+      apostaError.innerText = '';
+      apostaSuccess.innerText = '';
       
-      apostaErrorDiv.innerText = "";
-      apostaSuccessDiv.innerText = "";
-      apostaInfoDiv.innerText = "";
-      
-      if (apostas.length === 0 && apostaInput.value !== "") {
-          apostaErrorDiv.innerText = "Formato inválido. Use espaço, vírgula, ponto e vírgula ou ponto para separar os números.";
-          valid = false;
-      }
-
-      if (modalidade === "Milhar") {
-        apostas.forEach(a => {
-          if (!/^\d{4}$/.test(a)) {
-            mensagemErro = "Milhar: Apenas 4 dígitos.";
-            valid = false;
-          }
-        });
-      } else if (modalidade === "Centena") {
-        apostas.forEach(a => {
-          if (!/^\d{3}$/.test(a)) {
-            mensagemErro = "Centena: Apenas 3 dígitos.";
-            valid = false;
-          }
-        });
-      } else if (modalidade === "Dezena") {
-        apostas.forEach(a => {
-          if (!/^\d{2}$/.test(a)) {
-            mensagemErro = "Dezena: Apenas 2 dígitos.";
-            valid = false;
-          }
-        });
-      } else if (modalidade === "Grupo") {
-        apostas.forEach(a => {
-            const grupo = parseInt(a, 10);
-            if (!/^\d{2}$/.test(a) || grupo < 1 || grupo > 25) {
-                mensagemErro = "Grupo: Apenas 2 dígitos (01 a 25).";
-                valid = false;
-            }
-        });
-      } else if (modalidade === "Milhar e Centena") {
-          apostas.forEach(a => {
-              if (a.length !== 3 && a.length !== 4) {
-                  mensagemErro = "Milhar e Centena: Apenas 3 ou 4 dígitos.";
-                  valid = false;
-              }
-          });
-      }
-
-      if (modalidade.includes("Combinado")) {
-          const numerosUnicos = new Set();
-          apostas.forEach(a => {
-              a.split('').forEach(d => numerosUnicos.add(d));
-          });
-          if (numerosUnicos.size !== apostas[0].length) {
-              apostaInfoDiv.innerText = "Apostas combinadas devem ter números sem dígitos repetidos.";
-          }
-      }
-
-      if (valid) {
-          apostaErrorDiv.innerText = "";
-          apostaSuccessDiv.innerText = "Apostas válidas!";
-      } else {
-          apostaErrorDiv.innerText = mensagemErro;
-          apostaSuccessDiv.innerText = "";
-      }
-    }
-
-    function limitarCaracteres(event) {
-      if (event.key === ' ' || event.key === ',') {
+      if (apostaInput.value.trim() === '') {
+        btnConfirmar.disabled = false;
+        btnConfirmar.style.opacity = '1';
         return;
       }
-      const apostaInput = document.getElementById('aposta');
-      const apostas = apostaInput.value.split(/\s+|,/).filter(n => n).map(n => n.trim());
       
-      if (apostas.length > 0) {
-        let ultima = apostas[apostas.length - 1];
-        if (ultima.length >= maxCaracteres && event.key !== "Backspace" && event.key !== "Delete") {
-          event.preventDefault();
+      const modalidadesCombinadas = ["Dezena Combinada Cercada", "Grupo Combinado", "Grupo Combinado Cercado"];
+      const modalidadesDuqueTerno = ["Duque de Dezena", "Duque de Dezena Combinado", "Terno de Dezena", 
+                                   "Terno de Dezena Combinado", "Terno de Dezena Cercado", "Duque de Grupo", 
+                                   "Terno de Grupo", "Terno de Grupo Combinado", "Terno de Grupo Cercado"];
+      
+      let apostas = [];
+      let todasValidas = true;
+      let mensagemErro = '';
+      
+      if (modalidadesCombinadas.includes(modalidadeAtual)) {
+        const apostaTexto = apostaInput.value.replace(/\s/g, '');
+        for (let i = 0; i < apostaTexto.length; i += 2) {
+          if (i + 2 <= apostaTexto.length) {
+            apostas.push(apostaTexto.substring(i, i + 2));
+          }
+        }
+        
+        if (apostas.length > 7) {
+          mensagemErro = `${modalidadeAtual} permite no máximo 7 dezenas. Você digitou ${apostas.length}.`;
+          todasValidas = false;
+        }
+      } 
+      else if (modalidadesDuqueTerno.includes(modalidadeAtual)) {
+        apostas = apostaInput.value.split(' ').map(a => a.trim()).filter(a => a !== '');
+        
+        for (let aposta of apostas) {
+          if (modalidadeAtual.includes('Duque') && aposta.length !== 4) {
+            mensagemErro = `Cada duque deve ter exatamente 4 dígitos. "${aposta}" tem ${aposta.length}.`;
+            todasValidas = false;
+            break;
+          }
+          
+          if (modalidadeAtual.includes('Terno') && aposta.length !== 6) {
+            mensagemErro = `Cada terno deve ter exatamente 6 dígitos. "${aposta}" tem ${aposta.length}.`;
+            todasValidas = false;
+            break;
+          }
+          
+          if (modalidadeAtual.toLowerCase().includes('grupo')) {
+            let numeros = [];
+            for (let i = 0; i < aposta.length; i += 2) {
+              let num = aposta.substring(i, i+2);
+              numeros.push(num);
+              
+              const numeroInt = parseInt(num);
+              if (numeroInt < 1 || numeroInt > 25) {
+                mensagemErro = `Grupo "${num}" inválido. Os grupos devem ser entre 01 e 25.`;
+                todasValidas = false;
+                break;
+              }
+            }
+            if (!todasValidas) break;
+          }
+        }
+      } 
+      else {
+        apostas = apostaInput.value.split(' ').map(a => a.trim()).filter(a => a !== '');
+      }
+      
+      for (let i = 0; i < apostas.length && todasValidas; i++) {
+        const aposta = apostas[i];
+        
+        if (!/^\d+$/.test(aposta)) {
+          mensagemErro = `Aposta "${aposta}" não é um número válido.`;
+          todasValidas = false;
+          break;
+        }
+        
+        if (modalidadeAtual.toLowerCase().includes('grupo') && !modalidadesDuqueTerno.includes(modalidadeAtual)) {
+          const numero = parseInt(aposta);
+          if (numero < 1 || numero > 25) {
+            mensagemErro = `Grupo "${aposta}" inválido. Os grupos devem ser entre 01 e 25.`;
+            todasValidas = false;
+            break;
+          }
+        }
+        
+        const modalidadesInvertidas = ["Milhar Invertida", "Centena Invertida", "Milhar e Centena Invertida"];
+        
+        if (modalidadesInvertidas.includes(modalidadeAtual)) {
+          if (aposta.length < 3 || aposta.length > 7) {
+            mensagemErro = `${modalidadeAtual} deve ter entre 3 e 7 dígitos. "${aposta}" tem ${aposta.length}.`;
+            todasValidas = false;
+            break;
+          }
+        } 
+        else if (!modalidadesDuqueTerno.includes(modalidadeAtual) && aposta.length !== maxCaracteres) {
+          mensagemErro = `${modalidadeAtual} deve ter exatamente ${maxCaracteres} dígitos. "${aposta}" tem ${aposta.length}.`;
+          todasValidas = false;
+          break;
         }
       }
+      
+      if (mensagemErro) {
+        apostaError.innerText = mensagemErro;
+        btnConfirmar.disabled = true;
+        btnConfirmar.style.opacity = '0.6';
+        
+        apostaInput.classList.add('shake');
+        setTimeout(() => {
+          apostaInput.classList.remove('shake');
+        }, 500);
+      } else {
+        apostaError.innerText = '';
+        const mensagemSucesso = `${apostas.length} número(s) válido(s) para ${modalidadeAtual}.`;
+        apostaSuccess.innerText = mensagemSucesso;
+        btnConfirmar.disabled = false;
+        btnConfirmar.style.opacity = '1';
+        calcularTotal();
+      }
+    }
+    
+    function toggleOperacao(tipo) {
+      operacao = tipo;
+      document.getElementById('btnMultiplicar').classList.toggle('active', tipo === 'multiplicar');
+      document.getElementById('btnDividir').classList.toggle('active', tipo === 'dividir');
+      calcularTotal();
     }
 
     function calcularTotal() {
-      const apostaInput = document.getElementById('aposta');
-      const valorInput = document.getElementById('valor');
-      const quantidadeInput = document.getElementById('quantidade');
-      const totalInput = document.getElementById('total');
-      const modalidade = document.getElementById('modalidade').value;
-      const premiacao = document.getElementById('premiacao').value;
-
-      const valorStr = valorInput.value.replace(/\./g, '').replace(',', '.');
-      const valorUnitario = parseFloat(valorStr);
+      let valorInput = document.getElementById('valor').value;
+      let valor = parseFloat(valorInput.replace(/\./g, '').replace(',', '.')) || 0;
+      let premiacao = document.getElementById('premiacao').value;
+      let aposta = document.getElementById('aposta').value;
+      let modalidade = document.getElementById('modalidade').value;
       
-      if (isNaN(valorUnitario) || valorUnitario <= 0) {
-        quantidadeInput.value = 0;
-        totalInput.value = "R$ 0,00";
-        return;
-      }
-
-      const apostas = apostaInput.value.split(/, |,| /).filter(n => n);
-
+      document.getElementById('premiacaoInfo').innerText = infoPremiacoes[premiacao] || "";
+      
+      let numerosApostados = 0;
       let quantidadeJogos = 0;
-      let total = 0;
-
-      if (modalidade.includes("Invertida")) {
-        apostas.forEach(aposta => {
-          let numeros = aposta.split('').sort().join('');
-          let combinacoes = 0;
-          if (tabelaCombinacoes[numeros]) {
-            if (modalidade === "Milhar Invertida") {
-              combinacoes = tabelaCombinacoes[numeros][2];
-            } else if (modalidade === "Centena Invertida") {
-              combinacoes = tabelaCombinacoes[numeros][1];
+      
+      if (aposta.trim() !== '') {
+        const modalidadesCombinadas = ["Dezena Combinada Cercada", "Grupo Combinado", "Grupo Combinado Cercado"];
+        const modalidadesDuqueTerno = ["Duque de Dezena", "Duque de Dezena Combinado", "Terno de Dezena", 
+                                     "Terno de Dezena Combinado", "Terno de Dezena Cercado", "Duque de Grupo", 
+                                     "Terno de Grupo", "Terno de Grupo Combinado", "Terno de Grupo Cercado"];
+        const modalidadesInvertidas = ["Milhar Invertida", "Centena Invertida", "Milhar e Centena Invertida"];
+        const modalidadesCercadas = ["Dezena Combinada Cercada", "Terno de Dezena Cercado", "Grupo Combinado Cercado", "Terno de Grupo Cercado"];
+        
+        if (modalidadesCombinadas.includes(modalidade)) {
+          let apostasArray = [];
+          const apostaTexto = aposta.replace(/\s/g, '');
+          for (let i = 0; i < apostaTexto.length; i += 2) {
+            if (i + 2 <= apostaTexto.length) {
+              apostasArray.push(apostaTexto.substring(i, i + 2));
             }
           }
-          quantidadeJogos += combinacoes;
-        });
-      } else {
-        quantidadeJogos = apostas.length;
-      }
-      
-      if (operacao === 'multiplicar') {
-        total = quantidadeJogos * valorUnitario;
-      } else if (operacao === 'dividir') {
-        total = valorUnitario / quantidadeJogos;
-      }
-
-      quantidadeInput.value = quantidadeJogos;
-      totalInput.value = `R$ ${total.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-      
-      const totalSemFormatacao = parseFloat(total.toFixed(2));
-      valorTotalBilhete = totalSemFormatacao;
-    }
-    
-    function toggleOperacao(novaOperacao) {
-      operacao = novaOperacao;
-      const btnMultiplicar = document.getElementById('btnMultiplicar');
-      const btnDividir = document.getElementById('btnDividir');
-      
-      btnMultiplicar.classList.remove('active');
-      btnDividir.classList.remove('active');
-      
-      if (novaOperacao === 'multiplicar') {
-        btnMultiplicar.classList.add('active');
-      } else {
-        btnDividir.classList.add('active');
-      }
-      
-      calcularTotal();
-    }
-    
-    function salvarAposta(dados) {
-        fetch('/salvar_aposta', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify(dados)
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.status === 'success') {
-                showToast(data.message, 'success');
-            } else {
-                showToast(data.message, 'error');
+          numerosApostados = apostasArray.length;
+          
+          if (modalidade === "Grupo Combinado") {
+            quantidadeJogos = numerosApostados;
+          } else if (modalidade === "Dezena Combinada Cercada" || modalidade === "Grupo Combinado Cercado") {
+            quantidadeJogos = numerosApostados * 3;
+          }
+        } 
+        else if (modalidadesDuqueTerno.includes(modalidade)) {
+          if (modalidade.includes('Combinado')) {
+            quantidadeJogos = calcularCombinacoesDuqueTerno(aposta, modalidade);
+          } else {
+            const apostasArray = aposta.split(' ').map(a => a.trim()).filter(a => a !== '');
+            if (modalidade.includes('Duque')) {
+              quantidadeJogos = apostasArray.length;
+            } else if (modalidade.includes('Terno')) {
+              quantidadeJogos = apostasArray.length;
             }
-        })
-        .catch(error => {
-            console.error('Erro:', error);
-            showToast('Erro ao salvar aposta.', 'error');
+          }
+          
+          if (modalidadesCercadas.includes(modalidade)) {
+            quantidadeJogos *= 3;
+          }
+        } 
+        else if (modalidadesInvertidas.includes(modalidade)) {
+          const apostasArray = aposta.split(' ').map(a => a.trim()).filter(a => a !== '');
+          numerosApostados = 0;
+          
+          for (let i = 0; i < apostasArray.length; i++) {
+            numerosApostados += calcularCombinacoesPorPadrao(apostasArray[i], modalidade);
+          }
+          
+          quantidadeJogos = numerosApostados;
+        } 
+        else {
+          const apostasArray = aposta.split(' ').map(a => a.trim()).filter(a => a !== '');
+          numerosApostados = apostasArray.length;
+          quantidadeJogos = apostasArray.length;
+          
+          if (modalidade === "Milhar e Centena") {
+            quantidadeJogos = quantidadeJogos * 2;
+          }
+        }
+      }
+      
+      let multiplicador = 1;
+      if (premiacao === "1/2P") multiplicador = 2;
+      if (premiacao === "1/3P") multiplicador = 3;
+      if (premiacao === "1/4P") multiplicador = 4;
+      if (premiacao === "1/5P") multiplicador = 5;
+      if (premiacao === "1/6P") multiplicador = 6;
+      if (premiacao === "1/7P") multiplicador = 7;
+      if (premiacao === "1/8P") multiplicador = 8;
+      if (premiacao === "1/9P") multiplicador = 9;
+      if (premiacao === "1/10P") multiplicador = 10;
+      if (premiacao === "6/10P") multiplicador = 5;
+      
+      const modalidadesDuqueTerno = ["Duque de Dezena", "Duque de Dezena Combinado", "Terno de Dezena", 
+                                   "Terno de Dezena Combinado", "Terno de Dezena Cercado", "Duque de Grupo", 
+                                   "Terno de Grupo", "Terno de Grupo Combinado", "Terno de Grupo Cercado"];
+      
+      let quantidade = quantidadeJogos;
+      if (!modalidadesDuqueTerno.includes(modalidade)) {
+        quantidade = quantidadeJogos * multiplicador;
+      }
+      
+      document.getElementById('quantidade').value = quantidade;
+
+      let total;
+      if (operacao === 'dividir') {
+        const valorUnitarioPoule = valor / quantidade;
+        total = valor;
+        
+        document.getElementById('valor').value = valorUnitarioPoule.toLocaleString('pt-BR', { 
+          minimumFractionDigits: 2, 
+          maximumFractionDigits: 2 
         });
+      } else {
+        total = valor * quantidade;
+      }
+      
+      document.getElementById('total').value = "R$ " + total.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    }
+
+    function formatarApostasComX(apostas, modalidade) {
+      if (apostas.length === 0) return '';
+      
+      let resultado = '';
+      
+      const modalidadesComX = [
+        'Duque de Dezena', 'Duque de Dezena Combinado', 
+        'Duque de Grupo', 'Terno de Dezena', 
+        'Terno de Dezena Combinado', 'Terno de Dezena Cercado',
+        'Terno de Grupo', 'Terno de Grupo Combinado', 'Terno de Grupo Cercado'
+      ];
+      
+      if (!modalidadesComX.includes(modalidade)) {
+        return apostas.join(' ');
+      }
+      
+      if (modalidade.includes('Duque')) {
+        for (let i = 0; i < apostas.length; i += 2) {
+          if (i + 1 < apostas.length) {
+            resultado += `${apostas[i]} x ${apostas[i+1]}`;
+            if (i + 2 < apostas.length) resultado += ' ';
+          } else {
+            resultado += `${apostas[i]}`;
+          }
+        }
+      } 
+      else if (modalidade.includes('Terno')) {
+        for (let i = 0; i < apostas.length; i += 3) {
+          if (i + 2 < apostas.length) {
+            resultado += `${apostas[i]} x ${apostas[i+1]} x ${apostas[i+2]}`;
+            if (i + 3 < apostas.length) resultado += ' ';
+          } else if (i + 1 < apostas.length) {
+            resultado += `${apostas[i]} x ${apostas[i+1]}`;
+          } else {
+            resultado += `${apostas[i]}`;
+          }
+        }
+      }
+      
+      return resultado;
+    }
+
+    function toggleDatePicker() {
+      apostaPredatada = document.getElementById('apostaPredatada').checked;
+      const datePickerContainer = document.getElementById('datePickerContainer');
+      
+      if (apostaPredatada) {
+        datePickerContainer.style.display = 'block';
+        const hoje = new Date().toISOString().split('T')[0];
+        document.getElementById('dataAposta').min = hoje;
+      } else {
+        datePickerContainer.style.display = 'none';
+        dataApostaSelecionada = "";
+      }
+    }
+    
+    function hideDatePicker() {
+      dataApostaSelecionada = document.getElementById('dataAposta').value;
     }
 
     function exibirResultado() {
-      const apostaInput = document.getElementById('aposta');
-      const extracaoSelect = document.getElementById('extracao');
-      const modalidadeSelect = document.getElementById('modalidade');
-      const premiacaoSelect = document.getElementById('premiacao');
-      const valorInput = document.getElementById('valor');
-      const quantidadeInput = document.getElementById('quantidade');
-      const bilheteDiv = document.getElementById('bilhete');
-      const btnPdf = document.getElementById('btnPdf');
+      let extracao = document.getElementById('extracao').value;
+      let modalidade = document.getElementById('modalidade').value;
+      let aposta = document.getElementById('aposta').value;
+      let premiacao = document.getElementById('premiacao').value;
+      let valorInput = document.getElementById('valor').value;
+      let valor = parseFloat(valorInput.replace(/\./g, '').replace(',', '.')) || 0;
+      let quantidade = document.getElementById('quantidade').value;
+      let total = document.getElementById('total').value;
+      const repetirAposta = document.getElementById('repetirAposta').checked;
+      apostaPredatada = document.getElementById('apostaPredatada').checked;
 
-      if (!apostaInput.value || !valorInput.value || quantidadeInput.value === "0") {
-          showToast("Por favor, preencha todos os campos e adicione ao menos uma aposta válida.", 'error');
-          apostaInput.classList.add('shake');
-          setTimeout(() => apostaInput.classList.remove('shake'), 500);
-          return;
+      if (aposta.trim() === '' || valor <= 0) {
+        mostrarToast('Por favor, preencha todas as informações corretamente.', 'error');
+        return;
       }
 
-      const apostas = apostaInput.value.split(/, |,| /).filter(n => n);
-      const extracao = extracaoSelect.options[extracaoSelect.selectedIndex].text;
-      const modalidade = modalidadeSelect.options[modalidadeSelect.selectedIndex].text;
-      const premiacao = premiacaoSelect.options[premiacaoSelect.selectedIndex].text;
-      const valor = valorInput.value;
-      const quantidade = quantidadeInput.value;
-      const total = document.getElementById('total').value;
+      if (apostaPredatada && !dataApostaSelecionada) {
+        mostrarToast('Por favor, selecione uma data para a aposta pré-datada.', 'error');
+        return;
+      }
 
-      let apostaData = {
-          extracao: extracao,
-          modalidade: modalidade,
-          premiacao: premiacao,
-          valor: valor,
-          apostas: apostas,
-          quantidade: quantidade,
-          total: total
-      };
-
-      salvarAposta(apostaData);
-
-      let dataAtual = new Date().toLocaleDateString('pt-BR');
-      let horaAtual = new Date().toLocaleTimeString('pt-BR');
+      const modalidadesDuqueTerno = ["Duque de Dezena", "Duque de Dezena Combinado", "Terno de Dezena", 
+                                   "Terno de Dezena Combinado", "Terno de Dezena Cercado", "Duque de Grupo", 
+                                   "Terno de Grupo", "Terno de Grupo Combinado", "Terno de Grupo Cercado"];
       
-      let novoBilhete = `
-        <div class="bilhete-header">
-            <h3>Bilhete de Aposta</h3>
-        </div>
-        <p><strong>Número:</strong> ${numeroBilhete}</p>
-        <p><strong>Data:</strong> ${dataAtual} ${horaAtual}</p>
-        <p><strong>Modalidade:</strong> ${modalidade}</p>
-        <p><strong>Extração:</strong> ${extracao}</p>
-        <p><strong>Premiação:</strong> ${premiacao}</p>
-        <p><strong>Valor por Jogo:</strong> ${valor}</p>
-        <p><strong>Quantidade:</strong> ${quantidade}</p>
-        <p><strong>Valor Total:</strong> ${total}</p>
-        ---
-        <p><strong>Apostas:</strong></p>
-        <pre>${apostas.join(' ')}</pre>
-      `;
+      let apostasArray = [];
+      
+      if (modalidadesDuqueTerno.includes(modalidade)) {
+        const grupos = aposta.split(' ').map(a => a.trim()).filter(a => a !== '');
+        
+        for (let grupo of grupos) {
+          let numeros = [];
+          for (let i = 0; i < grupo.length; i += 2) {
+            numeros.push(grupo.substring(i, i+2));
+          }
+          apostasArray = [...apostasArray, ...numeros];
+        }
+      } else {
+        if (modalidade.includes("Combinada") || modalidade.includes("Combinado")) {
+          const apostaTexto = aposta.replace(/\s/g, '');
+          for (let i = 0; i < apostaTexto.length; i += 2) {
+            if (i + 2 <= apostaTexto.length) {
+              apostasArray.push(apostaTexto.substring(i, i + 2));
+            }
+          }
+        } else {
+          apostasArray = aposta.split(' ').map(a => a.trim()).filter(a => a !== '');
+        }
+      }
+      
+      if (modalidade.includes('Duque') && apostasArray.length % 2 !== 0) {
+        mostrarToast('Duque precisa de números em pares (2, 4, 6, etc). Complete com mais um número.', 'error');
+        return;
+      } else if (modalidade.includes('Terno') && apostasArray.length % 3 !== 0) {
+        const numerosFaltantes = 3 - (apostasArray.length % 3);
+        mostrarToast(`Terno precisa de números em grupos de 3. Faltam ${numerosFaltantes} número(s).`, 'error');
+        return;
+      }
+
+      repetindoAposta = repetirAposta && ultimaAposta && ultimaAposta.apostas.join(' ') === apostasArray.join(' ');
+
+      todasApostas = [...todasApostas, ...apostasArray];
+      
+      historicoApostas.push({
+        numeros: apostasArray,
+        modalidade: modalidade,
+        premiacao: premiacao,
+        valor: valor,
+        predatada: apostaPredatada,
+        dataAposta: dataApostaSelecionada
+      });
+      
+      const valorTotalAposta = parseFloat(total.replace("R$ ", "").replace(".", "").replace(",", "."));
+      valorTotalBilhete += valorTotalAposta;
+
+      const apostasFormatadas = formatarApostasComX(apostasArray, modalidade);
+
+      let temMilharBrinde = false;
+      if (valor > 2 && modalidade === "Milhar") {
+        milharBrinde = gerarMilharBrinde();
+        temMilharBrinde = true;
+        apostasComMilharBrinde.push({
+          numeros: apostasArray,
+          milharBrinde: milharBrinde
+        });
+      }
+
+      let apostaAtualTexto = '';
+      
+      if (repetindoAposta) {
+        apostaAtualTexto = `${modalidade} - ${premiacao}
+Unitario: R$ ${valor.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} Total: R$ ${parseFloat(total.replace("R$ ", "").replace(".", "").replace(",", ".")).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+      } else {
+        apostaAtualTexto = `${modalidade} - ${premiacao}
+${apostasFormatadas}
+Unitario: R$ ${valor.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} Total: R$ ${parseFloat(total.replace("R$ ", "").replace(".", "").replace(",", ".")).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+      }
+
+      let dataHoraTexto = `Data e Hora: ${new Date().toLocaleString('pt-BR')}`;
+      let dataPredatadaTexto = '';
+      if (apostaPredatada && dataApostaSelecionada) {
+        const dataFormatada = new Date(dataApostaSelecionada).toLocaleDateString('pt-BR');
+        dataPredatadaTexto = `Pré-datada: ${dataFormatada}`;
+      }
+
+
+
 
       if (primeiraAposta) {
-          bilheteDiv.innerHTML = novoBilhete;
-          primeiraAposta = false;
-      } else {
-          bilheteDiv.innerHTML += novoBilhete;
+        bilheteCompleto = `          LOTERIA ESPERANCA
+-------------------------------------------------------
+EXT: ${extracao}
+Poule: ${numeroPoule}
+NSU: ${Math.floor(Math.random() * 1000000).toString().padStart(7, '0')}
+Vendedor: ELIENE
+Área: RONA
+${dataHoraTexto}${dataPredatadaTexto ? '\n' + dataPredatadaTexto : ''}
+-------------------------------------------------------`;
+        primeiraAposta = false;
+      } else if (!repetindoAposta) {
+        bilheteCompleto += "\n------------------------------------------------------";
       }
 
-      numeroBilhete++;
-      btnPdf.style.display = 'inline-block';
-      bilheteDiv.classList.add('fade-in');
-      setTimeout(() => bilheteDiv.classList.remove('fade-in'), 500);
+      bilheteCompleto += `\n${apostaAtualTexto}`;
 
-      const repetirApostaCheckbox = document.getElementById('repetirAposta');
-      if (repetirApostaCheckbox.checked) {
-          ultimaAposta = {
-              aposta: apostaInput.value,
-              modalidade: modalidade,
-              valor: valor
-          };
-          repetindoAposta = true;
+      
+
+      const bilheteElement = document.getElementById('bilhete');
+      
+      let bilheteExibicao = bilheteCompleto;
+      
+      bilheteExibicao += `
+-------------------------------------------------------
+TOTAL DO BILHETE: R$ ${valorTotalBilhete.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+------------------------------------------------------
+PREMIAÇÃO APENAS VÁLIDA COM 
+APRESENTAÇÃO DESSE BILHETE. 
+VÁLIDO POR 7 DIAS.
+-------------------------------------------------------
+         BOA SORTE!
+--------------------------------------------------------`;
+      
+      bilheteExibicao = bilheteExibicao.split('\n').map(line => {
+        return line.trim();
+      }).join('\n').trim();
+      
+      bilheteElement.innerText = bilheteExibicao;
+      bilheteElement.classList.add('fade-in');
+      
+      bilheteElement.style.height = 'auto';
+      bilheteElement.style.minHeight = '400px';
+      
+      document.getElementById('btnPdf').style.display = "block";
+      
+      ultimaAposta = {
+        apostas: apostasArray,
+        modalidade: modalidade,
+        premiacao: premiacao,
+        valor: valor,
+        quantidade: quantidade,
+        total: total,
+        predatada: apostaPredatada,
+        dataAposta: dataApostaSelecionada
+      };
+      
+      if (!repetirAposta) {
+        limparCamposAposConfirmacao();
       } else {
-          limparFormulario(false);
-          ultimaAposta = null;
-          repetindoAposta = false;
+        document.getElementById('premiacao').selectedIndex = 0;
+        document.getElementById('valor').value = '';
+        document.getElementById('quantidade').value = '';
+        document.getElementById('total').value = '';
+        calcularTotal();
+      }
+      
+      mostrarToast('Aposta adicionada ao bilhete!', 'success');
+    }
+
+    function imprimirPDF() {
+      const { jsPDF } = window.jspdf;
+      
+      const bilheteTexto = document.getElementById('bilhete').innerText;
+      const numeroLinhas = bilheteTexto.split('\n').length;
+      const alturaPorLinha = 5;
+      const alturaMinima = 80;
+      const alturaMaxima = 2000;
+      const alturaCalculada = Math.min(alturaMaxima, Math.max(alturaMinima, numeroLinhas * alturaPorLinha + 1));
+      
+      const doc = new jsPDF({
+        orientation: 'portrait',
+        unit: 'mm',
+        format: [80, alturaCalculada]
+      });
+      
+      doc.setProperties({
+        title: 'LOTERIA ESPERANCA',
+      });
+      
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(10);
+      
+      let bilheteParaPDF = bilheteCompleto;
+      
+      bilheteParaPDF += `
+-------------------------------------------------------
+TOTAL DO BILHETE: R$ ${valorTotalBilhete.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+-------------------------------------------------------
+PREMIAÇÃO APENAS VÁLIDA COM 
+APRESENTAÇÃO DESSE BILHETE. 
+VÁLIDO POR 7 DIAS.
+-------------------------------------------------------
+         BOA SORTE!
+-------------------------------------------------------`;
+      
+      bilheteParaPDF = bilheteParaPDF.split('\n').map(line => {
+        return line.trim();
+      }).join('\n').trim();
+      
+      const lines = doc.splitTextToSize(bilheteParaPDF, 70);
+      doc.text(lines, 5, 5);
+      
+      doc.setFontSize(8);
+      doc.text(`Emitido: ${new Date().toLocaleString('pt-BR')}`, 5, alturaCalculada - 10);
+      
+      doc.save(`bilhete-sysbanca-${numeroBilhete}.pdf`);
+      mostrarToast('PDF gerado com sucesso!', 'success');
+      
+      numeroBilhete++;
+      
+      limparFormulario();
+    }
+    
+    function limparFormulario() {
+      const repetirAposta = document.getElementById('repetirAposta').checked;
+      
+      if (!repetirAposta) {
+        document.getElementById('aposta').value = '';
+        document.getElementById('valor').value = '';
+        document.getElementById('quantidade').value = '';
+        document.getElementById('total').value = '';
+        document.getElementById('apostaError').innerText = '';
+        document.getElementById('apostaSuccess').innerText = '';
+        document.getElementById('bilhete').innerText = 'Seu bilhete aparecerá aqui após confirmar a aposta.';
+        document.getElementById('btnPdf').style.display = 'none';
+        document.getElementById('repetirAposta').checked = false;
+        
+        document.getElementById('apostaPredatada').checked = false;
+        document.getElementById('dataAposta').value = '';
+        document.getElementById('datePickerContainer').style.display = 'none';
+        apostaPredatada = false;
+        dataApostaSelecionada = "";
+        
+        document.getElementById('extracao').selectedIndex = 0;
+        document.getElementById('modalidade').selectedIndex = 0;
+        document.getElementById('premiacao').selectedIndex = 0;
+        operacao = 'multiplicar';
+        document.getElementById('btnMultiplicar').classList.add('active');
+        document.getElementById('btnDividir').classList.remove('active');
+        
+        todasApostas = [];
+        bilheteCompleto = "";
+        valorTotalBilhete = 0;
+        milharBrinde = "";
+        ultimaAposta = null;
+        repetindoAposta = false;
+        apostasComMilharBrinde = [];
+        primeiraAposta = true;
+        
+        atualizarValidacaoAposta();
+        mostrarToast('Formulário limpo com sucesso!', 'success');
+      } else {
+        mostrarToast('Desative "Repetir aposta" para limpar o formulário', 'info');
       }
     }
     
-    function imprimirPDF() {
-      const { jsPDF } = window.jspdf;
-      const doc = new jsPDF();
+    function limparBilhete() {
+      document.getElementById('bilhete').innerText = 'Seu bilhete aparecerá aqui após confirmar a aposta.';
+      document.getElementById('btnPdf').style.display = 'none';
       
-      const bilhete = document.getElementById('bilhete');
-      const bilheteHTML = bilhete.innerHTML;
+      todasApostas = [];
+      bilheteCompleto = "";
+      valorTotalBilhete = 0;
+      milharBrinde = "";
+      apostasComMilharBrinde = [];
+      primeiraAposta = true;
       
-      doc.html(bilheteHTML, {
-        callback: function (doc) {
-          doc.save('bilhete-apostas.pdf');
-        },
-        x: 10,
-        y: 10
-      });
+      mostrarToast('Bilhete limpo com sucesso!', 'success');
     }
-
+    
     function copiarBilhete() {
-        const bilhete = document.getElementById('bilhete').innerText;
-        navigator.clipboard.writeText(bilhete).then(() => {
-            showToast("Bilhete copiado para a área de transferência!", "success");
-        }).catch(err => {
-            console.error('Erro ao copiar bilhete: ', err);
-            showToast("Erro ao copiar bilhete.", "error");
+      const bilheteText = document.getElementById('bilhete').innerText;
+      navigator.clipboard.writeText(bilheteText)
+        .then(() => {
+          mostrarToast('Bilhete copiado para a área de transferência!', 'success');
+        })
+        .catch(err => {
+          mostrarToast('Falha ao copiar o bilhete.', 'error');
         });
     }
-
-    function limparBilhete() {
-      const bilheteDiv = document.getElementById('bilhete');
-      bilheteDiv.innerHTML = 'Seu bilhete aparecerá aqui após confirmar a aposta.';
-      primeiraAposta = true;
-      document.getElementById('btnPdf').style.display = 'none';
-    }
-
-    function limparFormulario(limparTudo = true) {
+    
+    function limparCamposAposConfirmacao() {
       document.getElementById('aposta').value = '';
       document.getElementById('valor').value = '';
       document.getElementById('quantidade').value = '';
       document.getElementById('total').value = '';
-      document.getElementById('apostaInfo').innerText = '';
       document.getElementById('apostaError').innerText = '';
       document.getElementById('apostaSuccess').innerText = '';
+      document.getElementById('repetirAposta').checked = false;
       
-      if (limparTudo) {
-          document.getElementById('modalidade').value = 'Milhar';
-          document.getElementById('extracao').value = document.getElementById('extracao').options[0].value;
-          document.getElementById('premiacao').value = '1P';
-          document.getElementById('repetirAposta').checked = false;
-      }
-      
-      atualizarValidacaoAposta();
-      calcularTotal();
+      document.getElementById('apostaPredatada').checked = false;
+      document.getElementById('dataAposta').value = '';
+      document.getElementById('datePickerContainer').style.display = 'none';
+      apostaPredatada = false;
+      dataApostaSelecionada = "";
     }
     
-    function formatarMoeda(input) {
-      let valor = input.value.replace(/\D/g, '');
-      valor = (valor / 100).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-      input.value = valor;
-      calcularTotal();
-    }
-
-    function showToast(message, type = 'default') {
+    function mostrarToast(mensagem, tipo = 'info') {
       const toast = document.getElementById('toast');
-      toast.innerText = message;
+      toast.innerText = mensagem;
       
-      if (type === 'error') {
-        toast.style.background = 'rgba(255, 0, 0, 0.8)';
-      } else if (type === 'success') {
+      if (tipo === 'error') {
+        toast.style.background = 'rgba(204, 0, 0, 0.8)';
+      } else if (tipo === 'success') {
         toast.style.background = 'rgba(0, 102, 0, 0.8)';
       } else {
         toast.style.background = 'rgba(0, 0, 0, 0.8)';
@@ -1061,8 +1863,7 @@
     }
     
     function definirValor(valor) {
-      const valorInput = document.getElementById('valor');
-      valorInput.value = valor.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+      document.getElementById('valor').value = valor.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
       calcularTotal();
       
       document.querySelectorAll('.valor-btn').forEach(btn => {
@@ -1071,14 +1872,11 @@
       event.target.classList.add('active');
     }
 
-    // Inicializar a validação
     window.onload = function() {
       const valorInput = document.getElementById('valor');
       valorInput.classList.add('currency-input');
       
       atualizarValidacaoAposta();
-      document.getElementById('aposta').addEventListener('input', validarAposta);
-      document.getElementById('aposta').addEventListener('input', calcularTotal);
       
       valorInput.addEventListener('blur', function() {
         formatarMoeda(this);

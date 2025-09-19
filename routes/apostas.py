@@ -4,21 +4,43 @@ from models.models import Aposta, AreaCotacao, Modalidade, Descarrego, CadastroD
 from db_config import db
 import json
 from datetime import time, date, datetime
-
+import uuid
 aposta_route = Blueprint('Aposta', __name__)
 
 @aposta_route.route('/homeapk2')
 def apostas_apk():
     # Consulta todos os registros das tabelas
-    # O .query.all() retorna uma lista de objetos
     modalidades = Modalidade.query.all()
     extracoes = Extracao.query.all()
-    
-    # Renderiza o template e passa as listas como variáveis
+
+    try:
+        max_id_aposta = db.session.query(func.max(Aposta.id)).scalar()
+        max_id_excluida = db.session.query(func.max(ApostaExcluida.aposta_id_original)).scalar()
+
+        # Determina o maior ID entre as apostas e as apostas excluídas
+        ultimo_id = 0
+        if max_id_aposta is not None and max_id_excluida is not None:
+            ultimo_id = max(max_id_aposta, max_id_excluida)
+        elif max_id_aposta is not None:
+            ultimo_id = max_id_aposta
+        elif max_id_excluida is not None:
+            ultimo_id = max_id_excluida
+
+        # Calcula o próximo ID e formata com zeros à esquerda
+        proximo_id = ultimo_id + 1
+        poule_formatada = str(proximo_id).zfill(8)
+
+    except Exception as e:
+        # Em caso de erro, define um valor padrão para a poule
+        print(f"Erro ao buscar último ID da aposta: {e}")
+        poule_formatada = "00000001"
+
+    # Renderiza o template e passa as variáveis, incluindo a poule
     return render_template(
         'apostas_apk.html',
         modalidades=modalidades,
-        extracoes=extracoes
+        extracoes=extracoes,
+        poule=poule_formatada
     )
 
 @aposta_route.route('/vendedor/<string:vendedor_username>/<string:data_str>', methods=['GET'])
@@ -175,7 +197,17 @@ def salvar_apostas():
 
         apostas_para_salvar = []
         descarregos_para_salvar = []
-
+        
+        # ==========================================================
+        # LÓGICA DE GERAÇÃO E SALVAMENTO DO NSU
+        # ==========================================================
+        # Gera o NSU com base na data/hora e um UUID para garantir unicidade
+        agora = datetime.now()
+        timestamp_str = agora.strftime('%Y%m%d%H%M%S%f')
+        uuid_str = uuid.uuid4().hex[:10]
+        nsu_gerado = f"{timestamp_str}-{uuid_str}"
+        # ==========================================================
+        
         contador_apostas = 1
         for aposta in apostas:
             numeros = aposta.get('numeros', [])
@@ -231,21 +263,16 @@ def salvar_apostas():
                 limite_descarrego = float(modalidade_obj.limite_descarrego) if modalidade_obj.limite_descarrego else 10_000_000_000
             
             # --- INÍCIO DA NOVA LÓGICA DE COTAÇÃO ---
-            
             cotacao_utilizada = None
             
-            # 1. Define as modalidades que usam a cotação definida do vendedor
             modalidades_cotacao_definida = ['Milhar', 'Centena', 'Dezena', 'Grupo', 'Terno de Grupo', 'Terno de Dezena']
             
-            # 2. Checa se a modalidade da aposta está na lista e se o vendedor tem uma cotação definida
             if modalidade_nome in modalidades_cotacao_definida and vendedor_obj.cotacao_definida and vendedor_obj.cotacao_definida != 0:
                 print(f"--- DEBUG: Usando cotação definida do vendedor {vendedor_username} ---")
                 
-                # Busca a linha na tabela CotacaoDefinida com base no nome
                 cotacao_definida_obj = CotacaoDefinida.query.filter_by(nome=vendedor_obj.cotacao_definida).first()
                 
                 if cotacao_definida_obj:
-                    # Usa um dicionário para mapear a modalidade à coluna correspondente
                     cotacao_map = {
                         'Milhar': cotacao_definida_obj.milhar,
                         'Centena': cotacao_definida_obj.centena,
@@ -254,13 +281,11 @@ def salvar_apostas():
                         'Terno de Grupo': cotacao_definida_obj.terno_de_grupo,
                         'Terno de Dezena': cotacao_definida_obj.terno_de_dezena,
                     }
-                    # Pega a cotação do dicionário, se não encontrar, usa a da modalidade padrão (fallback)
                     cotacao_utilizada = float(cotacao_map.get(modalidade_nome))
                     
                     if cotacao_utilizada is not None:
                          print(f"--- DEBUG: Cotação definida encontrada: {cotacao_utilizada} ---")
-                
-            # 3. Se a cotação ainda não foi definida, segue o fluxo padrão (AreaCotacao ou Modalidade)
+            
             if cotacao_utilizada is None:
                 print("--- DEBUG: Usando o fluxo padrão de cotação (AreaCotacao ou Modalidade) ---")
                 area_cotacao_obj = AreaCotacao.query.filter(
@@ -295,33 +320,24 @@ def salvar_apostas():
 
             # ---- NOVA LÓGICA DE DESCARREGO POR NÚMERO ----
             
-            # Itera sobre cada número da aposta para verificar individualmente
             for numero in numeros:
-                # 5. Consulta para verificar se o número já teve um descarrego hoje
                 descarrego_existente = Descarrego.query.join(Aposta, Descarrego.bilhete == Aposta.id).filter(
-                    # Filtra por área, extração, modalidade e data
                     db.func.lower(Aposta.area) == normalized_area,
                     db.func.lower(Descarrego.extracao) == normalized_extracao,
                     db.func.lower(Descarrego.modalidade) == normalized_modalidade_name,
                     Aposta.data_atual == data_atual,
-                    # Verifica se o número existe na coluna 'numeros' do descarrego
-                    # Assume que 'numeros' é um JSON de lista de strings, ex: ["1234"]
                     db.func.lower(Descarrego.numeros).like(f'%"{numero}"%')
                 ).first()
 
                 if descarrego_existente:
-                    # Se o número já foi descarregado hoje, descarrega o valor TOTAL da aposta
                     valor_excedente = unidade_aposta
                     premio_excedente = unidade_aposta * cotacao_utilizada
                 elif unidade_aposta > limite_descarrego:
-                    # Se não houve descarrego anterior, verifica se a aposta atual excede o limite
                     valor_excedente = unidade_aposta - limite_descarrego
                     premio_excedente = valor_excedente * cotacao_utilizada
                 else:
-                    # Nenhuma das condições de descarrego foi atendida para este número
-                    continue # Pula para o próximo número
+                    continue
 
-                # Adiciona o descarrego à lista para salvar
                 descarregos_para_salvar.append({
                     "bilhete_id": None,
                     "extracao": extracao,
@@ -358,7 +374,8 @@ def salvar_apostas():
             apostas=json.dumps(apostas_para_salvar),
             pre_datar=pre_datar,
             data_agendada=data_agendada,
-            area=area
+            area=area,
+            nsu=nsu_gerado # Adicionamos o NSU ao objeto da aposta
         )
         db.session.add(aposta_obj)
         db.session.commit()
@@ -385,7 +402,8 @@ def salvar_apostas():
             "message": "Apostas e descarregos salvos com sucesso.",
             "total_apostas_salvas": len(apostas_para_salvar),
             "total_descarregos_gerados": len(descarregos_para_salvar),
-            "numero_bilhete": aposta_obj.id
+            "numero_bilhete": aposta_obj.id,
+            "nsu_gerado": nsu_gerado # Retorna o NSU gerado para o frontend
         }), 201
 
     except Exception as e:

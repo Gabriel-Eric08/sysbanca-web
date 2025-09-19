@@ -46,6 +46,7 @@ class Aposta(db.Model):
     pre_datar = db.Column(db.Boolean, default=False, nullable=False)
     data_agendada = db.Column(db.Date, nullable=True)
     area = db.Column(db.String(25), nullable=False)
+    nsu = db.Column(db.String(50), unique=True, nullable=False)
 
 class ApostaPremiada(db.Model):
     __tablename__ = 'tb_apostas_premiadas'
