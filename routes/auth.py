@@ -130,3 +130,51 @@ def download():
     # Este arquivo precisa estar na pasta 'static' do seu projeto Flask
     caminho_do_arquivo = 'SysApp.apk'
     return render_template('download.html', file_path=caminho_do_arquivo)
+
+@auth_route.route('/validate-no-device', methods=['POST'])
+def validate_no_device():
+    data = request.get_json()
+
+    if not data:
+        return {
+            "Validate": False,
+            "message": "Dados JSON ausentes ou inválidos!"
+        }, 400
+
+    username = str(data.get('username', '')).strip()
+    senha = str(data.get('password', '')).strip()
+
+    if not username or not senha:
+        return {
+            "Validate": False,
+            "message": "Usuário e senha são obrigatórios!"
+        }, 400
+
+    user = Vendedor.query.filter_by(username=username).first()
+
+    if not user:
+        return {
+            "Validate": False,
+            "message": "Usuário não encontrado!"
+        }, 401
+
+    if user.senha != senha:
+        return {
+            "Validate": False,
+            "message": "Senha incorreta!"
+        }, 401
+
+    nome_banca = os.environ.get("NOME_BANCA", "BANCA PADRÃO")
+    token = os.environ.get("APP_TOKEN", "token-padrao-do-app")
+    
+    return {
+        "message": "success!",
+        "Validate": True,
+        "Nome": user.nome,
+        "Comissao": user.comissao,
+        "Nome_banca": nome_banca,
+        "cancelar_poule": user.cancelar_poule,
+        "area": user.area,
+        "exibe_premiacao": user.exibe_premiacao,
+        "token": token
+    }, 200
