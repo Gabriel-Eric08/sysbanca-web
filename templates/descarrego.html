@@ -24,6 +24,7 @@
             align-items: center;
             gap: 6px;
         }
+        .coluna-oculta { display: none; }
         .botao-consultar { background-color: #072749; }
         .botao-consultar:hover { background-color: #0056b3; }
         .botao-imprimir { background-color: #6c757d; }
@@ -69,13 +70,13 @@
             <thead class="table-primary">
                 <tr>
                     <th>Bilhete</th>
-                    <th>Extração</th>
+                    <th class="coluna-oculta" >Extração</th>
                     <th>Modalidade</th>
-                    <th>Valor Apostado</th>
+                    <th class="coluna-oculta" >Valor Apostado</th>
                     <th>Excedente</th>
                     <th>Números</th>
                     <th>Tipo Prêmio</th>
-                    <th>Data</th>
+                    <th class="coluna-oculta" >Data</th>
                     <th>Ações</th>
                 </tr>
             </thead>
@@ -83,13 +84,13 @@
                 {% for d in descarregos %}
                     <tr>
                         <td>{{ d.bilhete }}</td>
-                        <td>{{ d.extracao }}</td>
+                        <td class="coluna-oculta">{{ d.extracao }}</td>
                         <td>{{ d.modalidade }}</td>
-                        <td>R$ {{ '{:,.2f}'.format(d.valor_apostado).replace(',', 'X').replace('.', ',').replace('X', '.') }}</td>
+                        <td class="coluna-oculta">R$ {{ '{:,.2f}'.format(d.valor_apostado).replace(',', 'X').replace('.', ',').replace('X', '.') }}</td>
                         <td>R$ {{ '%.2f'|format(d.valor_excedente) }}</td>
                         <td>{{ d.numeros }}</td>
                         <td>{{ d.tipo_premio }}</td> 
-                        <td>{{ d.data.strftime('%d-%m-%Y %H:%M:%S') }}</td>
+                        <td class="coluna-oculta">{{ d.data.strftime('%d-%m-%Y %H:%M:%S') }}</td>
                         <td>
                             <a href="{{ url_for('Aposta.consultar_aposta2', aposta_id=d.bilhete) }}" class="btn btn-sm btn-primary">
                                 Consultar

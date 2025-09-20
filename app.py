@@ -90,5 +90,11 @@ def remover_acentos(texto):
 # No Flask, registre o filtro
 app.jinja_env.filters['remover_acentos'] = remover_acentos
 
+
+print("--- URL MAP ---")
+for rule in app.url_map.iter_rules():
+    print(f"Endpoint: {rule.endpoint} | Methods: {','.join(rule.methods)} | URL: {rule.rule}")
+print("---------------")
+
 if __name__ == "__main__":
     app.run(debug=True)

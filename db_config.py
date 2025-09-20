@@ -6,10 +6,10 @@ from urllib.parse import quote_plus
 db = SQLAlchemy()
 # dbsysbanca
 def init_db(app):
-    db_user = os.getenv("DB_USER", "sysbancadbnew")
+    db_user = os.getenv("DB_USER", "clesperanca")
     db_password = quote_plus(os.getenv("DB_PASSWORD", "Tns22062010#"))
-    db_name = os.getenv("DB_NAME", "sysbancadbnew")
-    db_host = os.getenv("DB_HOST", "sysbancadbnew.mysql.dbaas.com.br")
+    db_name = os.getenv("DB_NAME", "clesperanca")
+    db_host = os.getenv("DB_HOST", "clesperanca.mysql.dbaas.com.br")
     db_port = int(os.getenv("DB_PORT", 3306))
 
     app.config["SQLALCHEMY_DATABASE_URI"] = (

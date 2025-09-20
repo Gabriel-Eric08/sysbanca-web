@@ -121,6 +121,78 @@ def adicionar_vendedores():
         return jsonify({"success": True, "message": f"{salvos} novos vendedores salvos."})
     return redirect(url_for('Vendedores.vendedores_page'))
 
+
+@vendedor_route.route('/cadastrar-sem-android', methods=['POST'])
+def cadastrar_vendedor_sem_idAndroid():
+    data = request.get_json()
+    if not data:
+        return jsonify({"success": False, "message": "Dados inválidos ou ausentes."}), 400
+
+    nome = data.get('nome')
+    regiao = data.get('regiao')
+    ativo = data.get('ativo')
+    area = data.get('area')
+    login = data.get('login')
+    senha = data.get('senha')
+    comissao = data.get('comissao')
+    cancelar_poule = data.get('cancelar_poule')
+    exibe_comissao = data.get('exibe_comissao')
+    exibe_premiacao = data.get('exibe_premiacao')
+    limite_venda = data.get('limite_venda')
+    tipo_limite = data.get('tipo_limite')
+    grade = data.get('grade')
+    teste = data.get('teste')
+    comissao_retida = data.get('comissao_retida')
+    cotacao_definida = data.get('cotacao_definida')
+
+    if not all([nome, regiao, ativo, area, login, senha]):
+        return jsonify({"success": False, "message": "Campos obrigatórios (nome, regiao, ativo, area, login, senha) ausentes."}), 400
+
+    existente = Vendedor.query.filter_by(username=login).first()
+    if existente:
+        return jsonify({"success": False, "message": "Vendedor com este login já existe."}), 409
+    
+    exibe_comissao_val = 1 if exibe_comissao and exibe_comissao.lower() == 'sim' else 0 if exibe_comissao and exibe_comissao.lower() == 'nao' else None
+    exibe_premiacao_val = 1 if exibe_premiacao and exibe_premiacao.lower() == 'sim' else 0 if exibe_premiacao and exibe_premiacao.lower() == 'nao' else None
+
+    novo = Vendedor(
+        nome=nome,
+        regiao=regiao,
+        ativo=ativo,
+        area=area,
+        username=login,
+        senha=senha,
+        comissao=comissao,
+        cancelar_poule=cancelar_poule,
+        exibe_comissao=exibe_comissao_val,
+        exibe_premiacao=exibe_premiacao_val,
+        limite_venda=limite_venda,
+        tipo_limite=tipo_limite,
+        grade=grade,
+        teste=teste,
+        comissao_retida=comissao_retida,
+        cotacao_definida=cotacao_definida
+    )
+
+    db.session.add(novo)
+    db.session.flush()
+
+    usuario = request.cookies.get('username', 'Desconhecido')
+    relatorio = Relatorio(
+        usuario=usuario,
+        tabela="tb_vendedores",
+        acao="Inserção (API)",
+        id_linha=novo.id,
+        linha=str(novo.__dict__),
+        data=datetime.now().date(),
+        horario=datetime.now().time()
+    )
+    db.session.add(relatorio)
+    db.session.commit()
+
+    return jsonify({"success": True, "message": "Vendedor cadastrado com sucesso!", "vendedor_id": novo.id}), 201
+
+
 @vendedor_route.route('/editar', methods=['POST'])
 def editar_vendedor():
     data = request.get_json()

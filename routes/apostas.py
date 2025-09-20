@@ -5,6 +5,8 @@ from db_config import db
 import json
 from datetime import time, date, datetime
 import uuid
+
+
 aposta_route = Blueprint('Aposta', __name__)
 
 @aposta_route.route('/homeapk2')
@@ -1492,4 +1494,85 @@ def pagar_aposta_premiada(aposta_id):
         # Lida com qualquer erro inesperado no processo
         db.session.rollback() # Garante que a transação é desfeita em caso de erro
         print(f"ERRO FATAL: Falha ao marcar aposta como paga. ID: {aposta_id} | Erro: {e}")
+        return jsonify({"error": f"Erro interno do servidor: {e}"}), 500
+
+
+def normalize_string(s):
+    if s is None:
+        return ""
+    return s.lower().strip()
+
+@aposta_route.route('/relatorio-apostas-premiadas', methods=['GET'])
+def relatorio_apostas_premiadas():
+    """
+    Renderiza a página do relatório de apostas premiadas com os campos de filtro.
+    """
+    vendedores_nomes = [v[0] for v in Vendedor.query.with_entities(Vendedor.nome).distinct().order_by(Vendedor.nome).all()]
+    extracao_nomes = [e[0] for e in Extracao.query.with_entities(Extracao.extracao).distinct().order_by(Extracao.extracao).all()]
+    areas_nomes = [a[0] for a in Area.query.with_entities(Area.regiao_area).distinct().order_by(Area.regiao_area).all()]
+
+    return render_template(
+        'relatorio_apostas_premiadas.html',
+        vendedores=vendedores_nomes,
+        extracao=extracao_nomes,
+        areas=areas_nomes
+    )
+
+
+@aposta_route.route('/api/relatorio-apostas-premiadas', methods=['POST'])
+def get_relatorio_apostas_premiadas_dados():
+    """
+    Recebe os filtros do frontend e retorna apenas os dados de apostas premiadas.
+    """
+    try:
+        filtros = request.get_json()
+        if not filtros:
+            return jsonify({"error": "Nenhum filtro recebido."}), 400
+
+        query_apostas_premiadas = ApostaPremiada.query
+
+        # Aplica filtros à consulta de apostas premiadas
+        if filtros.get('vendedor'):
+            normalized_vendedor = normalize_string(filtros['vendedor'])
+            query_apostas_premiadas = query_apostas_premiadas.filter(func.lower(ApostaPremiada.vendedor) == normalized_vendedor)
+            
+        if filtros.get('extracao'):
+            normalized_extracao = normalize_string(filtros['extracao'])
+            query_apostas_premiadas = query_apostas_premiadas.filter(func.lower(ApostaPremiada.extracao) == normalized_extracao)
+
+        if filtros.get('area'):
+            normalized_area = normalize_string(filtros['area'])
+            query_apostas_premiadas = query_apostas_premiadas.filter(func.lower(ApostaPremiada.area) == normalized_area)
+            
+        if filtros.get('data'):
+            query_apostas_premiadas = query_apostas_premiadas.filter(ApostaPremiada.data_atual == filtros['data'])
+
+        apostas_premiadas_filtradas_db = query_apostas_premiadas.order_by(ApostaPremiada.id.desc()).all()
+        
+        # Processamento das apostas premiadas
+        apostas_premiadas = []
+        for premiada in apostas_premiadas_filtradas_db:
+            try:
+                valor_premio_str = str(premiada.valor_premio).replace(',', '.')
+                valor_premio_float = float(valor_premio_str)
+            except (ValueError, TypeError):
+                valor_premio_float = 0.0
+
+            apostas_premiadas.append({
+                "id": premiada.id,
+                "numero_bilhete": premiada.numero_bilhete,
+                "data_atual": premiada.data_atual.strftime('%d/%m/%Y'),
+                "hora_atual": premiada.hora_atual.strftime('%H:%M'),
+                "vendedor": premiada.vendedor,
+                "extracao": premiada.extracao,
+                "area": premiada.area,
+                "valor_premio": f"{valor_premio_float:.2f}".replace('.', ','),
+                "impresso": premiada.impresso,
+                "pago": premiada.pago,
+            })
+        
+        return jsonify({
+            "apostas_premiadas": apostas_premiadas,
+        })
+    except Exception as e:
         return jsonify({"error": f"Erro interno do servidor: {e}"}), 500
