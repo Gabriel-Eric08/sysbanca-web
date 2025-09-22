@@ -19,6 +19,7 @@ from routes.relatorio import relatorio_route
 from routes.admin import admin_route
 from routes.cadastro_descarrego import cadastro_descarrego_route
 from routes.descarrego import descarrego_route
+from routes.usuario import usuario_route
 import unicodedata
 import re
 import json
@@ -52,6 +53,7 @@ def from_json_filter(value):
 app.jinja_env.filters['from_json'] = from_json_filter
 
 app.register_blueprint(auth_route)
+app.register_blueprint(usuario_route)
 app.register_blueprint(admin_route, url_prefix='/admin')
 app.register_blueprint(relatorio_route, url_prefix='/relatorio')
 app.register_blueprint(aposta_route, url_prefix='/aposta')

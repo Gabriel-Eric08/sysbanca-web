@@ -245,6 +245,15 @@ class User(db.Model):
     acesso_area = db.Column(db.Integer, default=0)
     ativo = db.Column(db.Text, default='não')
 
+class Usuario(db.Model):
+    __tablename__ = 'tb_usuario'
+    id = db.Column('id', db.Integer, primary_key=True, autoincrement=True)
+    cpf = db.Column(db.String(11), unique=True, nullable=False)
+    email = db.Column(db.String(255), unique=True, nullable=False)
+    celular = db.Column(db.String(15), nullable=True)
+    senha = db.Column(db.String(255), nullable=False)
+    data_criacao = db.Column(db.DateTime, default=datetime.utcnow)
+
 class Venda(db.Model):
     __tablename__ = 'tb_venda'
     id = db.Column('IdVenda', db.Integer, primary_key=True, autoincrement=True)
