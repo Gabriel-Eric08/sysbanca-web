@@ -556,7 +556,7 @@
 <body>
   <div class="container">
     <h2>🎲 Apostas Sysbanca</h2>
-    <div class="numero-poule" id="numeroPoule1">Poule: {{ poule }}</div>
+    <div class="numero-poule" id="numeroPoule">Poule: {{ poule }}</div>
 
     <div class="form-group">
       <label for="extracao">Escolha a Extração</label>
@@ -1599,7 +1599,7 @@
         dataAposta: dataApostaSelecionada
       });
       
-      const valorTotalAposta = parseFloat(total.replace("R$ ", "").replace(".", "").replace(",", "."));
+      const valorTotalAposta = parseFloat(total.replace("R$ ", "").replace(".", "").replace(",", ".")) || 0;
       valorTotalBilhete += valorTotalAposta;
 
       const apostasFormatadas = formatarApostasComX(apostasArray, modalidade);
@@ -1618,11 +1618,11 @@
       
       if (repetindoAposta) {
         apostaAtualTexto = `${modalidade} - ${premiacao}
-Unitario: R$ ${valor.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} Total: R$ ${parseFloat(total.replace("R$ ", "").replace(".", "").replace(",", ".")).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+Unitario: R$ ${valor.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} Total: R$ ${valorTotalAposta.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
       } else {
         apostaAtualTexto = `${modalidade} - ${premiacao}
 ${apostasFormatadas}
-Unitario: R$ ${valor.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} Total: R$ ${parseFloat(total.replace("R$ ", "").replace(".", "").replace(",", ".")).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+Unitario: R$ ${valor.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} Total: R$ ${valorTotalAposta.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
       }
 
       let dataHoraTexto = `Data e Hora: ${new Date().toLocaleString('pt-BR')}`;
