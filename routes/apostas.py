@@ -840,14 +840,14 @@ def relatorio_apostas_detalhado():
     """
     vendedores_nomes = [v[0] for v in Vendedor.query.with_entities(Vendedor.nome).distinct().order_by(Vendedor.nome).all()]
     modalidades_nomes = [m[0] for m in Modalidade.query.with_entities(Modalidade.modalidade).distinct().order_by(Modalidade.modalidade).all()]
-    extracoes_nomes = [e[0] for e in Extracao.query.with_entities(Extracao.extracao).distinct().order_by(Extracao.extracao).all()]
+    extracao_nomes = [e[0] for e in Extracao.query.with_entities(Extracao.extracao).distinct().order_by(Extracao.extracao).all()]
     areas_nomes = [a[0] for a in Area.query.with_entities(Area.regiao_area).distinct().order_by(Area.regiao_area).all()]
 
     return render_template(
         'relatorio_apostas.html',
         vendedores=vendedores_nomes,
         modalidades=modalidades_nomes,
-        extracoes=extracoes_nomes,
+        extracao=extracao_nomes,
         areas=areas_nomes,
         debito_anterior=0.00
     )
@@ -857,61 +857,65 @@ def relatorio_apostas_detalhado():
 def get_relatorio_caixa_dados():
     """
     Recebe os filtros do frontend e retorna os dados de apostas e prêmios.
+    Ajustado para filtrar por um período de datas e não enviar dados detalhados.
     """
     try:
         filtros = request.get_json()
         if not filtros:
             return jsonify({"error": "Nenhum filtro recebido."}), 400
 
-        # Configura as consultas baseadas nos filtros
+        # Captura os filtros de data
+        start_date_str = filtros.get('data_inicio')
+        end_date_str = filtros.get('data_fim')
+        
         query_apostas = Aposta.query
         query_apostas_premiadas = ApostaPremiada.query
 
-        # Aplica filtros às consultas de apostas
+        # Aplica filtros de data se eles existirem
+        if start_date_str:
+            start_date = datetime.strptime(start_date_str, '%Y-%m-%d').date()
+            if end_date_str:
+                end_date = datetime.strptime(end_date_str, '%Y-%m-%d').date()
+                query_apostas = query_apostas.filter(Aposta.data_atual.between(start_date, end_date))
+                query_apostas_premiadas = query_apostas_premiadas.filter(ApostaPremiada.data_atual.between(start_date, end_date))
+            else:
+                query_apostas = query_apostas.filter(Aposta.data_atual == start_date)
+                query_apostas_premiadas = query_apostas_premiadas.filter(ApostaPremiada.data_atual == start_date)
+        
+        # Aplica os outros filtros
         if filtros.get('vendedor'):
             normalized_vendedor = normalize_string(filtros['vendedor'])
             query_apostas = query_apostas.filter(func.lower(Aposta.vendedor) == normalized_vendedor)
-            
+            query_apostas_premiadas = query_apostas_premiadas.filter(func.lower(ApostaPremiada.vendedor) == normalized_vendedor)
+
         if filtros.get('extracao'):
             normalized_extracao = normalize_string(filtros['extracao'])
             query_apostas = query_apostas.filter(func.lower(Aposta.extracao) == normalized_extracao)
-
-        if filtros.get('area'):
-            normalized_area = normalize_string(filtros['area'])
-            query_apostas = query_apostas.filter(func.lower(Aposta.area) == normalized_area)
-            
-        if filtros.get('data'):
-            query_apostas = query_apostas.filter(Aposta.data_atual == filtros['data'])
-
-        # Aplica filtros às consultas de apostas premiadas
-        if filtros.get('vendedor'):
-            normalized_vendedor = normalize_string(filtros['vendedor'])
-            query_apostas_premiadas = query_apostas_premiadas.filter(func.lower(ApostaPremiada.vendedor) == normalized_vendedor)
-            
-        if filtros.get('extracao'):
-            normalized_extracao = normalize_string(filtros['extracao'])
             query_apostas_premiadas = query_apostas_premiadas.filter(func.lower(ApostaPremiada.extracao) == normalized_extracao)
 
         if filtros.get('area'):
             normalized_area = normalize_string(filtros['area'])
+            query_apostas = query_apostas.filter(func.lower(Aposta.area) == normalized_area)
             query_apostas_premiadas = query_apostas_premiadas.filter(func.lower(ApostaPremiada.area) == normalized_area)
-            
-        if filtros.get('data'):
-            query_apostas_premiadas = query_apostas_premiadas.filter(ApostaPremiada.data_atual == filtros['data'])
-
-        apostas_filtradas_db = query_apostas.order_by(Aposta.id.desc()).all()
-        apostas_premiadas_filtradas_db = query_apostas_premiadas.order_by(ApostaPremiada.id.desc()).all()
         
-        # Processamento das apostas detalhadas
+        # Novo filtro de comissão
+        if filtros.get('comissao_retida') == 'Sim':
+            query_apostas = query_apostas.filter(Aposta.comissao_retida == True)
+        elif filtros.get('comissao_retida') == 'Não':
+            query_apostas = query_apostas.filter(Aposta.comissao_retida == False)
+
+        # As apostas detalhadas e premiadas não são mais necessárias para o resumo
+        apostas_filtradas_db = query_apostas.all()
+        apostas_premiadas_filtradas_db = query_apostas_premiadas.all()
+
         apostas_detalhadas = []
         for aposta_principal in apostas_filtradas_db:
             try:
                 apostas_json = json.loads(aposta_principal.apostas)
             except json.JSONDecodeError:
-                continue # Pula para o próximo bilhete se o JSON for inválido
+                continue
 
             for aposta_individual in apostas_json:
-                # Validação da estrutura do dado
                 if not isinstance(aposta_individual, list) or len(aposta_individual) < 6:
                     continue
 
@@ -923,7 +927,6 @@ def get_relatorio_caixa_dados():
                     extracao_nome = aposta_principal.extracao
                     unidade_aposta = aposta_individual[5]
 
-                    # Validação de valor numérico
                     valor_apostado_individual = float(valor_apostado_raw)
                 except (IndexError, ValueError, TypeError):
                     continue
@@ -975,11 +978,9 @@ def get_relatorio_caixa_dados():
                     "valor_comissao": valor_comissao
                 })
         
-        # Processamento das apostas premiadas
         apostas_premiadas = []
         for premiada in apostas_premiadas_filtradas_db:
             try:
-                # Trata valor do prêmio, convertendo para float se necessário
                 valor_premio_str = str(premiada.valor_premio).replace(',', '.')
                 valor_premio_float = float(valor_premio_str)
             except (ValueError, TypeError):
@@ -1576,3 +1577,76 @@ def get_relatorio_apostas_premiadas_dados():
         })
     except Exception as e:
         return jsonify({"error": f"Erro interno do servidor: {e}"}), 500
+
+@aposta_route.route('/cotacao/all', methods=['POST'])
+def get_all_cotacao():
+    try:
+        data = request.get_json()
+        area = data.get('area')
+        extracao = data.get('extracao')
+
+        # 1. Validação dos parâmetros
+        if not area or not extracao:
+            return jsonify({
+                "success": False,
+                "message": "Parâmetros obrigatórios: area e extracao"
+            }), 400
+
+        # 2. Normalização das strings
+        normalized_area = normalize_string(area)
+        normalized_extracao = normalize_string(extracao)
+        
+        # 3. Busca todas as modalidades
+        modalidades = Modalidade.query.all()
+        
+        # 4. Prepara a lista de resultados
+        resultado = []
+        for modalidade_obj in modalidades:
+            modalidade_nome = modalidade_obj.modalidade
+            normalized_modalidade = normalize_string(modalidade_nome)
+
+            # 5. Procura por uma cotação específica em AreaCotacao
+            area_cotacao_obj = AreaCotacao.query.filter(
+                db.or_(
+                    db.func.lower(AreaCotacao.area).like(f"%, {normalized_area},%"),
+                    db.func.lower(AreaCotacao.area).like(f"{normalized_area},%"),
+                    db.func.lower(AreaCotacao.area).like(f"%,{normalized_area}"),
+                    db.func.lower(AreaCotacao.area) == normalized_area
+                ),
+                db.or_(
+                    db.func.lower(AreaCotacao.extracao).like(f"%, {normalized_extracao},%"),
+                    db.func.lower(AreaCotacao.extracao).like(f"{normalized_extracao},%"),
+                    db.func.lower(AreaCotacao.extracao).like(f"%,{normalized_extracao}"),
+                    db.func.lower(AreaCotacao.extracao) == normalized_extracao
+                ),
+                # Agora, filtra por cada modalidade individualmente no loop
+                db.or_(
+                    db.func.lower(AreaCotacao.modalidade).like(f"%, {normalized_modalidade},%"),
+                    db.func.lower(AreaCotacao.modalidade).like(f"{normalized_modalidade},%"),
+                    db.func.lower(AreaCotacao.modalidade).like(f"%,{normalized_modalidade}"),
+                    db.func.lower(AreaCotacao.modalidade) == normalized_modalidade
+                )
+            ).first()
+
+            # 6. Define a cotação e a origem
+            cotacao = float(area_cotacao_obj.cotacao) if area_cotacao_obj else float(modalidade_obj.cotacao)
+            origem = "area_cotacao" if area_cotacao_obj else "modalidade"
+
+            # 7. Adiciona à lista de resultados
+            resultado.append({
+                "modalidade": modalidade_nome,
+                "cotacao": cotacao,
+                "origem": origem
+            })
+        
+        # 8. Retorna o JSON completo
+        return jsonify({
+            "success": True,
+            "cotacoes": resultado
+        }), 200
+
+    except Exception as e:
+        return jsonify({
+            "success": False,
+            "message": f"Erro interno ao buscar cotações: {str(e)}"
+        }), 500

@@ -139,7 +139,7 @@
                 box-shadow: none;
             }
             .table thead th {
-                background-color: #d4edda !important;
+                background-color: #d4edda !important; 
                 color: #155724 !important;
                 border-bottom: 2px solid #28a745 !important;
                 font-weight: bold;
@@ -233,7 +233,7 @@
                     {% endfor %}
                 </select>
             </div>
-             <div class="col-md-3">
+               <div class="col-md-3">
                 <label for="comissaoRetida" class="form-label">Comissão Retida:</label>
                 <select id="comissaoRetida" class="form-select">
                     <option value="">Todas</option>
@@ -244,8 +244,12 @@
         </div>
         <div class="row mb-4 align-items-end">
             <div class="col-md-3">
-                <label for="filterDate" class="form-label">Data:</label>
-                <input type="date" id="filterDate" class="form-control">
+                <label for="filterStartDate" class="form-label">Data Inicial:</label>
+                <input type="date" id="filterStartDate" class="form-control">
+            </div>
+            <div class="col-md-3">
+                <label for="filterEndDate" class="form-label">Data Final:</label>
+                <input type="date" id="filterEndDate" class="form-control">
             </div>
             <div class="col-md-auto">
                 <button type="button" class="btn botao-estiloso" onclick="fetchAndRenderData()">Filtrar</button>
@@ -270,55 +274,57 @@
             </tbody>
         </table>
 
-        <h3 class="mb-4 mt-5">Todas as apostas</h3>
-        <table class="table table-bordered table-hover bg-white table-light-green" id="apostasTable">
-            <thead>
-                <tr>
-                    <th>Bilhete</th>
-                    <th>Data</th>
-                    <th>Vendedor</th>
-                    <th>Extração</th>
-                    <th>Área</th>
-                    <th>Modalidade</th>
-                    <th>Números</th>
-                    <th>Prêmio (Tipo)</th>
-                    <th>Valor Apostado (Individual)</th>
-                    <th>Unidade Aposta</th>
-                    <th>Comissão (%)</th>
-                    <th>Valor Comissão</th>
-                </tr>
-            </thead>
-            <tbody id="apostasTableBody">
-                <tr>
-                    <td colspan="12" class="text-center">Selecione os filtros e clique em "Filtrar" para ver os dados.</td>
-                </tr>
-            </tbody>
-        </table>
-
-        <hr>
-
-        <h3 class="mb-4 mt-5">Apostas Premiadas</h3>
-        <table class="table table-bordered table-hover bg-white table-light-green" id="apostasPremiadasTable">
-            <thead>
-                <tr>
-                    <th>ID</th>
-                    <th>Bilhete #</th>
-                    <th>Data</th>
-                    <th>Hora</th>
-                    <th>Vendedor</th>
-                    <th>Extração</th>
-                    <th>Área</th>
-                    <th>Valor Prêmio</th>
-                    <th>Impresso</th>
-                    <th>Pago</th>
-                </tr>
-            </thead>
-            <tbody id="apostasPremiadasTableBody">
-                <tr>
-                    <td colspan="10" class="text-center">Selecione os filtros e clique em "Filtrar" para ver os dados.</td>
-                </tr>
-            </tbody>
-        </table>
+        <div id="apostas-detalhadas-section" style="display: none;">
+            <h3 class="mb-4 mt-5">Todas as apostas</h3>
+            <table class="table table-bordered table-hover bg-white table-light-green" id="apostasTable">
+                <thead>
+                    <tr>
+                        <th>Bilhete</th>
+                        <th>Data</th>
+                        <th>Vendedor</th>
+                        <th>Extração</th>
+                        <th>Área</th>
+                        <th>Modalidade</th>
+                        <th>Números</th>
+                        <th>Prêmio (Tipo)</th>
+                        <th>Valor Apostado (Individual)</th>
+                        <th>Unidade Aposta</th>
+                        <th>Comissão (%)</th>
+                        <th>Valor Comissão</th>
+                    </tr>
+                </thead>
+                <tbody id="apostasTableBody">
+                    <tr>
+                        <td colspan="12" class="text-center">Selecione os filtros e clique em "Filtrar" para ver os dados.</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+        
+        <div id="apostas-premiadas-section" style="display: none;">
+            <h3 class="mb-4 mt-5">Apostas Premiadas</h3>
+            <table class="table table-bordered table-hover bg-white table-light-green" id="apostasPremiadasTable">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Bilhete #</th>
+                        <th>Data</th>
+                        <th>Hora</th>
+                        <th>Vendedor</th>
+                        <th>Extração</th>
+                        <th>Área</th>
+                        <th>Valor Prêmio</th>
+                        <th>Impresso</th>
+                        <th>Pago</th>
+                    </tr>
+                </thead>
+                <tbody id="apostasPremiadasTableBody">
+                    <tr>
+                        <td colspan="10" class="text-center">Selecione os filtros e clique em "Filtrar" para ver os dados.</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
     </div>
     
     <div class="print-only">
@@ -349,16 +355,13 @@
             const selectedModalidade = document.getElementById('selectModalidade').value;
             const selectedExtracao = document.getElementById('selectExtracao').value;
             const selectedArea = document.getElementById('selectArea').value;
-            const selectedComissaoRetida = document.getElementById('comissaoRetida').value; // NOVO CAMPO
-            const selectedDate = document.getElementById('filterDate').value;
+            const selectedComissaoRetida = document.getElementById('comissaoRetida').value;
+            const startDate = document.getElementById('filterStartDate').value;
+            const endDate = document.getElementById('filterEndDate').value;
             
             // Coloca as tabelas no estado de "carregando"
-            const apostasTableBody = document.getElementById('apostasTableBody');
-            const apostasPremiadasTableBody = document.getElementById('apostasPremiadasTableBody');
             const tabelaResumoBody = document.querySelector('#tabela-resumo tbody');
             
-            apostasTableBody.innerHTML = '<tr><td colspan="12" class="text-center">Carregando...</td></tr>';
-            apostasPremiadasTableBody.innerHTML = '<tr><td colspan="10" class="text-center">Carregando...</td></tr>';
             tabelaResumoBody.innerHTML = '<tr><td colspan="5" class="text-center">Carregando...</td></tr>';
             
             try {
@@ -372,8 +375,9 @@
                         modalidade: selectedModalidade,
                         extracao: selectedExtracao,
                         area: selectedArea,
-                        comissao_retida: selectedComissaoRetida, // ADICIONA O NOVO CAMPO NO REQUEST
-                        data: selectedDate
+                        comissao_retida: selectedComissaoRetida,
+                        data_inicio: startDate,
+                        data_fim: endDate // NOVO CAMPO
                     })
                 });
 
@@ -383,72 +387,13 @@
 
                 const data = await response.json();
                 
-                renderApostasTable(data.apostas_detalhadas);
-                renderApostasPremiadasTable(data.apostas_premiadas);
+                // As funções de renderização para as tabelas ocultas não são chamadas
                 renderResumoTable(data.apostas_detalhadas, data.apostas_premiadas);
                 
             } catch (error) {
                 console.error('Erro:', error);
-                apostasTableBody.innerHTML = '<tr><td colspan="12" class="text-center">Erro ao carregar os dados.</td></tr>';
-                apostasPremiadasTableBody.innerHTML = '<tr><td colspan="10" class="text-center">Erro ao carregar os dados.</td></tr>';
                 tabelaResumoBody.innerHTML = '<tr><td colspan="5" class="text-center">Erro ao carregar os dados.</td></tr>';
             }
-        }
-        
-        function renderApostasTable(apostas) {
-            const apostasTableBody = document.getElementById('apostasTableBody');
-            apostasTableBody.innerHTML = '';
-            
-            if (apostas.length === 0) {
-                apostasTableBody.innerHTML = '<tr><td colspan="12" class="text-center">Nenhuma aposta encontrada.</td></tr>';
-                return;
-            }
-            
-            apostas.forEach(aposta => {
-                const row = document.createElement('tr');
-                row.innerHTML = `
-                    <td>#${aposta.bilhete_id}</td>
-                    <td>${aposta.data_aposta}</td>
-                    <td>${aposta.vendedor}</td>
-                    <td>${aposta.extracao}</td>
-                    <td>${aposta.area}</td>
-                    <td>${aposta.modalidade}</td>
-                    <td>${aposta.numeros}</td>
-                    <td>${aposta.premio_str}</td>
-                    <td>R$ ${aposta.valor_apostado_individual.toFixed(2).replace('.', ',')}</td>
-                    <td>${aposta.unidade_aposta.toFixed(2).replace('.', ',')}</td>
-                    <td>${aposta.comissao_percentual.toFixed(2).replace('.', ',')}%</td>
-                    <td>R$ ${aposta.valor_comissao.toFixed(2).replace('.', ',')}</td>
-                `;
-                apostasTableBody.appendChild(row);
-            });
-        }
-        
-        function renderApostasPremiadasTable(premiadas) {
-            const apostasPremiadasTableBody = document.getElementById('apostasPremiadasTableBody');
-            apostasPremiadasTableBody.innerHTML = '';
-            
-            if (premiadas.length === 0) {
-                apostasPremiadasTableBody.innerHTML = '<tr><td colspan="10" class="text-center">Nenhuma aposta premiada encontrada.</td></tr>';
-                return;
-            }
-            
-            premiadas.forEach(premiada => {
-                const row = document.createElement('tr');
-                row.innerHTML = `
-                    <td>${premiada.id}</td>
-                    <td>#${premiada.numero_bilhete}</td>
-                    <td>${premiada.data_atual}</td>
-                    <td>${premiada.hora_atual}</td>
-                    <td>${premiada.vendedor}</td>
-                    <td>${premiada.extracao}</td>
-                    <td>${premiada.area}</td>
-                    <td>R$ ${premiada.valor_premio.replace('.', ',')}</td>
-                    <td>${premiada.impresso == 1 ? 'Sim' : 'Não'}</td>
-                    <td>${premiada.pago == 1 ? 'Sim' : 'Não'}</td>
-                `;
-                apostasPremiadasTableBody.appendChild(row);
-            });
         }
         
         function renderResumoTable(apostas, premiadas) {
@@ -504,9 +449,9 @@
         }
         
         function printReport() {
-            // (Esta função pode permanecer a mesma, mas agora ela vai pegar os dados das tabelas já renderizadas no DOM)
-            // Lógica de impressão...
-            const selectedDateText = document.getElementById('filterDate').value ? new Date(document.getElementById('filterDate').value + 'T12:00:00').toLocaleDateString('pt-BR') : 'Todo o período';
+            const startDateText = document.getElementById('filterStartDate').value ? new Date(document.getElementById('filterStartDate').value + 'T12:00:00').toLocaleDateString('pt-BR') : 'Todo o período';
+            const endDateText = document.getElementById('filterEndDate').value ? new Date(document.getElementById('filterEndDate').value + 'T12:00:00').toLocaleDateString('pt-BR') : '';
+            
             const selectedVendedorText = document.getElementById('selectVendedor').options[document.getElementById('selectVendedor').selectedIndex].text;
             const selectedModalidadeText = document.getElementById('selectModalidade').options[document.getElementById('selectModalidade').selectedIndex].text;
             const selectedExtracaoText = document.getElementById('selectExtracao').options[document.getElementById('selectExtracao').selectedIndex].text;
@@ -526,7 +471,7 @@
                 <div class="container print-only">
                     <h1 class="text-center mb-4">Relatório Financeiro</h1>
                     <div class="print-details mb-4">
-                        <p><strong>Data:</strong> ${selectedDateText}</p>
+                        <p><strong>Data:</strong> ${startDateText} ${endDateText ? 'a ' + endDateText : ''}</p>
                         <p><strong>Vendedor:</strong> ${selectedVendedorText}</p>
                         <p><strong>Extração:</strong> ${selectedExtracaoText}</p>
                         <p><strong>Modalidade:</strong> ${selectedModalidadeText}</p>

@@ -2,7 +2,7 @@ from flask import Blueprint, render_template, request, redirect, url_for, jsonif
 from models.models import Extracao, Relatorio, AreaCotacao, Modalidade
 from util.checkCreds import checkCreds
 from db_config import db
-from datetime import datetime
+from datetime import datetime, time
 
 extracao_route = Blueprint('Extracao', __name__, url_prefix='/extracao')
 
@@ -254,14 +254,23 @@ def extracao_cotacao_premiacao():
 def json_todas_extracoes():
     extracoes = Extracao.query.all()
     resultado = []
+    
+    agora = datetime.now().time()
+    
     for m in extracoes:
-        linha = {
-            'id': m.id,
-            'extracao': m.extracao,
-            'fechamento': m.fechamento.strftime("%H:%M") if m.fechamento else None,
-            'premiacao': m.premiacao,
-            'dias_extracao': m.dias_extracao,
-            'ativo': "sim" if m.ativo else "não"
-        }
-        resultado.append(linha)
+        # 'm.ativo' será avaliado como True se for 1, e False se for 0.
+        # As extrações precisam estar ativas, ter um horário de fechamento
+        # e o horário atual deve ser anterior ao de fechamento.
+        if m.ativo and m.fechamento is not None and agora < m.fechamento:
+            linha = {
+                'id': m.id,
+                'extracao': m.extracao,
+                'fechamento': m.fechamento.strftime("%H:%M"),
+                'premiacao': m.premiacao,
+                'dias_extracao': m.dias_extracao,
+                # A conversão para "sim" ou "não" também já funciona.
+                'ativo': "sim" if m.ativo else "não"
+            }
+            resultado.append(linha)
+            
     return jsonify(resultado)
