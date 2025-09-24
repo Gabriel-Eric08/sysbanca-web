@@ -5,7 +5,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Tela de Apostas - Sysbanca</title>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
   <style>
+    /* Estilos anteriores mantidos */
     * {
       box-sizing: border-box;
       margin: 0;
@@ -63,6 +65,12 @@
       border: 1px solid #444;
       overflow: auto;
       transition: all 0.3s ease;
+    }
+
+    .centralizado {
+      text-align: center;
+      display: block;
+      width: 100%;
     }
 
     h2 {
@@ -159,8 +167,16 @@
     }
 
     #btnPdf {
-      display: none;
       background: #ff3333;
+    }
+
+    #btnImprimir {
+      background: #007bff;
+    }
+
+    #btnImprimir:hover {
+      background: #0056b3;
+      transform: translateY(-2px);
     }
 
     #btnPdf:hover {
@@ -331,6 +347,7 @@
         font-weight: bold !important;
         color: #000 !important;
         background: #fff !important;
+        font-size: 14px !important;
       }
       .bilhete {
         position: absolute;
@@ -339,10 +356,14 @@
         width: 100%;
         box-shadow: none;
         border: none;
-        font-size: 12px;
         padding: 10px;
         min-height: auto;
         height: auto !important;
+      }
+      .poule-print {
+        font-size: 18px !important;
+        font-weight: bold !important;
+        color: #000 !important;
       }
     }
 
@@ -536,26 +557,134 @@
       font-size: 16px;
     }
 
-    /* Estilo para o cursor personalizado */
-    .cursor-helper {
-      position: absolute;
-      width: 2px;
-      height: 20px;
-      background-color: #ffcc00;
-      animation: blink 1s infinite;
+    /* Modal para completar sequência */
+    .modal {
       display: none;
-      z-index: 10;
+      position: fixed;
+      z-index: 1000;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0, 0, 0, 0.7);
     }
     
-    @keyframes blink {
-      0%, 100% { opacity: 1; }
-      50% { opacity: 0; }
+    .modal-content {
+      background-color: #222;
+      margin: 15% auto;
+      padding: 20px;
+      border-radius: 10px;
+      width: 300px;
+      box-shadow: 0 5px 15px rgba(0,0,0,0.5);
+    }
+    
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 15px;
+      text-align: center;
+    }
+    
+    .modal-title {
+      font-size: 18px;
+      font-weight: bold;
+      color: #ffcc00;
+      width: 100%;
+    }
+    
+    .close-modal {
+      color: #fff;
+      font-size: 24px;
+      font-weight: bold;
+      cursor: pointer;
+      position: absolute;
+      right: 15px;
+      top: 10px;
+    }
+    
+    .modal-input {
+      width: 100%;
+      padding: 10px;
+      margin-bottom: 15px;
+      border-radius: 5px;
+      border: none;
+      background: #333;
+      color: #fff;
+      font-size: 16px;
+    }
+    
+    .modal-btn {
+      padding: 10px 15px;
+      background: #ffcc00;
+      color: #000;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      font-weight: bold;
+      width: 100%;
+    }
+    
+    /* Estilos para o código de barras */
+    .barcode-container {
+      text-align: center;
+      margin-top: 10px;
+      padding: 5px;
+    }
+    
+    .barcode {
+      height: 40px;
+      background: white;
+      padding: 5px;
+      border-radius: 5px;
+    }
+    
+    /* Modal de impressão */
+    .modal-impressao {
+      display: none;
+      position: fixed;
+      z-index: 1000;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0, 0, 0, 0.7);
+    }
+    
+    .modal-impressao-content {
+      background-color: #222;
+      margin: 15% auto;
+      padding: 20px;
+      border-radius: 10px;
+      width: 300px;
+      box-shadow: 0 5px 15px rgba(0,0,0,0.5);
+      text-align: center;
+    }
+    
+    .modal-impressao-btn {
+      padding: 10px 15px;
+      margin: 10px;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      font-weight: bold;
+      width: 120px;
+    }
+    
+    .btn-pdf {
+      background: #ff3333;
+      color: white;
+    }
+    
+    .btn-imprimir {
+      background: #007bff;
+      color: white;
     }
   </style>
 </head>
 <body>
   <div class="container">
-    <h2>🎲 Apostas Sysbanca</h2>
+    <h2>Apostas Sysbanca</h2>
     <div class="numero-poule" id="numeroPoule">Poule: {{ poule }}</div>
 
     <div class="form-group">
@@ -580,8 +709,7 @@
     <div class="form-group">
       <label for="aposta">Digite a(s) Aposta(s)</label>
       <div style="position: relative;">
-        <textarea id="aposta" class="aposta-formatada" placeholder="Ex: 1234 5678 9012 (separadas por espaço)" oninput="formatarAposta()" onkeydown="limitarCaracteres(event)" onpaste="handlePaste(event)" onfocus="mostrarCursorHelper()" onblur="esconderCursorHelper()" onkeyup="atualizarCursorHelper()" onclick="atualizarCursorHelper()"></textarea>
-        <div id="cursorHelper" class="cursor-helper"></div>
+        <textarea id="aposta" class="aposta-formatada" placeholder="Ex: 1234 5678 9012 (separadas por espaço) ou . para repetir última aposta" oninput="formatarAposta()" onkeydown="manipularTeclado(event)" onpaste="handlePaste(event)"></textarea>
       </div>
       <div id="aposta-info" class="aposta-info"></div>
       <div id="apostaError" class="aposta-error"></div>
@@ -632,7 +760,7 @@
     </div>
 
     <div class="form-group">
-      <label for="valor">Valor Unitário (R$)</label>
+      <label for="valor">Valor (R$)</label>
       <input type="text" id="valor" class="currency-input" placeholder="0,00" oninput="formatarMoeda(this); calcularTotal()">
       <span class="input-hint">0,00</span>
            
@@ -663,8 +791,8 @@
       <button id="btnConfirmar" onclick="exibirResultado()">
         <span class="icon">✓</span> Confirmar Aposta
       </button>
-      <button id="btnPdf" onclick="imprimirPDF()">
-        <span class="icon">📄</span> Imprimir PDF
+      <button id="btnImprimir" onclick="abrirModalImpressao()">
+        <span class="icon">🖨️</span> Imprimir
       </button>
       <button id="btnLimpar" onclick="limparFormulario()">
         <span class="icon">🗑️</span> Limpar
@@ -681,6 +809,37 @@
       </div>
     </div>
     <div class="bilhete" id="bilhete">Seu bilhete aparecerá aqui após confirmar a aposta.</div>
+    <div id="barcode-container" class="barcode-container" style="display: none;">
+      <svg id="barcode" class="barcode"></svg>
+    </div>
+  </div>
+
+  <!-- Modal para completar sequência -->
+  <div id="modalSequencia" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <span class="modal-title">Completar Sequência</span>
+        <span class="close-modal" onclick="fecharModal()">&times;</span>
+      </div>
+      <p>Digite o final da sequência:</p>
+      <input type="text" id="finalSequencia" class="modal-input" placeholder="Ex: 40" onkeydown="verificarEnter(event)">
+      <button class="modal-btn" onclick="completarSequencia()">Confirmar</button>
+    </div>
+  </div>
+
+  <!-- Modal para escolher entre PDF e impressora -->
+  <div id="modalImpressao" class="modal-impressao">
+    <div class="modal-impressao-content">
+      <div class="modal-header">
+        <span class="modal-title">Escolher Opção de Impressão</span>
+        <span class="close-modal" onclick="fecharModalImpressao()">&times;</span>
+      </div>
+      <p>Como deseja imprimir o bilhete?</p>
+      <div>
+        <button class="modal-impressao-btn btn-pdf" onclick="imprimirPDF()">Salvar PDF</button>
+        <button class="modal-impressao-btn btn-imprimir" onclick="imprimirDireto()">Impressora</button>
+      </div>
+    </div>
   </div>
 
   <div class="toast" id="toast"></div>
@@ -693,17 +852,16 @@
     let todasApostas = [];
     let bilheteCompleto = "";
     let valorTotalBilhete = 0;
-    let milharBrinde = "";
     let ultimaAposta = null;
     let repetindoAposta = false;
-    let apostasComMilharBrinde = [];
     let historicoApostas = [];
     let primeiraAposta = true;
     let formatoDuqueTerno = false;
     let apostaPredatada = false;
     let dataApostaSelecionada = "";
-    let numeroPoule = Math.random().toString().substring(2, 10);
-    let ultimoCursorPos = 0;
+    let numeroPoule = Math.random().toString().substring(2, 8);
+    let sequenciaInicial = "";
+    let nsu = Math.floor(Math.random() * 10000000).toString().padStart(7, '0');
     
     document.getElementById('numeroPoule').innerText = `Poule: ${numeroPoule}`;
     
@@ -776,13 +934,13 @@
       "Duque de Dezena": "Par de dezenas. Ex: 12 x 34 (cada 2 dezenas = 1 aposta em 1/5P ou 6/10P)",
       "Duque de Dezena Combinado": "Pares de dezenas combinados. Ex: 12 x 34, 56 x 78",
       "Terno de Dezena": "Trio de dezenas. Ex: 12 x 34 x 56 (cada 3 dezenas = 1 aposta em 1/5P ou 6/10P)",
-      "Terno de Dezena Combinado": "Trios de dezenas combinados. Ex: 12 x 34 x 56",
+      "Terno de Dezena Combinado": "Trios de dezenas combinados. Ex: 1234567 (7 números para gerar combinações de terno)",
       "Terno de Dezena Cercado": "Trios de dezenas cercados. Ex: 12 x 34 x 56",
       "Grupo Combinado": "Combinação de grupos (01-25). Ex: 12, 34",
       "Grupo Combinado Cercado": "Grupos combinados e cercados. Ex: 12, 34",
       "Duque de Grupo": "Par de grupos (01-25). Ex: 12 x 34",
       "Terno de Grupo": "Trio de grupos (01-25). Ex: 12 x 34 x 56",
-      "Terno de Grupo Combinado": "Trios de grupos combinados. Ex: 12 x 34 x 56",
+      "Terno de Grupo Combinado": "Trios de grupos combinados. Ex: 1234567 (7 números para gerar combinações de terno)",
       "Terno de Grupo Cercado": "Trios de grupos cercados. Ex: 12 x 34 x 56",
       "Passe Vai": "Aposta em 2 dígitos para passe vai. Ex: 12",
       "Passe Vai e Vem": "Aposta em 2 dígitos para passe vai e vem. Ex: 12"
@@ -815,10 +973,6 @@
       setTimeout(() => {
         input.selectionStart = input.selectionEnd = input.value.length;
       }, 0);
-    }
-    
-    function gerarMilharBrinde() {
-      return Math.floor(Math.random() * 10000).toString().padStart(4, '0');
     }
     
     function identificarPadraoAposta(aposta) {
@@ -855,6 +1009,28 @@
     }
     
     function calcularCombinacoesDuqueTerno(apostas, modalidade) {
+      // MODIFICAÇÃO: Para ternos combinados de dezena, usar 7 números (não dezenas)
+      if (modalidade === "Terno de Dezena Combinado" || modalidade === "Terno de Dezena Cercado") {
+        // Verificar se temos exatamente 7 números
+        const numerosApenas = apostas.replace(/\s/g, '');
+        if (numerosApenas.length !== 7) return 0;
+        
+        // Usar a tabela de combinações para 7 números
+        const padrao = identificarPadraoAposta(numerosApenas);
+        if (tabelaCombinacoes.hasOwnProperty(padrao)) {
+          let combinacoes = tabelaCombinacoes[padrao][3]; // Total de combinações
+          
+          // Se for cercado, multiplicar por 3
+          if (modalidade === "Terno de Dezena Cercado") {
+            combinacoes = combinacoes * 3;
+          }
+          
+          return combinacoes;
+        }
+        return 0;
+      }
+      
+      // Para outros tipos de duques/ternos, manter a lógica original
       let numerosApenas = apostas.replace(/\s/g, '').replace(/x/gi, '');
       
       let dezenas = [];
@@ -876,21 +1052,24 @@
       return 0;
     }
     
-    // Função completamente reformulada para corrigir o problema do cursor
+    // Função simplificada para formatar apostas
     function formatarAposta() {
       const apostaInput = document.getElementById('aposta');
-      const cursorPosition = apostaInput.selectionStart;
       let texto = apostaInput.value;
-      
-      // Salva a posição do cursor antes de qualquer formatação
-      ultimoCursorPos = cursorPosition;
       
       // Remove todos os caracteres não numéricos
       let textoLimpo = texto.replace(/\D/g, '');
       
       let textoFormatado = '';
       
-      if (formatoDuqueTerno) {
+      // MODIFICAÇÃO: Para ternos combinados de dezena, aceitar 7 números sem formatação especial
+      if (modalidadeAtual === "Terno de Dezena Combinado" || modalidadeAtual === "Terno de Dezena Cercado") {
+        // Aceitar apenas 7 números sem formatação
+        if (textoLimpo.length > 7) {
+          textoLimpo = textoLimpo.substring(0, 7);
+        }
+        textoFormatado = textoLimpo;
+      } else if (formatoDuqueTerno) {
         if (modalidadeAtual.includes('Duque')) {
           for (let i = 0; i < textoLimpo.length; i += 4) {
             if (i > 0) textoFormatado += ' ';
@@ -937,40 +1116,193 @@
       // Atualiza o valor do textarea
       apostaInput.value = textoFormatado;
       
-      // Calcula a nova posição do cursor
-      let novaPosicao = calcularNovaPosicaoCursor(texto, textoFormatado, cursorPosition);
-      
-      // Define a nova posição do cursor
-      apostaInput.selectionStart = apostaInput.selectionEnd = novaPosicao;
-      
-      // Atualiza o cursor helper
-      atualizarCursorHelper();
-      
       validarAposta();
     }
     
-    // Função auxiliar para calcular a nova posição do cursor
-    function calcularNovaPosicaoCursor(textoAntigo, textoNovo, posicaoAntiga) {
-      // Se o texto está vazio, cursor no início
-      if (!textoAntigo && !textoNovo) return 0;
+    // Função para manipular teclas pressionadas - MODIFICADA para atender às novas solicitações
+    function manipularTeclado(event) {
+      const apostaInput = document.getElementById('aposta');
+      const texto = apostaInput.value;
+      const key = event.key;
       
-      // Conta quantos dígitos existiam antes do cursor na versão antiga
-      const textoAteCursor = textoAntigo.substring(0, posicaoAntiga);
-      const digitosAteCursor = textoAteCursor.replace(/\D/g, '').length;
+      // Se digitar apenas "." e pressionar Enter, preenche com a última aposta
+      if (key === 'Enter' && texto.trim() === '.') {
+        event.preventDefault();
+        recuperarUltimaAposta(4); // Milhar por padrão
+        return false;
+      }
       
-      // Encontra a posição no novo texto que corresponde ao mesmo número de dígitos
-      let digitosEncontrados = 0;
-      for (let i = 0; i < textoNovo.length; i++) {
-        if (digitosEncontrados >= digitosAteCursor) {
-          return i;
+      // Se digitar ".." e pressionar Enter, preenche com a dezena
+      if (key === 'Enter' && texto.trim() === '..') {
+        event.preventDefault();
+        recuperarUltimaAposta(2); // Dezena
+        return false;
+      }
+      
+      // Se digitar "..." e pressionar Enter, preenche com a centena
+      if (key === 'Enter' && texto.trim() === '...') {
+        event.preventDefault();
+        recuperarUltimaAposta(3); // Centena
+        return false;
+      }
+      
+      // Se digitar "*" no final, abre modal para completar sequência
+      if (key === '*' && !event.ctrlKey && !event.altKey && !event.metaKey) {
+        event.preventDefault();
+        // Verifica se já tem um asterisco para evitar múltiplos modais
+        if (!texto.includes('*')) {
+          sequenciaInicial = texto;
+          apostaInput.value = texto + '*';
+          abrirModalSequencia();
         }
-        if (textoNovo[i].match(/\d/)) {
-          digitosEncontrados++;
+        return false;
+      }
+      
+      // Permitir teclas de controle
+      if (event.ctrlKey || event.altKey || event.metaKey) {
+        return true;
+      }
+      
+      // Permitir teclas de navegação
+      if ([8, 9, 13, 16, 17, 18, 20, 27, 33, 34, 35, 36, 37, 38, 39, 40, 45, 46, 91, 92, 93, 144].includes(event.keyCode)) {
+        return true;
+      }
+      
+      // Permitir apenas números, ponto e asterisco
+      if (event.keyCode < 48 || event.keyCode > 57) {
+        if (event.keyCode < 96 || event.keyCode > 105) {
+          if (key !== '.' && key !== '*') {
+            event.preventDefault();
+            return false;
+          }
         }
       }
       
-      // Se chegou ao final, retorna o final do texto
-      return textoNovo.length;
+      return true;
+    }
+    
+    // Função para recuperar a última aposta com base no tipo (2=dezena, 3=centena, 4=milhar)
+    function recuperarUltimaAposta(tipo) {
+      const apostaInput = document.getElementById('aposta');
+      
+      if (ultimaAposta && ultimaAposta.apostas) {
+        let apostasRecuperadas = [];
+        
+        // Filtrar apenas os números com o comprimento correto
+        for (let aposta of ultimaAposta.apostas) {
+          if (aposta.length === tipo) {
+            apostasRecuperadas.push(aposta);
+          }
+        }
+        
+        if (apostasRecuperadas.length > 0) {
+          apostaInput.value = apostasRecuperadas.join(' ');
+          formatarAposta();
+          
+          // Definir a modalidade correta automaticamente
+          if (tipo === 2) {
+            document.getElementById('modalidade').value = 'Dezena';
+          } else if (tipo === 3) {
+            document.getElementById('modalidade').value = 'Centena';
+          } else if (tipo === 4) {
+            document.getElementById('modalidade').value = 'Milhar';
+          }
+          
+          atualizarValidacaoAposta();
+          
+          mostrarToast('Última aposta recuperada!', 'success');
+          
+          // Coloca o cursor no final para edição
+          setTimeout(() => {
+            apostaInput.focus();
+            apostaInput.setSelectionRange(apostaInput.value.length, apostaInput.value.length);
+          }, 0);
+        } else {
+          mostrarToast(`Nenhuma aposta anterior com ${tipo} dígitos encontrada.`, 'error');
+        }
+      } else {
+        mostrarToast('Nenhuma aposta anterior encontrada.', 'error');
+      }
+    }
+    
+    // Função para verificar se o Enter foi pressionado no modal
+    function verificarEnter(event) {
+      if (event.key === 'Enter') {
+        completarSequencia();
+        // Foca no campo de aposta após completar a sequência
+        setTimeout(() => {
+          document.getElementById('aposta').focus();
+        }, 100);
+      }
+    }
+    
+    // Função para abrir modal de completar sequência
+    function abrirModalSequencia() {
+      document.getElementById('modalSequencia').style.display = 'block';
+      document.getElementById('finalSequencia').focus();
+    }
+    
+    // Função para fechar modal
+    function fecharModal() {
+      document.getElementById('modalSequencia').style.display = 'none';
+      document.getElementById('finalSequencia').value = '';
+    }
+    
+    // FUNÇÃO CORRIGIDA: completarSequencia - não fecha o modal imediatamente
+    function completarSequencia() {
+      const final = document.getElementById('finalSequencia').value.replace(/\D/g, '');
+      
+      // Validação básica
+      if (!final) {
+        mostrarToast('Por favor, digite o final da sequência', 'error');
+        document.getElementById('finalSequencia').focus();
+        return;
+      }
+      
+      // Remove o asterisco da sequência inicial
+      const sequenciaSemAsterisco = sequenciaInicial.replace(/\*$/, '');
+      
+      // Verifica se a sequência inicial tem 4 dígitos (para milhar)
+      if (sequenciaSemAsterisco.length === 4) {
+        const inicio = parseInt(sequenciaSemAsterisco);
+        const fim = parseInt(final);
+        
+        if (!isNaN(inicio) && !isNaN(fim) && fim > inicio) {
+          // Gera todas as sequências do início até o final
+          let todasSequencias = [];
+          for (let i = inicio + 1; i <= fim; i++) {
+            // Formata o número para ter 4 dígitos
+            todasSequencias.push(i.toString().padStart(4, '0'));
+          }
+          
+          // Juntar todas as sequências em uma string formatada
+          document.getElementById('aposta').value = sequenciaSemAsterisco + ' ' + todasSequencias.join(' ');
+          formatarAposta();
+          
+          // Mostrar mensagem de sucesso primeiro
+          mostrarToast('Sequência completada com sucesso!', 'success');
+          
+          // Só fecha o modal após a ação ser concluída
+          setTimeout(() => {
+            fecharModal();
+            
+            // Foca no campo de aposta
+            document.getElementById('aposta').focus();
+            
+            // Calcular automaticamente a quantidade de jogos
+            calcularTotal();
+          }, 3);
+          
+        } else {
+          mostrarToast('Digite um valor final válido maior que a sequência inicial.', 'error');
+          document.getElementById('finalSequencia').focus();
+          document.getElementById('finalSequencia').select();
+        }
+      } else {
+        mostrarToast('A sequência inicial deve ter 4 dígitos para milhar.', 'error');
+        document.getElementById('finalSequencia').focus();
+        document.getElementById('finalSequencia').select();
+      }
     }
     
     function handlePaste(event) {
@@ -978,96 +1310,19 @@
       const texto = (event.clipboardData || window.clipboardData).getData('text');
       const apostaInput = document.getElementById('aposta');
       
+      // Insere apenas os dígitos do texto colado
+      const textoColadoLimpo = texto.replace(/\D/g, '');
+      
+      // Obtém a posição do cursor
       const inicio = apostaInput.selectionStart;
       const fim = apostaInput.selectionEnd;
       const textoAtual = apostaInput.value;
       
-      // Insere apenas os dígitos do texto colado
-      const textoColadoLimpo = texto.replace(/\D/g, '');
+      // Insere o texto colado na posição do cursor
       apostaInput.value = textoAtual.substring(0, inicio) + textoColadoLimpo + textoAtual.substring(fim);
       
-      // Reposiciona o cursor
-      apostaInput.selectionStart = apostaInput.selectionEnd = inicio + textoColadoLimpo.length;
-      
+      // Dispara o evento input para formatar
       formatarAposta();
-    }
-    
-    // Funções para gerenciar o cursor helper personalizado
-    function mostrarCursorHelper() {
-      const cursorHelper = document.getElementById('cursorHelper');
-      cursorHelper.style.display = 'block';
-      atualizarCursorHelper();
-    }
-    
-    function esconderCursorHelper() {
-      const cursorHelper = document.getElementById('cursorHelper');
-      cursorHelper.style.display = 'none';
-    }
-    
-    function atualizarCursorHelper() {
-      const apostaInput = document.getElementById('aposta');
-      const cursorHelper = document.getElementById('cursorHelper');
-      
-      // Obtém a posição do cursor
-      const cursorPosition = apostaInput.selectionStart;
-      
-      // Obtém as coordenadas do cursor
-      const coordinates = getCursorCoordinates(apostaInput, cursorPosition);
-      
-      if (coordinates) {
-        cursorHelper.style.left = coordinates.x + 'px';
-        cursorHelper.style.top = coordinates.y + 'px';
-        cursorHelper.style.height = coordinates.height + 'px';
-      }
-    }
-    
-    // Função para obter as coordenadas do cursor
-    function getCursorCoordinates(input, pos) {
-      // Cria um elemento temporário para medir a posição
-      const tempDiv = document.createElement('div');
-      const style = getComputedStyle(input);
-      
-      // Aplica o mesmo estilo do textarea
-      tempDiv.style.font = style.font;
-      tempDiv.style.padding = style.padding;
-      tempDiv.style.width = input.offsetWidth + 'px';
-      tempDiv.style.whiteSpace = 'pre-wrap';
-      tempDiv.style.wordWrap = 'break-word';
-      tempDiv.style.visibility = 'hidden';
-      tempDiv.style.position = 'absolute';
-      tempDiv.style.top = '0';
-      tempDiv.style.left = '0';
-      
-      // Insere o texto até a posição do cursor
-      const text = input.value.substring(0, pos);
-      tempDiv.textContent = text;
-      
-      // Adiciona ao DOM para calcular as dimensões
-      document.body.appendChild(tempDiv);
-      
-      // Obtém as coordenadas
-      const range = document.createRange();
-      const selection = window.getSelection();
-      range.selectNodeContents(tempDiv);
-      range.collapse(false);
-      selection.removeAllRanges();
-      selection.addRange(range);
-      
-      const rect = range.getBoundingClientRect();
-      const inputRect = input.getBoundingClientRect();
-      
-      // Remove o elemento temporário
-      document.body.removeChild(tempDiv);
-      
-      if (rect) {
-        return {
-          x: rect.left - inputRect.left + input.scrollLeft,
-          y: rect.top - inputRect.top + input.scrollTop,
-          height: rect.height
-        };
-      }
-      
-      return null;
     }
     
     function atualizarValidacaoAposta() {
@@ -1082,7 +1337,11 @@
                                    "Terno de Dezena Combinado", "Terno de Dezena Cercado", "Duque de Grupo", 
                                    "Terno de Grupo", "Terno de Grupo Combinado", "Terno de Grupo Cercado"];
 
-      if (modalidadesCombinadas.includes(modalidadeAtual)) {
+      // MODIFICAÇÃO: Para ternos combinados de dezena, aceitar 7 números sem formatação especial
+      if (modalidadeAtual === "Terno de Dezena Combinado" || modalidadeAtual === "Terno de Dezena Cercado") {
+        maxCaracteres = 7;
+        formatoDuqueTerno = false;
+      } else if (modalidadesCombinadas.includes(modalidadeAtual)) {
         maxCaracteres = 10;
         formatoDuqueTerno = false;
       } 
@@ -1144,6 +1403,11 @@
                                    "Terno de Dezena Combinado", "Terno de Dezena Cercado", "Duque de Grupo", 
                                    "Terno de Grupo", "Terno de Grupo Combinado", "Terno de Grupo Cercado"];
 
+      // MODIFICAÇÃO: Mensagem específica para ternos combinados de dezena
+      if (modalidadeAtual === "Terno de Dezena Combinado" || modalidadeAtual === "Terno de Dezena Cercado") {
+        return 'Digite exatamente 7 números (ex: 1234567) para gerar combinações de terno.';
+      }
+      
       if (modalidadesInvertidas.includes(modalidadeAtual)) {
         return 'Digite números de 3 a 7 dígitos (ex: 123 1234 12345)';
       }
@@ -1162,60 +1426,20 @@
       
       switch(modalidadeAtual) {
         case 'Milhar': 
-          return 'Digite números de 4 dígitos (ex: 1234 5678).';
+          return 'Digite números de 4 dígitos (ex: 1234 5678). Use . para recuperar última aposta, .. para dezena, ... para centena, * para gerar sequências.';
         case 'Milhar e Centena':
-          return 'Digite números de 4 dígitos (ex: 1234 5678). Cada aposta conta como 2 jogos.';
+          return 'Digite números de 4 dígitos (ex: 1234 5678). Cada aposta conta como 2 jogos. Use . para recuperar última aposta, .. para dezena, ... para centena, * para gerar sequências.';
         case 'Centena':
-          return 'Digite números de 3 dígitos (ex: 123 456).';
+          return 'Digite números de 3 dígitos (ex: 123 456). Use . para recuperar última aposta, .. para dezena, ... para centena, * para gerar sequências.';
         case 'Dezena':
-          return 'Digite números de 2 dígitos (ex: 12 34).';
+          return 'Digite números de 2 dígitos (ex: 12 34). Use . para recuperar última aposta, .. para dezena, ... para centena, * para gerar sequências.';
         case 'Grupo':
-          return 'Digite números de 2 dígitos (01-25) representando grupos (ex: 12 34).';
+          return 'Digite números de 2 dígitos (01-25) representando grupos (ex: 12 34). Use . para recuperar última aposta, .. para dezena, ... para centena, * para gerar sequências.';
         case 'Passe Vai':
         case 'Passe Vai e Vem':
-          return 'Digite números de 2 dígitos (ex: 12 34).';
+          return 'Digite números de 2 dígitos (ex: 12 34). Use . para recuperar última aposta, .. para dezena, ... para centena, * para gerar sequências.';
         default: return '';
       }
-    }
-    
-    function limitarCaracteres(event) {
-      const apostaInput = document.getElementById('aposta');
-      const cursorPosition = apostaInput.selectionStart;
-      let texto = apostaInput.value;
-      
-      if (event.key === 'Backspace' || event.key === 'Delete' || event.key === 'Tab') {
-        return true;
-      }
-      
-      if (event.ctrlKey || event.altKey || event.metaKey) {
-        return true;
-      }
-      
-      if (event.key === 'ArrowLeft' || event.key === 'ArrowRight' || event.key === 'ArrowUp' || event.key === 'ArrowDown') {
-        return true;
-      }
-      
-      if (!/^\d$/.test(event.key)) {
-        event.preventDefault();
-        return false;
-      }
-      
-      if (!formatoDuqueTerno) {
-        const textoAteCursor = texto.substring(0, cursorPosition);
-        const ultimoEspaco = textoAteCursor.lastIndexOf(' ');
-        const inicioApostaAtual = ultimoEspaco !== -1 ? ultimoEspaco + 1 : 0;
-        const apostaAtual = texto.substring(inicioApostaAtual, cursorPosition).replace(/\D/g, '');
-        
-        if (apostaAtual.length >= maxCaracteres) {
-          event.preventDefault();
-          const newText = texto.substring(0, cursorPosition) + ' ' + texto.substring(cursorPosition);
-          apostaInput.value = newText;
-          apostaInput.selectionStart = apostaInput.selectionEnd = cursorPosition + 1;
-          return false;
-        }
-      }
-      
-      return true;
     }
     
     function validarAposta() {
@@ -1244,7 +1468,16 @@
       let todasValidas = true;
       let mensagemErro = '';
       
-      if (modalidadesCombinadas.includes(modalidadeAtual)) {
+      // MODIFICAÇÃO: Validação específica para ternos combinados de dezena
+      if (modalidadeAtual === "Terno de Dezena Combinado" || modalidadeAtual === "Terno de Dezena Cercado") {
+        const apostaTexto = apostaInput.value.replace(/\s/g, '');
+        if (apostaTexto.length !== 7) {
+          mensagemErro = `${modalidadeAtual} deve ter exatamente 7 números. Você digitou ${apostaTexto.length}.`;
+          todasValidas = false;
+        } else {
+          apostas = [apostaTexto]; // Uma única aposta com 7 números
+        }
+      } else if (modalidadesCombinadas.includes(modalidadeAtual)) {
         const apostaTexto = apostaInput.value.replace(/\s/g, '');
         for (let i = 0; i < apostaTexto.length; i += 2) {
           if (i + 2 <= apostaTexto.length) {
@@ -1281,7 +1514,7 @@
               
               const numeroInt = parseInt(num);
               if (numeroInt < 1 || numeroInt > 25) {
-                mensagemErro = `Grupo "${num}" inválido. Os grupos devem ser entre 01 e 25.`;
+                mensagemErro = `Grupo "${num}" inválido. Os grupos devem ser entre 01 and 25.`;
                 todasValidas = false;
                 break;
               }
@@ -1306,7 +1539,7 @@
         if (modalidadeAtual.toLowerCase().includes('grupo') && !modalidadesDuqueTerno.includes(modalidadeAtual)) {
           const numero = parseInt(aposta);
           if (numero < 1 || numero > 25) {
-            mensagemErro = `Grupo "${aposta}" inválido. Os grupos devem ser entre 01 e 25.`;
+            mensagemErro = `Grupo "${aposta}" inválido. Os grupos devem ser entre 01 and 25.`;
             todasValidas = false;
             break;
           }
@@ -1316,7 +1549,7 @@
         
         if (modalidadesInvertidas.includes(modalidadeAtual)) {
           if (aposta.length < 3 || aposta.length > 7) {
-            mensagemErro = `${modalidadeAtual} deve ter entre 3 e 7 dígitos. "${aposta}" tem ${aposta.length}.`;
+            mensagemErro = `${modalidadeAtual} deve ter entre 3 and 7 dígitos. "${aposta}" tem ${aposta.length}.`;
             todasValidas = false;
             break;
           }
@@ -1336,7 +1569,7 @@
         apostaInput.classList.add('shake');
         setTimeout(() => {
           apostaInput.classList.remove('shake');
-        }, 500);
+        }, 3);
       } else {
         apostaError.innerText = '';
         const mensagemSucesso = `${apostas.length} número(s) válido(s) para ${modalidadeAtual}.`;
@@ -1391,7 +1624,7 @@
           }
         } 
         else if (modalidadesDuqueTerno.includes(modalidade)) {
-          if (modalidade.includes('Combinado')) {
+          if (modalidade.includes('Combinado') || modalidade.includes('Cercado')) {
             quantidadeJogos = calcularCombinacoesDuqueTerno(aposta, modalidade);
           } else {
             const apostasArray = aposta.split(' ').map(a => a.trim()).filter(a => a !== '');
@@ -1400,10 +1633,6 @@
             } else if (modalidade.includes('Terno')) {
               quantidadeJogos = apostasArray.length;
             }
-          }
-          
-          if (modalidadesCercadas.includes(modalidade)) {
-            quantidadeJogos *= 3;
           }
         } 
         else if (modalidadesInvertidas.includes(modalidade)) {
@@ -1477,6 +1706,11 @@
         'Terno de Dezena Combinado', 'Terno de Dezena Cercado',
         'Terno de Grupo', 'Terno de Grupo Combinado', 'Terno de Grupo Cercado'
       ];
+      
+      // MODIFICAÇÃO: Para ternos combinados de dezena, não usar "x", mostrar os números juntos
+      if (modalidade === "Terno de Dezena Combinado" || modalidade === "Terno de Dezena Cercado") {
+        return apostas.join(' '); // Mostrar os números juntos sem "x"
+      }
       
       if (!modalidadesComX.includes(modalidade)) {
         return apostas.join(' ');
@@ -1554,7 +1788,13 @@
       
       let apostasArray = [];
       
-      if (modalidadesDuqueTerno.includes(modalidade)) {
+      // MODIFICAÇÃO: Para ternos combinados de dezena, tratar como uma única aposta de 7 números
+      if (modalidade === "Terno de Dezena Combinado" || modalidade === "Terno de Dezena Cercado") {
+        const apostaTexto = aposta.replace(/\s/g, '');
+        if (apostaTexto.length === 7) {
+          apostasArray = [apostaTexto];
+        }
+      } else if (modalidadesDuqueTerno.includes(modalidade)) {
         const grupos = aposta.split(' ').map(a => a.trim()).filter(a => a !== '');
         
         for (let grupo of grupos) {
@@ -1580,7 +1820,8 @@
       if (modalidade.includes('Duque') && apostasArray.length % 2 !== 0) {
         mostrarToast('Duque precisa de números em pares (2, 4, 6, etc). Complete com mais um número.', 'error');
         return;
-      } else if (modalidade.includes('Terno') && apostasArray.length % 3 !== 0) {
+      } else if (modalidade.includes('Terno') && apostasArray.length % 3 !== 0 && 
+                 modalidade !== "Terno de Dezena Combinado" && modalidade !== "Terno de Dezena Cercado") {
         const numerosFaltantes = 3 - (apostasArray.length % 3);
         mostrarToast(`Terno precisa de números em grupos de 3. Faltam ${numerosFaltantes} número(s).`, 'error');
         return;
@@ -1599,30 +1840,19 @@
         dataAposta: dataApostaSelecionada
       });
       
-      const valorTotalAposta = parseFloat(total.replace("R$ ", "").replace(".", "").replace(",", ".")) || 0;
+      const valorTotalAposta = parseFloat(total.replace("R$ ", "").replace(".", "").replace(",", "."));
       valorTotalBilhete += valorTotalAposta;
 
       const apostasFormatadas = formatarApostasComX(apostasArray, modalidade);
 
-      let temMilharBrinde = false;
-      if (valor > 2 && modalidade === "Milhar") {
-        milharBrinde = gerarMilharBrinde();
-        temMilharBrinde = true;
-        apostasComMilharBrinde.push({
-          numeros: apostasArray,
-          milharBrinde: milharBrinde
-        });
-      }
-
       let apostaAtualTexto = '';
       
       if (repetindoAposta) {
-        apostaAtualTexto = `${modalidade} - ${premiacao}
-Unitario: R$ ${valor.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} Total: R$ ${valorTotalAposta.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+        apostaAtualTexto = `${premiacao} R$ ${valor.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} Total: R$ ${parseFloat(total.replace("R$ ", "").replace(".", "").replace(",", ".")).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
       } else {
-        apostaAtualTexto = `${modalidade} - ${premiacao}
+        apostaAtualTexto = `${modalidade}
 ${apostasFormatadas}
-Unitario: R$ ${valor.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} Total: R$ ${valorTotalAposta.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+${premiacao} R$ ${valor.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} Total: R$ ${parseFloat(total.replace("R$ ", "").replace(".", "").replace(",", ".")).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
       }
 
       let dataHoraTexto = `Data e Hora: ${new Date().toLocaleString('pt-BR')}`;
@@ -1632,54 +1862,58 @@ Unitario: R$ ${valor.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximum
         dataPredatadaTexto = `Pré-datada: ${dataFormatada}`;
       }
 
-
-
-
       if (primeiraAposta) {
-        bilheteCompleto = `          LOTERIA ESPERANCA
--------------------------------------------------------
+        // Removido espaços em branco no início do bilhete
+        bilheteCompleto = `          
+        *
+        CL ESPERANCA
+-------------------------------------------------
 EXT: ${extracao}
 Poule: ${numeroPoule}
-NSU: ${Math.floor(Math.random() * 1000000).toString().padStart(7, '0')}
+NSU: ${nsu}
 Vendedor: ELIENE
 Área: RONA
 ${dataHoraTexto}${dataPredatadaTexto ? '\n' + dataPredatadaTexto : ''}
--------------------------------------------------------`;
+-------------------------------------------------`;
         primeiraAposta = false;
       } else if (!repetindoAposta) {
-        bilheteCompleto += "\n------------------------------------------------------";
+        bilheteCompleto += "\n-----------------------------------------------";
       }
 
       bilheteCompleto += `\n${apostaAtualTexto}`;
 
-      
-
       const bilheteElement = document.getElementById('bilhete');
       
+      // MODIFICAÇÃO: Ajustar altura do bilhete automaticamente
+      const numLinhas = bilheteCompleto.split('\n').length;
+      const alturaMinima = 300;
+      const alturaPorLinha = 20;
+      const novaAltura = Math.max(alturaMinima, numLinhas * alturaPorLinha + 100);
+      
+      bilheteElement.style.minHeight = `${novaAltura}px`;
+      
+      // MODIFICAÇÃO: Centralizar as frases finais
       let bilheteExibicao = bilheteCompleto;
       
       bilheteExibicao += `
--------------------------------------------------------
+-----------------------------------------------------------
 TOTAL DO BILHETE: R$ ${valorTotalBilhete.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-------------------------------------------------------
-PREMIAÇÃO APENAS VÁLIDA COM 
-APRESENTAÇÃO DESSE BILHETE. 
-VÁLIDO POR 7 DIAS.
--------------------------------------------------------
-         BOA SORTE!
---------------------------------------------------------`;
+-------------------------------------------------
+VÁLIDO POR 15 DIAS.
+-------------------------------------------------
+BOA SORTE!
+-------------------------------------------------`;
       
+      // Remover espaços em branco do início de cada linha
       bilheteExibicao = bilheteExibicao.split('\n').map(line => {
         return line.trim();
       }).join('\n').trim();
       
-      bilheteElement.innerText = bilheteExibicao;
+      bilheteElement.innerHTML = bilheteExibicao;
       bilheteElement.classList.add('fade-in');
       
-      bilheteElement.style.height = 'auto';
-      bilheteElement.style.minHeight = '400px';
-      
-      document.getElementById('btnPdf').style.display = "block";
+      // Gerar código de barras
+      gerarCodigoBarras();
       
       ultimaAposta = {
         apostas: apostasArray,
@@ -1705,58 +1939,198 @@ VÁLIDO POR 7 DIAS.
       mostrarToast('Aposta adicionada ao bilhete!', 'success');
     }
 
+    function gerarCodigoBarras() {
+      const codigoBarras = numeroPoule + nsu;
+      const barcodeContainer = document.getElementById('barcode-container');
+      const barcodeSvg = document.getElementById('barcode');
+      
+      // Limpar SVG existente
+      barcodeSvg.innerHTML = '';
+      
+      // Gerar novo código de barras
+      JsBarcode(barcodeSvg, codigoBarras, {
+        format: "CODE128",
+        width: 2,
+        height: 50,
+        displayValue: true,
+        fontSize: 11,
+        background: "#fff",
+        lineColor: "#000"
+      });
+      
+      // Exibir container do código de barras
+      barcodeContainer.style.display = 'block';
+      
+      // MODIFICAÇÃO: Ajustar a posição do código de barras para não sobrepor o texto
+      const bilheteElement = document.getElementById('bilhete');
+      const bilheteHeight = bilheteElement.scrollHeight;
+      
+      // Posicionar o código de barras abaixo do conteúdo do bilhete
+      barcodeContainer.style.marginTop = '20px';
+    }
+
+    function abrirModalImpressao() {
+      if (bilheteCompleto.trim() === "") {
+        mostrarToast('Não há bilhete para imprimir.', 'error');
+        return;
+      }
+      document.getElementById('modalImpressao').style.display = 'block';
+    }
+    
+    function fecharModalImpressao() {
+      document.getElementById('modalImpressao').style.display = 'none';
+    }
+
     function imprimirPDF() {
       const { jsPDF } = window.jspdf;
       
       const bilheteTexto = document.getElementById('bilhete').innerText;
       const numeroLinhas = bilheteTexto.split('\n').length;
       const alturaPorLinha = 5;
-      const alturaMinima = 80;
-      const alturaMaxima = 2000;
+      const alturaMinima = 50;
+      const alturaMaxima = 3000;
       const alturaCalculada = Math.min(alturaMaxima, Math.max(alturaMinima, numeroLinhas * alturaPorLinha + 1));
+      
+      // Converter para pontos (1mm = 2.83465 pontos)
+      const larguraPDF = 70 * 2.83465; // 70mm em pontos
+      const alturaPDF = alturaCalculada * 3;
       
       const doc = new jsPDF({
         orientation: 'portrait',
-        unit: 'mm',
-        format: [80, alturaCalculada]
+        unit: 'pt',
+        format: [larguraPDF, alturaPDF]
       });
       
       doc.setProperties({
-        title: 'LOTERIA ESPERANCA',
+        title: 'CL ESPERANCA',
       });
       
       doc.setFont("helvetica", "bold");
-      doc.setFontSize(10);
+      doc.setFontSize(11); // Diminuir a fonte para 11 pontos
       
       let bilheteParaPDF = bilheteCompleto;
       
       bilheteParaPDF += `
--------------------------------------------------------
+-------------------------------------------------
 TOTAL DO BILHETE: R$ ${valorTotalBilhete.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
--------------------------------------------------------
-PREMIAÇÃO APENAS VÁLIDA COM 
-APRESENTAÇÃO DESSE BILHETE. 
-VÁLIDO POR 7 DIAS.
--------------------------------------------------------
-         BOA SORTE!
--------------------------------------------------------`;
+-------------------------------------------------
+VÁLIDO POR 15 DIAS.
+-------------------------------------------------
+BOA SORTE!
+-------------------------------------------------`;
       
+      // Remover espaços em branco do início de cada linha
       bilheteParaPDF = bilheteParaPDF.split('\n').map(line => {
         return line.trim();
       }).join('\n').trim();
       
-      const lines = doc.splitTextToSize(bilheteParaPDF, 70);
-      doc.text(lines, 5, 5);
+      // Ajustar a largura máxima do texto para caber em 70mm (deixando margem)
+      const maxWidth = larguraPDF - 15; // Margem de 10 pontos de cada lado
+      const lines = doc.splitTextToSize(bilheteParaPDF, maxWidth);
+      doc.text(lines, 8, 8);
+      
+      // Adicionar código de barras no PDF com 60mm de largura
+      const codigoBarras = numeroPoule + nsu;
+      const barcodeWidth = 60 * 2.83465; // 60mm em pontos
+      const barcodeHeight = 30;
+      const barcodeX = (larguraPDF - barcodeWidth) / 2;
+      const barcodeY = alturaPDF - 50;
+      
+      // Criar um canvas para gerar o código de barras
+      const canvas = document.createElement('canvas');
+      JsBarcode(canvas, codigoBarras, {
+        format: "CODE128",
+        width: 2,
+        height: 30,
+        displayValue: true,
+        fontSize: 10,
+        background: "#fff",
+        lineColor: "#000"
+      });
+      
+      // Converter canvas para imagem e adicionar ao PDF
+      const imgData = canvas.toDataURL('image/png');
+      doc.addImage(imgData, 'PNG', barcodeX, barcodeY, barcodeWidth, barcodeHeight);
       
       doc.setFontSize(8);
-      doc.text(`Emitido: ${new Date().toLocaleString('pt-BR')}`, 5, alturaCalculada - 10);
+      doc.text(`Emitido: ${new Date().toLocaleString('pt-BR')}`, 10, alturaPDF - 15);
       
       doc.save(`bilhete-sysbanca-${numeroBilhete}.pdf`);
       mostrarToast('PDF gerado com sucesso!', 'success');
       
-      numeroBilhete++;
+      fecharModalImpressao();
+    }
+    
+    function imprimirDireto() {
+      // Criar uma nova janela para impressão
+      const janelaImpressao = window.open('', '_blank');
       
-      limparFormulario();
+      // Corrigir a visualização da poule antes de imprimir
+      const bilheteParaImprimir = bilheteCompleto.replace(
+        `Poule: ${numeroPoule}`, 
+        `Poule: <strong class="poule-print">${numeroPoule}</strong>`
+      );
+      
+      janelaImpressao.document.write(`
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <title>Imprimir Bilhete</title>
+          <style>
+            body {
+              font-family: 'Courier New', monospace;
+              font-size: 12px;
+              margin: 0;
+              padding: 10px;
+            }
+            .barcode {
+              width: 50mm;
+              height: 20mm;
+              margin: 5px auto;
+              display: block;
+            }
+            .center {
+              text-align: center;
+            }
+            .footer {
+              font-size: 8px;
+              text-align: center;
+              margin-top: 10px;
+            }
+            .poule-print {
+              font-size: 16px !important;
+              font-weight: bold !important;
+            }
+          </style>
+        </head>
+        <body>
+          <pre>${bilheteParaImprimir}</pre>
+          <div class="center">
+            <svg id="barcode" class="barcode"></svg>
+          </div>
+          <div class="footer">Emitido em: ${new Date().toLocaleString('pt-BR')}</div>
+          <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"><\/script>
+          <script>
+            JsBarcode('#barcode', '${numeroPoule + nsu}', {
+              format: "CODE128",
+              width: 2,
+              height: 50,
+              displayValue: true,
+              fontSize: 10,
+              background: "#fff",
+              lineColor: "#000"
+            });
+            window.print();
+            window.onafterprint = function() {
+              window.close();
+            };
+          <\/script>
+        </body>
+        </html>
+      `);
+      
+      janelaImpressao.document.close();
+      fecharModalImpressao();
     }
     
     function limparFormulario() {
@@ -1770,7 +2144,6 @@ VÁLIDO POR 7 DIAS.
         document.getElementById('apostaError').innerText = '';
         document.getElementById('apostaSuccess').innerText = '';
         document.getElementById('bilhete').innerText = 'Seu bilhete aparecerá aqui após confirmar a aposta.';
-        document.getElementById('btnPdf').style.display = 'none';
         document.getElementById('repetirAposta').checked = false;
         
         document.getElementById('apostaPredatada').checked = false;
@@ -1789,11 +2162,12 @@ VÁLIDO POR 7 DIAS.
         todasApostas = [];
         bilheteCompleto = "";
         valorTotalBilhete = 0;
-        milharBrinde = "";
         ultimaAposta = null;
         repetindoAposta = false;
-        apostasComMilharBrinde = [];
         primeiraAposta = true;
+        
+        // Esconder código de barras
+        document.getElementById('barcode-container').style.display = 'none';
         
         atualizarValidacaoAposta();
         mostrarToast('Formulário limpo com sucesso!', 'success');
@@ -1804,14 +2178,14 @@ VÁLIDO POR 7 DIAS.
     
     function limparBilhete() {
       document.getElementById('bilhete').innerText = 'Seu bilhete aparecerá aqui após confirmar a aposta.';
-      document.getElementById('btnPdf').style.display = 'none';
       
       todasApostas = [];
       bilheteCompleto = "";
       valorTotalBilhete = 0;
-      milharBrinde = "";
-      apostasComMilharBrinde = [];
       primeiraAposta = true;
+      
+      // Esconder código de barras
+      document.getElementById('barcode-container').style.display = 'none';
       
       mostrarToast('Bilhete limpo com sucesso!', 'success');
     }
@@ -1872,6 +2246,55 @@ VÁLIDO POR 7 DIAS.
       event.target.classList.add('active');
     }
 
+    // Função para navegação por Enter entre campos - MODIFICADA para atender às novas solicitações
+    function configurarNavegacaoEnter() {
+      const campos = [
+        document.getElementById('aposta'),
+        document.getElementById('premiacao'),
+        document.getElementById('valor'),
+        document.getElementById('btnConfirmar')
+      ];
+      
+      campos.forEach((campo, index) => {
+        campo.addEventListener('keydown', function(event) {
+          if (event.key === 'Enter') {
+            event.preventDefault();
+            
+            // Se estamos no último campo, confirmar a aposta
+            if (index === campos.length - 1) {
+              exibirResultado();
+            } else {
+              // Mover para o próximo campo
+              campos[index + 1].focus();
+              
+              // Se for um select, abrir as opções
+              if (campos[index + 1].tagName === 'SELECT') {
+                campos[index + 1].size = campos[index + 1].options.length;
+                setTimeout(() => {
+                  campos[index + 1].addEventListener('blur', function() {
+                    this.size = 1;
+                  }, { once: true });
+                }, 100);
+              }
+              
+              // Se for o campo de valor, selecionar todo o texto
+              if (index + 1 === 2) { // Campo de valor
+                setTimeout(() => {
+                  campos[index + 1].select();
+                }, 10);
+              }
+            }
+          }
+        });
+      });
+      
+      // Adicionar navegação automática para o campo de valor quando selecionar premiação
+      document.getElementById('premiacao').addEventListener('change', function() {
+        document.getElementById('valor').focus();
+        document.getElementById('valor').select();
+      });
+    }
+
     window.onload = function() {
       const valorInput = document.getElementById('valor');
       valorInput.classList.add('currency-input');
@@ -1887,6 +2310,12 @@ VÁLIDO POR 7 DIAS.
       });
       
       document.getElementById('premiacaoInfo').innerText = infoPremiacoes[document.getElementById('premiacao').value] || "";
+      
+      // Configurar navegação por Enter
+      configurarNavegacaoEnter();
+      
+      // Adicionar evento de teclado para o campo de aposta
+      document.getElementById('aposta').addEventListener('keydown', manipularTeclado);
     };
   </script>
 </body>
