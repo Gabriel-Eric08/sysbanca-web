@@ -219,10 +219,9 @@ def salvar_apostas():
         # LÓGICA DE GERAÇÃO E SALVAMENTO DO NSU
         # ==========================================================
         # Gera o NSU com base na data/hora e um UUID para garantir unicidade
-        agora = datetime.now()
-        timestamp_str = agora.strftime('%Y%m%d%H%M%S%f')
-        uuid_str = uuid.uuid4().hex[:10]
-        nsu_gerado = f"{timestamp_str}-{uuid_str}"
+        nsu_gerado = uuid.uuid4().hex[:8].lower()
+        while Aposta.query.filter_by(nsu=nsu_gerado).first():
+            nsu_gerado = uuid.uuid4().hex[:8].lower()
         # ==========================================================
         
         contador_apostas = 1

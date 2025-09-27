@@ -866,25 +866,27 @@
 
 
     let numeroPoule = 'Carregando...'; // Valor temporário até a requisição ser concluída
-    //let nsu = Math.floor(Math.random() * 10000000).toString().padStart(7, '0');
+    
 
     // Função para buscar o número da poule
     async function fetchNumeroPoule() {
-        try {
-            const response = await fetch(`${API_BASE_URL}/aposta/last`);
-            if (!response.ok) {
-                throw new Error('Erro ao buscar número da poule');
-            }
-            const data = await response.json();
-            numeroPoule = data.ultimo_id || '000000'; // Fallback caso ultimo_id não esteja disponível
-            document.getElementById('numeroPoule').innerText = `Poule: ${numeroPoule}`;
-        } catch (error) {
-            console.error('Erro ao buscar poule:', error);
-            numeroPoule = Math.random().toString().substring(2, 8); // Fallback para número aleatório
-            document.getElementById('numeroPoule').innerText = `Poule: ${numeroPoule}`;
-            mostrarToast('Erro ao carregar número da poule. Usando número temporário.', 'error');
+    try {
+        const response = await fetch(`${API_BASE_URL}/aposta/last`);
+        if (!response.ok) {
+            throw new Error('Erro ao buscar número da poule');
         }
+        const data = await response.json();
+        // Garantir que numeroPoule tenha 8 dígitos com zeros à esquerda
+        numeroPoule = data.ultimo_id ? String(data.ultimo_id).padStart(8, '0') : '00000000';
+        document.getElementById('numeroPoule').innerText = `Poule: ${numeroPoule}`;
+    } catch (error) {
+        console.error('Erro ao buscar poule:', error);
+        // Fallback: gerar número aleatório com 8 dígitos
+        numeroPoule = Math.random().toString().substring(2, 10).padStart(8, '0');
+        document.getElementById('numeroPoule').innerText = `Poule: ${numeroPoule}`;
+        mostrarToast('Erro ao carregar número da poule. Usando número temporário.', 'error');
     }
+  }
     
     document.getElementById('numeroPoule').innerText = `Poule: ${numeroPoule}`;
     
@@ -1800,12 +1802,12 @@ async function fetchNumeroPoule() {
         }
         const data = await response.json();
         numeroPoule = data.ultimo_id || '000000'; // Fallback caso ultimo_id não esteja disponível
-        //nsu = Math.floor(Math.random() * 10000000).toString().padStart(7, '0'); // NSU inicial
+        
         document.getElementById('numeroPoule').innerText = `Poule: ${numeroPoule}`;
     } catch (error) {
         console.error('Erro ao buscar poule:', error);
         numeroPoule = Math.random().toString().substring(2, 8); // Fallback para número aleatório
-        //nsu = Math.floor(Math.random() * 10000000).toString().padStart(7, '0');
+        
         document.getElementById('numeroPoule').innerText = `Poule: ${numeroPoule}`;
         mostrarToast('Erro ao carregar número da poule. Usando número temporário.', 'error');
     }
@@ -1996,7 +1998,7 @@ ${premiacao} R$ ${valor.toLocaleString('pt-BR', { minimumFractionDigits: 2, maxi
             CL ESPERANCA
 -------------------------------------------------
 EXT: ${extracao}
-Poule: ${numeroPoule}
+Poule: ${String(numeroPoule).padStart(8, '0')}
 NSU: ${nsu}
 Vendedor: {{ nome_vendedor }}
 Área: {{ nome_area }}
@@ -2065,7 +2067,7 @@ BOA SORTE!
 
 // Função gerarCodigoBarras modificada
 function gerarCodigoBarras() {
-    const codigoBarras = nsu; // Usar o nsu retornado pelo backend
+    const codigoBarras = String(numeroPoule).padStart(8, '0') + nsu; // Usar o nsu retornado pelo backend
     const barcodeContainer = document.getElementById('barcode-container');
     const barcodeSvg = document.getElementById('barcode');
     
@@ -2155,7 +2157,7 @@ BOA SORTE!
     doc.text(lines, 8, 8);
     
     // Adicionar código de barras no PDF com 60mm de largura
-    const codigoBarras = numeroPoule + nsu;
+    const codigoBarras = String(numeroPoule).padStart(8, '0') + nsu;
     const barcodeWidth = 60 * 2.83465; // 60mm em pontos
     const barcodeHeight = 30;
     const barcodeX = (larguraPDF - barcodeWidth) / 2;
@@ -2240,7 +2242,7 @@ function imprimirDireto() {
             <div class="footer">Emitido em: ${new Date().toLocaleString('pt-BR')}</div>
             <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"><\/script>
             <script>
-                JsBarcode('#barcode', '${numeroPoule + nsu}', {
+                JsBarcode('#barcode', '${String(numeroPoule).padStart(8, '0') + nsu}', {
                     format: "CODE128",
                     width: 2,
                     height: 50,
@@ -2344,6 +2346,7 @@ window.addEventListener('message', function(event) {
     
     janelaImpressao.document.close();
     fecharModalImpressao();
+    limparBilhete();
 }
     
     function limparFormulario() {
