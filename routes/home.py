@@ -19,17 +19,32 @@ def home():
     if check_creds and check_creds['success']:
         print("Login bem-sucedido na rota 'home'.")
         if check_creds['is_vendedor']:
-         return render_template('home_apk.html')
-        
+            return render_template('home_apk.html')
         return render_template('principal.html')
     else:
         print("Login falhou na rota 'home'.")
         return check_creds['message']
 
+@home_route.route('/resultados_online')
+def resultados_online():
+    username = request.cookies.get('username')
+    senha = request.cookies.get('senha')
+
+    print(f"Rota 'resultados_online' recebendo cookies - Username: {username}, Senha: {senha}")
+
+    # Verifica as credenciais
+    check_creds = checkCreds(username, senha)
+
+    if check_creds and check_creds['success']:
+        print("Login bem-sucedido na rota 'resultados_online'.")
+        return render_template('resultadosOnline.html')
+    else:
+        print("Login falhou na rota 'resultados_online'.")
+        return check_creds['message']
 
 # Rota que retorna data e hora do Nordeste
 @home_route.route('/datetime')
 def datetime_ne():
     tz = pytz.timezone("America/Recife")
     agora = datetime.now(tz)
-    return jsonify({ "data": agora.strftime("%d/%m/%Y"), "hora": agora.strftime("%H:%M:%S"), "timezone": str(tz)})
+    return jsonify({"data": agora.strftime("%d/%m/%Y"), "hora": agora.strftime("%H:%M:%S"), "timezone": str(tz)})

@@ -859,9 +859,32 @@
     let formatoDuqueTerno = false;
     let apostaPredatada = false;
     let dataApostaSelecionada = "";
-    let numeroPoule = Math.random().toString().substring(2, 8);
     let sequenciaInicial = "";
-    let nsu = Math.floor(Math.random() * 10000000).toString().padStart(7, '0');
+
+    // Definir a base do URL dinamicamente (pode ser configurada conforme o ambiente)
+    const API_BASE_URL = window.location.origin;
+
+
+    let numeroPoule = 'Carregando...'; // Valor temporário até a requisição ser concluída
+    //let nsu = Math.floor(Math.random() * 10000000).toString().padStart(7, '0');
+
+    // Função para buscar o número da poule
+    async function fetchNumeroPoule() {
+        try {
+            const response = await fetch(`${API_BASE_URL}/aposta/last`);
+            if (!response.ok) {
+                throw new Error('Erro ao buscar número da poule');
+            }
+            const data = await response.json();
+            numeroPoule = data.ultimo_id || '000000'; // Fallback caso ultimo_id não esteja disponível
+            document.getElementById('numeroPoule').innerText = `Poule: ${numeroPoule}`;
+        } catch (error) {
+            console.error('Erro ao buscar poule:', error);
+            numeroPoule = Math.random().toString().substring(2, 8); // Fallback para número aleatório
+            document.getElementById('numeroPoule').innerText = `Poule: ${numeroPoule}`;
+            mostrarToast('Erro ao carregar número da poule. Usando número temporário.', 'error');
+        }
+    }
     
     document.getElementById('numeroPoule').innerText = `Poule: ${numeroPoule}`;
     
@@ -1760,142 +1783,242 @@
       dataApostaSelecionada = document.getElementById('dataAposta').value;
     }
 
-    function exibirResultado() {
-      let extracao = document.getElementById('extracao').value;
-      let modalidade = document.getElementById('modalidade').value;
-      let aposta = document.getElementById('aposta').value;
-      let premiacao = document.getElementById('premiacao').value;
-      let valorInput = document.getElementById('valor').value;
-      let valor = parseFloat(valorInput.replace(/\./g, '').replace(',', '.')) || 0;
-      let quantidade = document.getElementById('quantidade').value;
-      let total = document.getElementById('total').value;
-      const repetirAposta = document.getElementById('repetirAposta').checked;
-      apostaPredatada = document.getElementById('apostaPredatada').checked;
+// Variável para acumular apostas antes de enviar ao backend
+let apostasAcumuladas = [];
 
-      if (aposta.trim() === '' || valor <= 0) {
+// Função para formatar números com zeros à esquerda
+function formatarNumero(numero, tamanho) {
+    return numero.padStart(tamanho, '0');
+}
+
+// Função para buscar o número da poule
+async function fetchNumeroPoule() {
+    try {
+        const response = await fetch(`${API_BASE_URL}/aposta/last`);
+        if (!response.ok) {
+            throw new Error('Erro ao buscar número da poule');
+        }
+        const data = await response.json();
+        numeroPoule = data.ultimo_id || '000000'; // Fallback caso ultimo_id não esteja disponível
+        //nsu = Math.floor(Math.random() * 10000000).toString().padStart(7, '0'); // NSU inicial
+        document.getElementById('numeroPoule').innerText = `Poule: ${numeroPoule}`;
+    } catch (error) {
+        console.error('Erro ao buscar poule:', error);
+        numeroPoule = Math.random().toString().substring(2, 8); // Fallback para número aleatório
+        //nsu = Math.floor(Math.random() * 10000000).toString().padStart(7, '0');
+        document.getElementById('numeroPoule').innerText = `Poule: ${numeroPoule}`;
+        mostrarToast('Erro ao carregar número da poule. Usando número temporário.', 'error');
+    }
+}
+
+// Função para enviar a aposta ao banco
+async function enviarApostaAoBackend(apostaData) {
+    try {
+        const response = await fetch(`${API_BASE_URL}/aposta`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(apostaData)
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(`Erro ao enviar aposta: ${errorData.message || response.statusText}`);
+        }
+
+        const result = await response.json();
+        mostrarToast('Aposta enviada com sucesso!', 'success');
+        return result;
+    } catch (error) {
+        console.error('Erro ao enviar aposta:', error);
+        mostrarToast(`Erro ao enviar aposta: ${error.message}`, 'error');
+        throw error;
+    }
+}
+
+// Função exibirResultado do jogo
+async function exibirResultado() {
+    let extracao = document.getElementById('extracao').value;
+    let modalidade = document.getElementById('modalidade').value;
+    let aposta = document.getElementById('aposta').value;
+    let premiacao = document.getElementById('premiacao').value;
+    let valorInput = document.getElementById('valor').value;
+    let valor = parseFloat(valorInput.replace(/\./g, '').replace(',', '.')) || 0;
+    let quantidade = document.getElementById('quantidade').value;
+    let total = document.getElementById('total').value;
+    const repetirAposta = document.getElementById('repetirAposta').checked;
+    apostaPredatada = document.getElementById('apostaPredatada').checked;
+
+    // Validações
+    if (aposta.trim() === '' || valor <= 0) {
         mostrarToast('Por favor, preencha todas as informações corretamente.', 'error');
         return;
-      }
+    }
 
-      if (apostaPredatada && !dataApostaSelecionada) {
+    /*if (valor < 0.50) { // Exemplo: valor mínimo de 0,50
+        mostrarToast('O valor da aposta deve ser de pelo menos R$ 0,50.', 'error');
+        return;
+    }*/
+
+    if (apostaPredatada && !dataApostaSelecionada) {
         mostrarToast('Por favor, selecione uma data para a aposta pré-datada.', 'error');
         return;
-      }
+    }
 
-      const modalidadesDuqueTerno = ["Duque de Dezena", "Duque de Dezena Combinado", "Terno de Dezena", 
-                                   "Terno de Dezena Combinado", "Terno de Dezena Cercado", "Duque de Grupo", 
-                                   "Terno de Grupo", "Terno de Grupo Combinado", "Terno de Grupo Cercado"];
-      
-      let apostasArray = [];
-      
-      // MODIFICAÇÃO: Para ternos combinados de dezena, tratar como uma única aposta de 7 números
-      if (modalidade === "Terno de Dezena Combinado" || modalidade === "Terno de Dezena Cercado") {
+    const modalidadesDuqueTerno = ["Duque de Dezena", "Duque de Dezena Combinado", "Terno de Dezena", 
+                                 "Terno de Dezena Combinado", "Terno de Dezena Cercado", "Duque de Grupo", 
+                                 "Terno de Grupo", "Terno de Grupo Combinado", "Terno de Grupo Cercado"];
+    
+    let apostasArray = [];
+    
+    // Formatar números de acordo com a modalidade
+    if (modalidade === "Terno de Dezena Combinado" || modalidade === "Terno de Dezena Cercado") {
         const apostaTexto = aposta.replace(/\s/g, '');
         if (apostaTexto.length === 7) {
-          apostasArray = [apostaTexto];
+            apostasArray = [apostaTexto];
         }
-      } else if (modalidadesDuqueTerno.includes(modalidade)) {
+    } else if (modalidadesDuqueTerno.includes(modalidade)) {
         const grupos = aposta.split(' ').map(a => a.trim()).filter(a => a !== '');
-        
         for (let grupo of grupos) {
-          let numeros = [];
-          for (let i = 0; i < grupo.length; i += 2) {
-            numeros.push(grupo.substring(i, i+2));
-          }
-          apostasArray = [...apostasArray, ...numeros];
-        }
-      } else {
-        if (modalidade.includes("Combinada") || modalidade.includes("Combinado")) {
-          const apostaTexto = aposta.replace(/\s/g, '');
-          for (let i = 0; i < apostaTexto.length; i += 2) {
-            if (i + 2 <= apostaTexto.length) {
-              apostasArray.push(apostaTexto.substring(i, i + 2));
+            let numeros = [];
+            for (let i = 0; i < grupo.length; i += 2) {
+                let num = grupo.substring(i, i + 2);
+                numeros.push(formatarNumero(num, 2)); // Garantir 2 dígitos
             }
-          }
-        } else {
-          apostasArray = aposta.split(' ').map(a => a.trim()).filter(a => a !== '');
+            apostasArray = [...apostasArray, ...numeros];
         }
-      }
-      
-      if (modalidade.includes('Duque') && apostasArray.length % 2 !== 0) {
+    } else {
+        if (modalidade.includes("Combinada") || modalidade.includes("Combinado")) {
+            const apostaTexto = aposta.replace(/\s/g, '');
+            for (let i = 0; i < apostaTexto.length; i += 2) {
+                if (i + 2 <= apostaTexto.length) {
+                    apostasArray.push(formatarNumero(apostaTexto.substring(i, i + 2), 2));
+                }
+            }
+        } else {
+            apostasArray = aposta.split(' ').map(a => a.trim()).filter(a => a !== '');
+            if (modalidade === "Centena") {
+                apostasArray = apostasArray.map(num => formatarNumero(num, 3)); // Garantir 3 dígitos
+            } else if (modalidade === "Milhar" || modalidade === "Milhar e Centena") {
+                apostasArray = apostasArray.map(num => formatarNumero(num, 4)); // Garantir 4 dígitos
+            } else if (modalidade === "Dezena" || modalidade.includes("Grupo") || modalidade === "Passe Vai" || modalidade === "Passe Vai e Vem") {
+                apostasArray = apostasArray.map(num => formatarNumero(num, 2)); // Garantir 2 dígitos
+            }
+        }
+    }
+    
+    if (modalidade.includes('Duque') && apostasArray.length % 2 !== 0) {
         mostrarToast('Duque precisa de números em pares (2, 4, 6, etc). Complete com mais um número.', 'error');
         return;
-      } else if (modalidade.includes('Terno') && apostasArray.length % 3 !== 0 && 
-                 modalidade !== "Terno de Dezena Combinado" && modalidade !== "Terno de Dezena Cercado") {
+    } else if (modalidade.includes('Terno') && apostasArray.length % 3 !== 0 && 
+               modalidade !== "Terno de Dezena Combinado" && modalidade !== "Terno de Dezena Cercado") {
         const numerosFaltantes = 3 - (apostasArray.length % 3);
         mostrarToast(`Terno precisa de números em grupos de 3. Faltam ${numerosFaltantes} número(s).`, 'error');
         return;
-      }
+    }
 
-      repetindoAposta = repetirAposta && ultimaAposta && ultimaAposta.apostas.join(' ') === apostasArray.join(' ');
+    repetindoAposta = repetirAposta && ultimaAposta && ultimaAposta.apostas.join(' ') === apostasArray.join(' ');
 
-      todasApostas = [...todasApostas, ...apostasArray];
-      
-      historicoApostas.push({
+    // Criar objeto da aposta atual
+    const apostaAtual = {
+        numeros: apostasArray,
+        modalidade: modalidade,
+        premio: premiacao,
+        valorTotalAposta: parseFloat(total.replace("R$ ", "").replace(".", "").replace(",", ".")),
+        unidadeAposta: valor
+    };
+
+    // Acumular aposta
+    apostasAcumuladas.push(apostaAtual);
+
+    // Atualizar interface (bilhete)
+    todasApostas = [...todasApostas, ...apostasArray];
+    
+    historicoApostas.push({
         numeros: apostasArray,
         modalidade: modalidade,
         premiacao: premiacao,
         valor: valor,
         predatada: apostaPredatada,
         dataAposta: dataApostaSelecionada
-      });
-      
-      const valorTotalAposta = parseFloat(total.replace("R$ ", "").replace(".", "").replace(",", "."));
-      valorTotalBilhete += valorTotalAposta;
+    });
+    
+    const valorTotalAposta = parseFloat(total.replace("R$ ", "").replace(".", "").replace(",", "."));
+    valorTotalBilhete += valorTotalAposta;
 
-      const apostasFormatadas = formatarApostasComX(apostasArray, modalidade);
+    const apostasFormatadas = formatarApostasComX(apostasArray, modalidade);
 
-      let apostaAtualTexto = '';
-      
-      if (repetindoAposta) {
-        apostaAtualTexto = `${premiacao} R$ ${valor.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} Total: R$ ${parseFloat(total.replace("R$ ", "").replace(".", "").replace(",", ".")).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-      } else {
+    let apostaAtualTexto = '';
+    if (repetindoAposta) {
+        apostaAtualTexto = `${premiacao} R$ ${valor.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} Total: R$ ${valorTotalAposta.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+    } else {
         apostaAtualTexto = `${modalidade}
 ${apostasFormatadas}
-${premiacao} R$ ${valor.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} Total: R$ ${parseFloat(total.replace("R$ ", "").replace(".", "").replace(",", ".")).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-      }
+${premiacao} R$ ${valor.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} Total: R$ ${valorTotalAposta.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+    }
 
-      let dataHoraTexto = `Data e Hora: ${new Date().toLocaleString('pt-BR')}`;
-      let dataPredatadaTexto = '';
-      if (apostaPredatada && dataApostaSelecionada) {
+    let dataHoraTexto = `Data e Hora: ${new Date().toLocaleString('pt-BR')}`;
+    let dataPredatadaTexto = '';
+    if (apostaPredatada && dataApostaSelecionada) {
         const dataFormatada = new Date(dataApostaSelecionada).toLocaleDateString('pt-BR');
         dataPredatadaTexto = `Pré-datada: ${dataFormatada}`;
-      }
+    }
 
-      if (primeiraAposta) {
-        // Removido espaços em branco no início do bilhete
-        bilheteCompleto = `          
-        *
-        CL ESPERANCA
+    // Enviar apostas acumuladas ao backend
+    const valorTotal = apostasAcumuladas.reduce((sum, aposta) => sum + aposta.valorTotalAposta, 0);
+    const apostaData = {
+        apostas: apostasAcumuladas,
+        area: {{ nome_area | tojson }},
+        data_agendada: apostaPredatada ? dataApostaSelecionada : new Date().toLocaleDateString('pt-BR'),
+        data_atual: new Date().toLocaleDateString('pt-BR'),
+        hora_atual: new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }),
+        extracao: extracao,
+        pre_datar: apostaPredatada,
+        valor_total: valorTotal,
+        vendedor: {{ nome_vendedor | tojson }}
+    };
+
+    try {
+        const result = await enviarApostaAoBackend(apostaData);
+        
+        // Atualizar numeroPoule e nsu com os valores retornados pelo backend
+        numeroPoule = result.numero_bilhete.toString();
+        nsu = result.nsu_gerado;
+
+        // Atualizar o número da poule na interface
+        document.getElementById('numeroPoule').innerText = `Poule: ${numeroPoule}`;
+
+        // Construir o bilhete com os valores retornados
+        if (primeiraAposta) {
+            bilheteCompleto = `          
+            *
+            CL ESPERANCA
 -------------------------------------------------
 EXT: ${extracao}
 Poule: ${numeroPoule}
 NSU: ${nsu}
-Vendedor: ELIENE
-Área: RONA
+Vendedor: {{ nome_vendedor }}
+Área: {{ nome_area }}
 ${dataHoraTexto}${dataPredatadaTexto ? '\n' + dataPredatadaTexto : ''}
 -------------------------------------------------`;
-        primeiraAposta = false;
-      } else if (!repetindoAposta) {
-        bilheteCompleto += "\n-----------------------------------------------";
-      }
+            primeiraAposta = false;
+        } else if (!repetindoAposta) {
+            bilheteCompleto += "\n-----------------------------------------------";
+        }
 
-      bilheteCompleto += `\n${apostaAtualTexto}`;
+        bilheteCompleto += `\n${apostaAtualTexto}`;
 
-      const bilheteElement = document.getElementById('bilhete');
-      
-      // MODIFICAÇÃO: Ajustar altura do bilhete automaticamente
-      const numLinhas = bilheteCompleto.split('\n').length;
-      const alturaMinima = 300;
-      const alturaPorLinha = 20;
-      const novaAltura = Math.max(alturaMinima, numLinhas * alturaPorLinha + 100);
-      
-      bilheteElement.style.minHeight = `${novaAltura}px`;
-      
-      // MODIFICAÇÃO: Centralizar as frases finais
-      let bilheteExibicao = bilheteCompleto;
-      
-      bilheteExibicao += `
+        const bilheteElement = document.getElementById('bilhete');
+        const numLinhas = bilheteCompleto.split('\n').length;
+        const alturaMinima = 300;
+        const alturaPorLinha = 20;
+        const novaAltura = Math.max(alturaMinima, numLinhas * alturaPorLinha + 100);
+        
+        bilheteElement.style.minHeight = `${novaAltura}px`;
+        
+        let bilheteExibicao = bilheteCompleto;
+        bilheteExibicao += `
 -----------------------------------------------------------
 TOTAL DO BILHETE: R$ ${valorTotalBilhete.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
 -------------------------------------------------
@@ -1903,52 +2026,54 @@ VÁLIDO POR 15 DIAS.
 -------------------------------------------------
 BOA SORTE!
 -------------------------------------------------`;
-      
-      // Remover espaços em branco do início de cada linha
-      bilheteExibicao = bilheteExibicao.split('\n').map(line => {
-        return line.trim();
-      }).join('\n').trim();
-      
-      bilheteElement.innerHTML = bilheteExibicao;
-      bilheteElement.classList.add('fade-in');
-      
-      // Gerar código de barras
-      gerarCodigoBarras();
-      
-      ultimaAposta = {
-        apostas: apostasArray,
-        modalidade: modalidade,
-        premiacao: premiacao,
-        valor: valor,
-        quantidade: quantidade,
-        total: total,
-        predatada: apostaPredatada,
-        dataAposta: dataApostaSelecionada
-      };
-      
-      if (!repetirAposta) {
-        limparCamposAposConfirmacao();
-      } else {
-        document.getElementById('premiacao').selectedIndex = 0;
-        document.getElementById('valor').value = '';
-        document.getElementById('quantidade').value = '';
-        document.getElementById('total').value = '';
-        calcularTotal();
-      }
-      
-      mostrarToast('Aposta adicionada ao bilhete!', 'success');
-    }
+        
+        bilheteExibicao = bilheteExibicao.split('\n').map(line => line.trim()).join('\n').trim();
+        
+        bilheteElement.innerHTML = bilheteExibicao;
+        bilheteElement.classList.add('fade-in');
+        
+        gerarCodigoBarras();
 
-    function gerarCodigoBarras() {
-      const codigoBarras = numeroPoule + nsu;
-      const barcodeContainer = document.getElementById('barcode-container');
-      const barcodeSvg = document.getElementById('barcode');
-      
-      // Limpar SVG existente
-      barcodeSvg.innerHTML = '';
-      
-      // Gerar novo código de barras
-      JsBarcode(barcodeSvg, codigoBarras, {
+        // Limpar apostas acumuladas após envio bem-sucedido
+        apostasAcumuladas = [];
+        
+        ultimaAposta = {
+            apostas: apostasArray,
+            modalidade: modalidade,
+            premiacao: premiacao,
+            valor: valor,
+            quantidade: quantidade,
+            total: total,
+            predatada: apostaPredatada,
+            dataAposta: dataApostaSelecionada
+        };
+
+        if (!repetirAposta) {
+            limparCamposAposConfirmacao();
+        } else {
+            document.getElementById('premiacao').selectedIndex = 0;
+            document.getElementById('valor').value = '';
+            document.getElementById('quantidade').value = '';
+            document.getElementById('total').value = '';
+            calcularTotal();
+        }
+    } catch (error) {
+        // Em caso de erro, manter apostas acumuladas para retry
+        console.error('Falha ao processar aposta:', error);
+    }
+}
+
+// Função gerarCodigoBarras modificada
+function gerarCodigoBarras() {
+    const codigoBarras = nsu; // Usar o nsu retornado pelo backend
+    const barcodeContainer = document.getElementById('barcode-container');
+    const barcodeSvg = document.getElementById('barcode');
+    
+    // Limpar SVG existente
+    barcodeSvg.innerHTML = '';
+    
+    // Gerar novo código de barras
+    JsBarcode(barcodeSvg, codigoBarras, {
         format: "CODE128",
         width: 2,
         height: 50,
@@ -1956,18 +2081,18 @@ BOA SORTE!
         fontSize: 11,
         background: "#fff",
         lineColor: "#000"
-      });
-      
-      // Exibir container do código de barras
-      barcodeContainer.style.display = 'block';
-      
-      // MODIFICAÇÃO: Ajustar a posição do código de barras para não sobrepor o texto
-      const bilheteElement = document.getElementById('bilhete');
-      const bilheteHeight = bilheteElement.scrollHeight;
-      
-      // Posicionar o código de barras abaixo do conteúdo do bilhete
-      barcodeContainer.style.marginTop = '20px';
-    }
+    });
+    
+    // Exibir container do código de barras
+    barcodeContainer.style.display = 'block';
+    
+    // Ajustar a posição do código de barras para não sobrepor o texto
+    const bilheteElement = document.getElementById('bilhete');
+    const bilheteHeight = bilheteElement.scrollHeight;
+    
+    // Posicionar o código de barras abaixo do conteúdo do bilhete
+    barcodeContainer.style.marginTop = '20px';
+}
 
     function abrirModalImpressao() {
       if (bilheteCompleto.trim() === "") {
@@ -1982,35 +2107,35 @@ BOA SORTE!
     }
 
     function imprimirPDF() {
-      const { jsPDF } = window.jspdf;
-      
-      const bilheteTexto = document.getElementById('bilhete').innerText;
-      const numeroLinhas = bilheteTexto.split('\n').length;
-      const alturaPorLinha = 5;
-      const alturaMinima = 50;
-      const alturaMaxima = 3000;
-      const alturaCalculada = Math.min(alturaMaxima, Math.max(alturaMinima, numeroLinhas * alturaPorLinha + 1));
-      
-      // Converter para pontos (1mm = 2.83465 pontos)
-      const larguraPDF = 70 * 2.83465; // 70mm em pontos
-      const alturaPDF = alturaCalculada * 3;
-      
-      const doc = new jsPDF({
+    const { jsPDF } = window.jspdf;
+    
+    const bilheteTexto = document.getElementById('bilhete').innerText;
+    const numeroLinhas = bilheteTexto.split('\n').length;
+    const alturaPorLinha = 5;
+    const alturaMinima = 50;
+    const alturaMaxima = 3000;
+    const alturaCalculada = Math.min(alturaMaxima, Math.max(alturaMinima, numeroLinhas * alturaPorLinha + 1));
+    
+    // Converter para pontos (1mm = 2.83465 pontos)
+    const larguraPDF = 70 * 2.83465; // 70mm em pontos
+    const alturaPDF = alturaCalculada * 3;
+    
+    const doc = new jsPDF({
         orientation: 'portrait',
         unit: 'pt',
         format: [larguraPDF, alturaPDF]
-      });
-      
-      doc.setProperties({
+    });
+    
+    doc.setProperties({
         title: 'CL ESPERANCA',
-      });
-      
-      doc.setFont("helvetica", "bold");
-      doc.setFontSize(11); // Diminuir a fonte para 11 pontos
-      
-      let bilheteParaPDF = bilheteCompleto;
-      
-      bilheteParaPDF += `
+    });
+    
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(11); // Diminuir a fonte para 11 pontos
+    
+    let bilheteParaPDF = bilheteCompleto;
+    
+    bilheteParaPDF += `
 -------------------------------------------------
 TOTAL DO BILHETE: R$ ${valorTotalBilhete.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
 -------------------------------------------------
@@ -2018,27 +2143,27 @@ VÁLIDO POR 15 DIAS.
 -------------------------------------------------
 BOA SORTE!
 -------------------------------------------------`;
-      
-      // Remover espaços em branco do início de cada linha
-      bilheteParaPDF = bilheteParaPDF.split('\n').map(line => {
+    
+    // Remover espaços em branco do início de cada linha
+    bilheteParaPDF = bilheteParaPDF.split('\n').map(line => {
         return line.trim();
-      }).join('\n').trim();
-      
-      // Ajustar a largura máxima do texto para caber em 70mm (deixando margem)
-      const maxWidth = larguraPDF - 15; // Margem de 10 pontos de cada lado
-      const lines = doc.splitTextToSize(bilheteParaPDF, maxWidth);
-      doc.text(lines, 8, 8);
-      
-      // Adicionar código de barras no PDF com 60mm de largura
-      const codigoBarras = numeroPoule + nsu;
-      const barcodeWidth = 60 * 2.83465; // 60mm em pontos
-      const barcodeHeight = 30;
-      const barcodeX = (larguraPDF - barcodeWidth) / 2;
-      const barcodeY = alturaPDF - 50;
-      
-      // Criar um canvas para gerar o código de barras
-      const canvas = document.createElement('canvas');
-      JsBarcode(canvas, codigoBarras, {
+    }).join('\n').trim();
+    
+    // Ajustar a largura máxima do texto para caber em 70mm (deixando margem)
+    const maxWidth = larguraPDF - 15; // Margem de 10 pontos de cada lado
+    const lines = doc.splitTextToSize(bilheteParaPDF, maxWidth);
+    doc.text(lines, 8, 8);
+    
+    // Adicionar código de barras no PDF com 60mm de largura
+    const codigoBarras = numeroPoule + nsu;
+    const barcodeWidth = 60 * 2.83465; // 60mm em pontos
+    const barcodeHeight = 30;
+    const barcodeX = (larguraPDF - barcodeWidth) / 2;
+    const barcodeY = alturaPDF - 50;
+    
+    // Criar um canvas para gerar o código de barras
+    const canvas = document.createElement('canvas');
+    JsBarcode(canvas, codigoBarras, {
         format: "CODE128",
         width: 2,
         height: 30,
@@ -2046,92 +2171,180 @@ BOA SORTE!
         fontSize: 10,
         background: "#fff",
         lineColor: "#000"
-      });
-      
-      // Converter canvas para imagem e adicionar ao PDF
-      const imgData = canvas.toDataURL('image/png');
-      doc.addImage(imgData, 'PNG', barcodeX, barcodeY, barcodeWidth, barcodeHeight);
-      
-      doc.setFontSize(8);
-      doc.text(`Emitido: ${new Date().toLocaleString('pt-BR')}`, 10, alturaPDF - 15);
-      
-      doc.save(`bilhete-sysbanca-${numeroBilhete}.pdf`);
-      mostrarToast('PDF gerado com sucesso!', 'success');
-      
-      fecharModalImpressao();
-    }
+    });
     
-    function imprimirDireto() {
-      // Criar uma nova janela para impressão
-      const janelaImpressao = window.open('', '_blank');
-      
-      // Corrigir a visualização da poule antes de imprimir
-      const bilheteParaImprimir = bilheteCompleto.replace(
+    // Converter canvas para imagem e adicionar ao PDF
+    const imgData = canvas.toDataURL('image/png');
+    doc.addImage(imgData, 'PNG', barcodeX, barcodeY, barcodeWidth, barcodeHeight);
+    
+    doc.setFontSize(8);
+    doc.text(`Emitido: ${new Date().toLocaleString('pt-BR')}`, 10, alturaPDF - 15);
+    
+    doc.save(`bilhete-sysbanca-${numeroBilhete}.pdf`);
+    mostrarToast('PDF gerado com sucesso!', 'success');
+    
+    fecharModalImpressao();
+    
+    // Resetar o bilhete após gerar o PDF
+    limparBilhete();
+    limparFormulario(); // Opcional: limpa também o formulário
+}
+
+function imprimirDireto() {
+    // Criar uma nova janela para impressão
+    const janelaImpressao = window.open('', '_blank');
+    
+    // Corrigir a visualização da poule antes de imprimir
+    const bilheteParaImprimir = bilheteCompleto.replace(
         `Poule: ${numeroPoule}`, 
         `Poule: <strong class="poule-print">${numeroPoule}</strong>`
-      );
-      
-      janelaImpressao.document.write(`
+    );
+    
+    janelaImpressao.document.write(`
         <!DOCTYPE html>
         <html>
         <head>
-          <title>Imprimir Bilhete</title>
-          <style>
-            body {
-              font-family: 'Courier New', monospace;
-              font-size: 12px;
-              margin: 0;
-              padding: 10px;
-            }
-            .barcode {
-              width: 50mm;
-              height: 20mm;
-              margin: 5px auto;
-              display: block;
-            }
-            .center {
-              text-align: center;
-            }
-            .footer {
-              font-size: 8px;
-              text-align: center;
-              margin-top: 10px;
-            }
-            .poule-print {
-              font-size: 16px !important;
-              font-weight: bold !important;
-            }
-          </style>
+            <title>Imprimir Bilhete</title>
+            <style>
+                body {
+                    font-family: 'Courier New', monospace;
+                    font-size: 12px;
+                    margin: 0;
+                    padding: 10px;
+                }
+                .barcode {
+                    width: 50mm;
+                    height: 20mm;
+                    margin: 5px auto;
+                    display: block;
+                }
+                .center {
+                    text-align: center;
+                }
+                .footer {
+                    font-size: 8px;
+                    text-align: center;
+                    margin-top: 10px;
+                }
+                .poule-print {
+                    font-size: 16px !important;
+                    font-weight: bold !important;
+                }
+            </style>
         </head>
         <body>
-          <pre>${bilheteParaImprimir}</pre>
-          <div class="center">
-            <svg id="barcode" class="barcode"></svg>
-          </div>
-          <div class="footer">Emitido em: ${new Date().toLocaleString('pt-BR')}</div>
-          <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"><\/script>
-          <script>
-            JsBarcode('#barcode', '${numeroPoule + nsu}', {
-              format: "CODE128",
-              width: 2,
-              height: 50,
-              displayValue: true,
-              fontSize: 10,
-              background: "#fff",
-              lineColor: "#000"
-            });
-            window.print();
-            window.onafterprint = function() {
-              window.close();
-            };
-          <\/script>
+            <pre>${bilheteParaImprimir}</pre>
+            <div class="center">
+                <svg id="barcode" class="barcode"></svg>
+            </div>
+            <div class="footer">Emitido em: ${new Date().toLocaleString('pt-BR')}</div>
+            <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"><\/script>
+            <script>
+                JsBarcode('#barcode', '${numeroPoule + nsu}', {
+                    format: "CODE128",
+                    width: 2,
+                    height: 50,
+                    displayValue: true,
+                    fontSize: 10,
+                    background: "#fff",
+                    lineColor: "#000"
+                });
+                window.print();
+                window.onafterprint = function() {
+                    window.close();
+                    // Enviar evento para a janela principal para limpar o bilhete
+                    window.opener.postMessage('impressaoFinalizada', '*');
+                };
+            <\/script>
         </body>
         </html>
-      `);
-      
-      janelaImpressao.document.close();
-      fecharModalImpressao();
+    `);
+    
+    janelaImpressao.document.close();
+    fecharModalImpressao();
+}
+
+// Adicionar listener para o evento de impressão finalizada
+window.addEventListener('message', function(event) {
+    if (event.data === 'impressaoFinalizada') {
+        limparBilhete();
+        limparFormulario(); // Opcional: limpa também o formulário
+        mostrarToast('Bilhete impresso e resetado com sucesso!', 'success');
     }
+});
+    
+    function imprimirDireto() {
+    // Criar uma nova janela para impressão
+    const janelaImpressao = window.open('', '_blank');
+    
+    // Corrigir a visualização da poule antes de imprimir
+    const bilheteParaImprimir = bilheteCompleto.replace(
+        `Poule: ${numeroPoule}`, 
+        `Poule: <strong class="poule-print">${numeroPoule}</strong>`
+    );
+    
+    janelaImpressao.document.write(`
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <title>Imprimir Bilhete</title>
+            <style>
+                body {
+                    font-family: 'Courier New', monospace;
+                    font-size: 12px;
+                    margin: 0;
+                    padding: 10px;
+                }
+                .barcode {
+                    width: 50mm;
+                    height: 20mm;
+                    margin: 5px auto;
+                    display: block;
+                }
+                .center {
+                    text-align: center;
+                }
+                .footer {
+                    font-size: 8px;
+                    text-align: center;
+                    margin-top: 10px;
+                }
+                .poule-print {
+                    font-size: 16px !important;
+                    font-weight: bold !important;
+                }
+            </style>
+        </head>
+        <body>
+            <pre>${bilheteParaImprimir}</pre>
+            <div class="center">
+                <svg id="barcode" class="barcode"></svg>
+            </div>
+            <div class="footer">Emitido em: ${new Date().toLocaleString('pt-BR')}</div>
+            <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"><\/script>
+            <script>
+                JsBarcode('#barcode', '${numeroPoule + nsu}', {
+                    format: "CODE128",
+                    width: 2,
+                    height: 50,
+                    displayValue: true,
+                    fontSize: 10,
+                    background: "#fff",
+                    lineColor: "#000"
+                });
+                window.print();
+                window.onafterprint = function() {
+                    window.opener.postMessage('impressaoFinalizada', '*');
+                    window.close();
+                };
+            <\/script>
+        </body>
+        </html>
+    `);
+    
+    janelaImpressao.document.close();
+    fecharModalImpressao();
+}
     
     function limparFormulario() {
       const repetirAposta = document.getElementById('repetirAposta').checked;
@@ -2295,27 +2508,30 @@ BOA SORTE!
       });
     }
 
-    window.onload = function() {
-      const valorInput = document.getElementById('valor');
-      valorInput.classList.add('currency-input');
-      
-      atualizarValidacaoAposta();
-      
-      valorInput.addEventListener('blur', function() {
-        formatarMoeda(this);
-      });
-      
-      document.getElementById('premiacao').addEventListener('change', function() {
-        document.getElementById('premiacaoInfo').innerText = infoPremiacoes[this.value] || "";
-      });
-      
-      document.getElementById('premiacaoInfo').innerText = infoPremiacoes[document.getElementById('premiacao').value] || "";
-      
-      // Configurar navegação por Enter
-      configurarNavegacaoEnter();
-      
-      // Adicionar evento de teclado para o campo de aposta
-      document.getElementById('aposta').addEventListener('keydown', manipularTeclado);
+  window.onload = function() {
+        // Buscar número da poule ao carregar a página
+        fetchNumeroPoule();
+
+        const valorInput = document.getElementById('valor');
+        valorInput.classList.add('currency-input');
+        
+        atualizarValidacaoAposta();
+        
+        valorInput.addEventListener('blur', function() {
+            formatarMoeda(this);
+        });
+        
+        document.getElementById('premiacao').addEventListener('change', function() {
+            document.getElementById('premiacaoInfo').innerText = infoPremiacoes[this.value] || "";
+        });
+        
+        document.getElementById('premiacaoInfo').innerText = infoPremiacoes[document.getElementById('premiacao').value] || "";
+        
+        // Configurar navegação por Enter
+        configurarNavegacaoEnter();
+        
+        // Adicionar evento de teclado para o campo de aposta
+        document.getElementById('aposta').addEventListener('keydown', manipularTeclado);
     };
   </script>
 </body>

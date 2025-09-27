@@ -333,7 +333,7 @@
         <span class="arrow">›</span>
       </div>
       
-      <div class="menu-item resultados">
+      <div class="menu-item resultados" id="resultados-btn">
         <div class="menu-item-content">
           <div class="menu-item-icon">
             <i class="fas fa-trophy"></i>
@@ -388,7 +388,7 @@
           <div class="username">admin</div>
         </div>
       </div>
-      <div class="date">27/08/2025</div>
+      <div class="date">27/09/2025</div>
     </div>
   </div>
 
@@ -433,6 +433,17 @@
       // Redirecionar para a URL gerada pelo Jinja2
       setTimeout(() => {
         window.location.href = apostasUrl;
+      }, 800);
+    });
+
+    // Redirecionamento para a página de resultados
+    document.getElementById('resultados-btn').addEventListener('click', function() {
+      const notification = document.getElementById('notification');
+      notification.textContent = 'Redirecionando para Resultados...';
+      notification.classList.add('show');
+      
+      setTimeout(() => {
+        window.location.href = "{{ url_for('Home.resultados_online') }}";
       }, 800);
     });
   </script>

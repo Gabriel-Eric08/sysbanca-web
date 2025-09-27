@@ -11,6 +11,19 @@ aposta_route = Blueprint('Aposta', __name__)
 
 @aposta_route.route('/homeapk2')
 def apostas_apk():
+
+    nome_vendedor = None
+    nome_area = None
+    # Tenta obter o nome do vendedor do cookie 'username'
+    try:
+        nome_vendedor = request.cookies.get('username')
+        vendedor = Vendedor.query.filter_by(username=nome_vendedor).first()
+        nome_area = vendedor.area if vendedor else None
+    except Exception as e:
+        # Imprime um erro se houver problema ao acessar o cookie
+        print(f"Erro ao obter o cookie 'username': {e}")
+        # O nome_vendedor será None se o cookie não existir ou houver erro
+
     # Consulta todos os registros das tabelas
     modalidades = Modalidade.query.all()
     extracoes = Extracao.query.all()
@@ -42,7 +55,9 @@ def apostas_apk():
         'apostas_apk.html',
         modalidades=modalidades,
         extracoes=extracoes,
-        poule=poule_formatada
+        poule=poule_formatada,
+        nome_vendedor=nome_vendedor,
+        nome_area=nome_area
     )
 
 @aposta_route.route('/vendedor/<string:vendedor_username>/<string:data_str>', methods=['GET'])

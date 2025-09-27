@@ -1,0 +1,494 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SysBanca - Resultados Online</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+    
+    body {
+      background: linear-gradient(135deg, #6c5ce7, #a29bfe);
+      color: #333;
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 20px;
+    }
+    
+    .container {
+      width: 100%;
+      max-width: 500px;
+      background: #f8f9fa;
+      border-radius: 20px;
+      padding: 30px;
+      box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+      border: 1px solid #e9ecef;
+      position: relative;
+      overflow: hidden;
+    }
+    
+    .container::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 5px;
+      background: linear-gradient(90deg, #4fc3f7, #29b6f6, #ffeb3b, #ffc107, #ffd700, #daa520, #66bb6a, #4caf50, #ba68c8, #9c27b0);
+    }
+    
+    .header {
+      display: flex;
+      align-items: center;
+      margin-bottom: 30px;
+      gap: 15px;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+    
+    .logo-placeholder {
+      width: 300px;
+      height: 80px;
+      background: linear-gradient(135deg, #6c5ce7, #a29bfe);
+      border-radius: 10px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      color: white;
+      font-weight: bold;
+      font-size: 24px;
+      box-shadow: 0 5px 15px rgba(108, 92, 231, 0.3);
+    }
+    
+    h1 {
+      font-size: 32px;
+      color: #6c5ce7;
+      text-align: center;
+      text-shadow: 0 2px 4px rgba(108, 92, 231, 0.2);
+      letter-spacing: 1px;
+      margin-bottom: 10px;
+      width: 100%;
+    }
+    
+    .subtitle {
+      color: #6c757d;
+      font-size: 16px;
+      margin-bottom: 30px;
+      text-align: center;
+      font-weight: 500;
+    }
+    
+    .content {
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+      margin-bottom: 40px;
+    }
+    
+    .spinner-container {
+      background: rgba(255, 255, 255, 0.9);
+      padding: 18px 22px;
+      border-radius: 15px;
+      border: 1px solid #e9ecef;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+      display: flex;
+      align-items: center;
+      gap: 15px;
+    }
+    
+    .spinner-container i {
+      font-size: 20px;
+      color: #fff;
+      background: linear-gradient(135deg, #ffeb3b, #ffc107);
+      width: 40px;
+      height: 40px;
+      border-radius: 10px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+    
+    select, input[type="date"] {
+      flex: 1;
+      padding: 10px;
+      font-size: 16px;
+      border: 1px solid #e9ecef;
+      border-radius: 8px;
+      background: #fff;
+      color: #495057;
+      outline: none;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+    
+    select:hover, input[type="date"]:hover {
+      border-color: #6c5ce7;
+    }
+    
+    select:focus, input[type="date"]:focus {
+      border-color: #6c5ce7;
+      box-shadow: 0 0 5px rgba(108, 92, 231, 0.3);
+    }
+    
+    .results-table {
+      background: rgba(255, 255, 255, 0.9);
+      padding: 18px 22px;
+      border-radius: 15px;
+      border: 1px solid #e9ecef;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+      display: none;
+      flex-direction: column;
+      gap: 10px;
+    }
+    
+    .results-table.show {
+      display: flex;
+    }
+    
+    .results-table h3 {
+      font-size: 18px;
+      color: #6c5ce7;
+      margin-bottom: 10px;
+    }
+    
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 14px;
+      color: #495057;
+    }
+    
+    th, td {
+      padding: 10px;
+      text-align: left;
+      border-bottom: 1px solid #e9ecef;
+    }
+    
+    th {
+      font-weight: 600;
+      color: #6c5ce7;
+    }
+    
+    td {
+      font-weight: 500;
+    }
+    
+    .back-btn {
+      background: linear-gradient(135deg, #6c5ce7, #a29bfe);
+      padding: 18px 22px;
+      border-radius: 15px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      transition: all 0.3s ease;
+      border: none;
+      cursor: pointer;
+      font-size: 18px;
+      font-weight: 600;
+      color: white;
+      box-shadow: 0 5px 15px rgba(108, 92, 231, 0.3);
+    }
+    
+    .back-btn:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 8px 20px rgba(108, 92, 231, 0.4);
+      background: linear-gradient(135deg, #a29bfe, #6c5ce7);
+    }
+    
+    .back-btn:active {
+      transform: scale(0.98);
+    }
+    
+    .back-btn i {
+      margin-right: 12px;
+      font-size: 20px;
+    }
+    
+    .footer {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 25px;
+      padding-top: 20px;
+      border-top: 1px solid #e9ecef;
+    }
+    
+    .user {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    
+    .user-icon {
+      width: 42px;
+      height: 42px;
+      background: linear-gradient(135deg, #6c5ce7, #a29bfe);
+      border-radius: 50%;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      color: white;
+      font-size: 18px;
+    }
+    
+    .user-info {
+      display: flex;
+      flex-direction: column;
+    }
+    
+    .username {
+      font-weight: 500;
+      font-size: 16px;
+      color: #495057;
+    }
+    
+    .date {
+      color: #6c757d;
+      font-size: 15px;
+      font-weight: 500;
+    }
+    
+    .notification {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      background: #4caf50;
+      color: white;
+      padding: 15px 25px;
+      border-radius: 10px;
+      box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+      transform: translateX(100%);
+      opacity: 0;
+      transition: all 0.5s ease;
+      z-index: 1000;
+    }
+    
+    .notification.show {
+      transform: translateX(0);
+      opacity: 1;
+    }
+    
+    @media (max-width: 480px) {
+      .container {
+        padding: 20px 15px;
+      }
+      
+      .header {
+        flex-direction: column;
+        text-align: center;
+      }
+      
+      .logo-placeholder {
+        width: 250px;
+        height: 70px;
+        font-size: 20px;
+      }
+      
+      h1 {
+        font-size: 28px;
+      }
+      
+      .spinner-container, .back-btn, .results-table {
+        padding: 16px 18px;
+      }
+      
+      select, input[type="date"] {
+        font-size: 14px;
+      }
+      
+      table {
+        font-size: 12px;
+      }
+      
+      th, td {
+        padding: 8px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <div class="logo-placeholder">SYSBANCA</div>
+      <h1>Resultados Online</h1>
+      <div class="subtitle">Visualize os Resultados das Extrações</div>
+    </div>
+    
+    <div class="content">
+      <div class="spinner-container">
+        <i class="fas fa-calendar-alt"></i>
+        <input type="date" id="date-picker" placeholder="Selecione uma data (dd/mm/yyyy)">
+      </div>
+      <div class="spinner-container">
+        <i class="fas fa-trophy"></i>
+        <select id="extracao-spinner">
+          <option value="" disabled selected>Selecione uma Extração</option>
+        </select>
+      </div>
+      <div class="results-table" id="results-table">
+        <h3>Resultados da Extração</h3>
+        <table>
+          <thead>
+            <tr>
+              <th>Prêmio</th>
+              <th>Número</th>
+              <th>Grupo</th>
+              <th>Animal</th>
+            </tr>
+          </thead>
+          <tbody id="results-body"></tbody>
+        </table>
+      </div>
+      <button class="back-btn" id="back-btn">
+        <i class="fas fa-arrow-left"></i>
+        <span>Voltar</span>
+      </button>
+    </div>
+    
+    <div class="footer">
+      <div class="user">
+        <div class="user-icon">
+          <i class="fas fa-user"></i>
+        </div>
+        <div class="user-info">
+          <div class="username">admin</div>
+        </div>
+      </div>
+      <div class="date">27/09/2025</div>
+    </div>
+  </div>
+
+  <div class="notification" id="notification">Carregando...</div>
+
+  <script>
+    // Função para mostrar notificação
+    function showNotification(message) {
+      const notification = document.getElementById('notification');
+      notification.textContent = message;
+      notification.classList.add('show');
+      setTimeout(() => {
+        notification.classList.remove('show');
+      }, 3000);
+    }
+
+    // Função para converter data de yyyy-mm-dd para dd/mm/yyyy
+    function convertDateToFrontendFormat(dateStr) {
+      if (!dateStr) return '';
+      const [year, month, day] = dateStr.split('-');
+      return `${day}/${month}/${year}`;
+    }
+
+    // Carregar extrações da rota /extracao/json
+    fetch('/extracao/json')
+      .then(response => {
+        if (!response.ok) {
+          throw new Error('Erro ao carregar as extrações');
+        }
+        return response.json();
+      })
+      .then(data => {
+        const spinner = document.getElementById('extracao-spinner');
+        const uniqueExtracoes = [...new Set(data.map(item => item.extracao))];
+        uniqueExtracoes.forEach(extracao => {
+          const option = document.createElement('option');
+          option.value = extracao;
+          option.textContent = extracao;
+          spinner.appendChild(option);
+        });
+      })
+      .catch(error => {
+        console.error('Erro:', error);
+        showNotification('Erro ao carregar as extrações');
+      });
+
+    // Função para carregar resultados com base em data e extração
+    function loadResults() {
+      const selectedExtracao = document.getElementById('extracao-spinner').value;
+      const selectedDate = document.getElementById('date-picker').value;
+      const resultsTable = document.getElementById('results-table');
+      const resultsBody = document.getElementById('results-body');
+
+      if (selectedExtracao && selectedDate) {
+        // A data do input type="date" já está em yyyy-mm-dd
+        const backendDate = selectedDate;
+        showNotification(`Carregando resultados para ${convertDateToFrontendFormat(selectedDate)} - ${selectedExtracao}...`);
+
+        fetch('/resultado/json')
+          .then(response => {
+            if (!response.ok) {
+              throw new Error('Erro ao carregar os resultados');
+            }
+            return response.json();
+          })
+          .then(data => {
+            // Filtrar resultados por data e extração
+            const filteredResults = data.filter(result => 
+              result.data === backendDate && result.extracao === selectedExtracao
+            );
+
+            // Limpar tabela
+            resultsBody.innerHTML = '';
+
+            if (filteredResults.length > 0) {
+              const result = filteredResults[0]; // Apenas um resultado deve corresponder
+              for (let i = 1; i <= 10; i++) {
+                const premioKey = `premio_${i}`;
+                const premio = result[premioKey];
+                if (premio) {
+                  const row = document.createElement('tr');
+                  row.innerHTML = `
+                    <td>${i}º Prêmio</td>
+                    <td>${premio[0]}</td>
+                    <td>${premio[1]}</td>
+                    <td>${premio[2]}</td>
+                  `;
+                  resultsBody.appendChild(row);
+                }
+              }
+              resultsTable.classList.add('show');
+              showNotification(`Resultados para ${convertDateToFrontendFormat(selectedDate)} - ${selectedExtracao} carregados com sucesso!`);
+            } else {
+              resultsTable.classList.remove('show');
+              showNotification(`Nenhum resultado encontrado para ${convertDateToFrontendFormat(selectedDate)} - ${selectedExtracao}`);
+            }
+          })
+          .catch(error => {
+            console.error('Erro:', error);
+            resultsTable.classList.remove('show');
+            showNotification('Erro ao carregar os resultados');
+          });
+      } else {
+        resultsTable.classList.remove('show');
+        if (!selectedExtracao || !selectedDate) {
+          showNotification('Por favor, selecione uma extração e uma data');
+        }
+      }
+    }
+
+    // Adicionar interação ao spinner e ao campo de data
+    document.getElementById('extracao-spinner').addEventListener('change', loadResults);
+    document.getElementById('date-picker').addEventListener('change', loadResults);
+
+    // Adicionar interação ao botão de voltar
+    document.getElementById('back-btn').addEventListener('click', function() {
+      this.style.transform = 'scale(0.98)';
+      setTimeout(() => {
+        this.style.transform = '';
+      }, 150);
+      
+      showNotification('Retornando ao menu principal...');
+      setTimeout(() => {
+        window.location.href = "{{ url_for('Home.home') }}";
+      }, 800);
+    });
+  </script>
+</body>
+</html>

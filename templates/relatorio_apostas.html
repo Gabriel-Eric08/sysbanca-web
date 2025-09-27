@@ -4,7 +4,7 @@
     <meta charset="UTF-8" name="viewport" content="width=device-width, initial-scale=1"/>
     <title>Relatório Financeiro</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/choices.js/public/assets/styles/choices.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css"> <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/choices.js/public/assets/styles/choices.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
     <style>
         /* (Seus estilos CSS permanecem os mesmos) */
@@ -252,7 +252,14 @@
                 <input type="date" id="filterEndDate" class="form-control">
             </div>
             <div class="col-md-auto">
-                <button type="button" class="btn botao-estiloso" onclick="fetchAndRenderData()">Filtrar</button>
+                <button type="button" class="btn botao-estiloso" onclick="fetchAndRenderData()">
+                    <i class="bi bi-funnel-fill"></i> Filtrar
+                </button>
+            </div>
+            <div class="col-md-auto">
+                <button type="button" class="btn botao-estiloso" onclick="printReport()">
+                    <i class="bi bi-printer-fill"></i> Imprimir
+                </button>
             </div>
         </div>
         
@@ -331,218 +338,199 @@
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    <script>
-        const debitoAnteriorValue = {{ debito_anterior | tojson }};
+<script>
+    // Variável Jinja2 passada para o JavaScript, garantida como string com |tojson
+    const debitoAnteriorValue = {{ debito_anterior | tojson }};
 
-        function normalizeString(str) {
-            if (str === null || typeof str === 'undefined') {
-                return '';
-            }
-            return String(str).normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim();
+    function normalizeString(str) {
+        if (str === null || typeof str === 'undefined') {
+            return '';
         }
+        return String(str).normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim();
+    }
 
-        function parseCurrencyToFloat(currencyStr) {
-            if (currencyStr === null || typeof currencyStr === 'undefined') {
-                return 0.0;
-            }
-            const cleanedStr = String(currencyStr).replace('R$', '').trim().replace(',', '.');
-            const parsed = parseFloat(cleanedStr);
-            return isNaN(parsed) ? 0.0 : parsed;
+    function parseCurrencyToFloat(currencyStr) {
+        if (currencyStr === null || typeof currencyStr === 'undefined') {
+            return 0.0;
         }
+        const cleanedStr = String(currencyStr).replace('R$', '').trim().replace(',', '.');
+        const parsed = parseFloat(cleanedStr);
+        return isNaN(parsed) ? 0.0 : parsed;
+    }
 
-        async function fetchAndRenderData() {
-            const selectedVendedor = document.getElementById('selectVendedor').value;
-            const selectedModalidade = document.getElementById('selectModalidade').value;
-            const selectedExtracao = document.getElementById('selectExtracao').value;
-            const selectedArea = document.getElementById('selectArea').value;
-            const selectedComissaoRetida = document.getElementById('comissaoRetida').value;
-            const startDate = document.getElementById('filterStartDate').value;
-            const endDate = document.getElementById('filterEndDate').value;
-            
-            // Coloca as tabelas no estado de "carregando"
-            const tabelaResumoBody = document.querySelector('#tabela-resumo tbody');
-            
-            tabelaResumoBody.innerHTML = '<tr><td colspan="5" class="text-center">Carregando...</td></tr>';
-            
-            try {
-                const response = await fetch('/aposta/api/relatorio-caixa-dados', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({
-                        vendedor: selectedVendedor,
-                        modalidade: selectedModalidade,
-                        extracao: selectedExtracao,
-                        area: selectedArea,
-                        comissao_retida: selectedComissaoRetida,
-                        data_inicio: startDate,
-                        data_fim: endDate // NOVO CAMPO
-                    })
-                });
-
-                if (!response.ok) {
-                    throw new Error('Erro ao buscar os dados do relatório.');
-                }
-
-                const data = await response.json();
-                
-                // As funções de renderização para as tabelas ocultas não são chamadas
-                renderResumoTable(data.apostas_detalhadas, data.apostas_premiadas);
-                
-            } catch (error) {
-                console.error('Erro:', error);
-                tabelaResumoBody.innerHTML = '<tr><td colspan="5" class="text-center">Erro ao carregar os dados.</td></tr>';
-            }
-        }
+    // Função de Filtragem: Puxa dados e renderiza a tabela (Mantida)
+    async function fetchAndRenderData() {
+        const selectedVendedor = document.getElementById('selectVendedor').value;
+        const selectedModalidade = document.getElementById('selectModalidade').value;
+        const selectedExtracao = document.getElementById('selectExtracao').value;
+        const selectedArea = document.getElementById('selectArea').value;
+        const selectedComissaoRetida = document.getElementById('comissaoRetida').value;
+        const startDate = document.getElementById('filterStartDate').value;
+        const endDate = document.getElementById('filterEndDate').value;
         
-        function renderResumoTable(apostas, premiadas) {
-            const tabelaResumoBody = document.querySelector('#tabela-resumo tbody');
-            tabelaResumoBody.innerHTML = '';
-            
-            const resumoVendedores = {};
-            const resumoPremios = {};
-
-            apostas.forEach(aposta => {
-                const vendedor = normalizeString(aposta.vendedor);
-                if (!resumoVendedores[vendedor]) {
-                    resumoVendedores[vendedor] = { apurado: 0, comissao: 0, area: aposta.area };
-                }
-                resumoVendedores[vendedor].apurado += aposta.valor_apostado_individual;
-                resumoVendedores[vendedor].comissao += aposta.valor_comissao;
+        // Coloca as tabelas no estado de "carregando"
+        const tabelaResumoBody = document.querySelector('#tabela-resumo tbody');
+        
+        tabelaResumoBody.innerHTML = '<tr><td colspan="5" class="text-center">Carregando...</td></tr>';
+        
+        try {
+            const response = await fetch('/aposta/api/relatorio-caixa-dados', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    vendedor: selectedVendedor,
+                    modalidade: selectedModalidade,
+                    extracao: selectedExtracao,
+                    area: selectedArea,
+                    comissao_retida: selectedComissaoRetida,
+                    data_inicio: startDate,
+                    data_fim: endDate 
+                })
             });
 
-            premiadas.forEach(premiada => {
-                const vendedor = normalizeString(premiada.vendedor);
-                if (premiada.pago == 1) {
-                    if (!resumoPremios[vendedor]) {
-                        resumoPremios[vendedor] = 0;
-                    }
-                    resumoPremios[vendedor] += parseCurrencyToFloat(premiada.valor_premio);
+            if (!response.ok) {
+                throw new Error('Erro ao buscar os dados do relatório.');
+            }
+
+            const data = await response.json();
+            
+            renderResumoTable(data.apostas_detalhadas, data.apostas_premiadas);
+            
+        } catch (error) {
+            console.error('Erro:', error);
+            tabelaResumoBody.innerHTML = '<tr><td colspan="5" class="text-center">Erro ao carregar os dados.</td></tr>';
+        }
+    }
+    
+    function renderResumoTable(apostas, premiadas) {
+        const tabelaResumoBody = document.querySelector('#tabela-resumo tbody');
+        tabelaResumoBody.innerHTML = '';
+        
+        const resumoVendedores = {};
+        const resumoPremios = {};
+
+        apostas.forEach(aposta => {
+            const vendedor = normalizeString(aposta.vendedor); 
+            if (!resumoVendedores[vendedor]) {
+                resumoVendedores[vendedor] = { apurado: 0, comissao: 0, area: aposta.area };
+            }
+            resumoVendedores[vendedor].apurado += aposta.valor_apostado_individual;
+            resumoVendedores[vendedor].comissao += aposta.valor_comissao;
+        });
+
+        premiadas.forEach(premiada => {
+            const vendedor = normalizeString(premiada.vendedor);
+            if (premiada.pago == 1) {
+                if (!resumoPremios[vendedor]) {
+                    resumoPremios[vendedor] = 0;
                 }
-            });
+                resumoPremios[vendedor] += parseCurrencyToFloat(premiada.valor_premio);
+            }
+        });
 
-            const allVendedores = new Set([...Object.keys(resumoVendedores), ...Object.keys(resumoPremios)]);
+        const allVendedores = new Set([...Object.keys(resumoVendedores), ...Object.keys(resumoPremios)]);
 
-            if (allVendedores.size === 0) {
-                tabelaResumoBody.innerHTML = '<tr><td colspan="5" class="text-center">Nenhum dado encontrado para os filtros aplicados.</td></tr>';
-            } else {
-                for (const vendedor of allVendedores) {
-                    const dadosAposta = resumoVendedores[vendedor] || { apurado: 0, comissao: 0, area: 'N/A' };
-                    const premioPago = resumoPremios[vendedor] || 0;
+        if (allVendedores.size === 0) {
+            tabelaResumoBody.innerHTML = '<tr><td colspan="5" class="text-center">Nenhum dado encontrado para os filtros aplicados.</td></tr>';
+        } else {
+            for (const vendedor of allVendedores) {
+                const dadosAposta = resumoVendedores[vendedor] || { apurado: 0, comissao: 0, area: 'N/A' };
+                const premioPago = resumoPremios[vendedor] || 0;
 
-                    const apurado = dadosAposta.apurado;
-                    const comissao = dadosAposta.comissao;
-                    const area = dadosAposta.area;
-                    const total = apurado - comissao - premioPago;
-                    
-                    const newRow = tabelaResumoBody.insertRow();
-                    newRow.innerHTML = `
-                        <td>${vendedor}</td>
-                        <td>${area}</td>
-                        <td>R$ ${apurado.toFixed(2).replace('.', ',')}</td>
-                        <td>R$ ${comissao.toFixed(2).replace('.', ',')}</td>
-                        <td>R$ ${total.toFixed(2).replace('.', ',')}</td>
-                    `;
-                }
+                const apurado = dadosAposta.apurado;
+                const comissao = dadosAposta.comissao;
+                const area = dadosAposta.area;
+                const total = apurado - comissao - premioPago;
+                
+                const newRow = tabelaResumoBody.insertRow();
+                newRow.innerHTML = `
+                    <td>${vendedor}</td>
+                    <td>${area}</td>
+                    <td>R$ ${apurado.toFixed(2).replace('.', ',')}</td>
+                    <td>R$ ${comissao.toFixed(2).replace('.', ',')}</td>
+                    <td class="${total < 0 ? 'negative-value' : 'positive-value'}">R$ ${total.toFixed(2).replace('.', ',')}</td>
+                `;
             }
         }
+    }
+    
+    // Função de Impressão: Apenas pega o que está no DOM e imprime
+    function printReport() {
+        const startDateText = document.getElementById('filterStartDate').value ? new Date(document.getElementById('filterStartDate').value + 'T12:00:00').toLocaleDateString('pt-BR') : 'Todo o período';
+        const endDateText = document.getElementById('filterEndDate').value ? new Date(document.getElementById('filterEndDate').value + 'T12:00:00').toLocaleDateString('pt-BR') : '';
         
-        function printReport() {
-            const startDateText = document.getElementById('filterStartDate').value ? new Date(document.getElementById('filterStartDate').value + 'T12:00:00').toLocaleDateString('pt-BR') : 'Todo o período';
-            const endDateText = document.getElementById('filterEndDate').value ? new Date(document.getElementById('filterEndDate').value + 'T12:00:00').toLocaleDateString('pt-BR') : '';
-            
-            const selectedVendedorText = document.getElementById('selectVendedor').options[document.getElementById('selectVendedor').selectedIndex].text;
-            const selectedModalidadeText = document.getElementById('selectModalidade').options[document.getElementById('selectModalidade').selectedIndex].text;
-            const selectedExtracaoText = document.getElementById('selectExtracao').options[document.getElementById('selectExtracao').selectedIndex].text;
-            const selectedAreaText = document.getElementById('selectArea').options[document.getElementById('selectArea').selectedIndex].text;
+        const selectedVendedorText = document.getElementById('selectVendedor').options[document.getElementById('selectVendedor').selectedIndex].text;
+        const selectedModalidadeText = document.getElementById('selectModalidade').options[document.getElementById('selectModalidade').selectedIndex].text;
+        const selectedExtracaoText = document.getElementById('selectExtracao').options[document.getElementById('selectExtracao').selectedIndex].text;
+        const selectedAreaText = document.getElementById('selectArea').options[document.getElementById('selectArea').selectedIndex].text;
 
-            const resumoTable = document.getElementById('tabela-resumo').cloneNode(true);
-            
-            resumoTable.querySelector('thead tr').innerHTML = `
-                <th>Vendedor</th>
-                <th>Área</th>
-                <th>Apurado</th>
-                <th>Comissão</th>
-                <th>Total</th>
-            `;
+        // Pega a tabela de resumo *já renderizada* no DOM
+        const resumoTable = document.getElementById('tabela-resumo').cloneNode(true);
+        
+        // Corrige o cabeçalho (se necessário, para manter a consistência na impressão)
+        resumoTable.querySelector('thead tr').innerHTML = `
+            <th>Vendedor</th>
+            <th>Área</th>
+            <th>Apurado</th>
+            <th>Comissão</th>
+            <th>Total</th>
+        `;
 
-            const printContent = `
-                <div class="container print-only">
-                    <h1 class="text-center mb-4">Relatório Financeiro</h1>
-                    <div class="print-details mb-4">
-                        <p><strong>Data:</strong> ${startDateText} ${endDateText ? 'a ' + endDateText : ''}</p>
-                        <p><strong>Vendedor:</strong> ${selectedVendedorText}</p>
-                        <p><strong>Extração:</strong> ${selectedExtracaoText}</p>
-                        <p><strong>Modalidade:</strong> ${selectedModalidadeText}</p>
-                        <p><strong>Área:</strong> ${selectedAreaText}</p>
-                    </div>
-                    
-                    <h2>Geral Caixa</h2>
-                    ${resumoTable.outerHTML}
+        const printContent = `
+            <div class="container print-only">
+                <h1 class="text-center mb-4">Relatório Financeiro</h1>
+                <div class="print-details mb-4">
+                    <p><strong>Data:</strong> ${startDateText} ${endDateText ? 'a ' + endDateText : ''}</p>
+                    <p><strong>Vendedor:</strong> ${selectedVendedorText}</p>
+                    <p><strong>Extração:</strong> ${selectedExtracaoText}</p>
+                    <p><strong>Modalidade:</strong> ${selectedModalidadeText}</p>
+                    <p><strong>Área:</strong> ${selectedAreaText}</p>
                 </div>
-            `;
+                
+                <h2>Geral Caixa</h2>
+                ${resumoTable.outerHTML}
+            </div>
+        `;
 
-            const printWindow = window.open('', '_blank');
-            printWindow.document.write(`
-                <!DOCTYPE html>
-                <html lang="pt-br">
-                <head>
-                    <title>Relatório Financeiro</title>
-                    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-                    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
-                    <style>
-                        /* (Seus estilos de impressão aqui) */
-                        body { font-family: 'Roboto', sans-serif; padding: 20px; }
-                        h1, h2 { text-align: center; margin-bottom: 20px; color: #072749; }
-                        .print-details p { margin-bottom: 8px; }
-                        .print-details strong { color: #072749; }
-                        .table { margin-bottom: 20px; border-collapse: collapse; width: 100%; }
-                        .table thead th { 
-                            background-color: #d4edda !important; 
-                            color: #155724 !important;
-                            font-size: 10px; 
-                            padding: 4px; 
-                            text-align: center;
-                            white-space: nowrap; 
-                        }
-                        .table tbody tr:nth-child(odd) { background-color: #ffffff !important; }
-                        .table tbody tr:nth-child(even) { background-color: #f2f2f2 !important; }
-                        .table td { 
-                            padding: 4px;
-                            border: 1px solid #dee2e6;
-                            font-size: 12px;
-                            white-space: nowrap;
-                            text-align: center;
-                        }
-
-                        .table.table-bordered {
-                            width: 100%;
-                            table-layout: auto;
-                        }
-                        .table td:nth-child(1), .table th:nth-child(1) { 
-                            text-align: left;
-                            width: 15%;
-                        }
-                        .table td:nth-child(2), .table th:nth-child(2) { 
-                            width: 10%;
-                        }
-                        .table td:nth-child(3), .table th:nth-child(3), 
-                        .table td:nth-child(4), .table th:nth-child(4), 
-                        .table td:nth-child(5), .table th:nth-child(5) { 
-                            width: 15%;
-                        }
-                    </style>
-                </head>
-                <body>
-                    ${printContent}
-                </body>
-                </html>
-            `);
-            printWindow.document.close();
-            printWindow.focus();
-            printWindow.print();
-        }
-    </script>
+        const printWindow = window.open('', '_blank');
+        printWindow.document.write(`
+            <!DOCTYPE html>
+            <html lang="pt-br">
+            <head>
+                <title>Relatório Financeiro</title>
+                <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+                <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+                <style>
+                    /* Estilos de impressão repetidos do cabeçalho */
+                    body { font-family: 'Roboto', sans-serif; padding: 0; margin: 0; background-color: #ffffff !important; color: #000; }
+                    h1, h2 { text-align: center; margin-bottom: 20px; color: #072749; }
+                    .print-details p { margin-bottom: 8px; }
+                    .print-details strong { color: #072749; }
+                    .table { margin-bottom: 20px; border-collapse: collapse; width: 100%; box-shadow: none; }
+                    .table thead th { background-color: #d4edda !important; color: #155724 !important; font-size: 10px; padding: 4px; text-align: center; white-space: nowrap; border-bottom: 2px solid #28a745 !important; }
+                    .table tbody tr:nth-child(odd) { background-color: #f2f2f2 !important; }
+                    .table tbody tr:nth-child(even) { background-color: #ffffff !important; }
+                    .table td { padding: 4px; border: 1px solid #dee2e6; font-size: 12px; white-space: nowrap; text-align: center; }
+                    .table-bordered th, .table-bordered td { border: 1px solid #dee2e6 !important; }
+                    /* Colunas */
+                    .table td:nth-child(1), .table th:nth-child(1) { text-align: left; width: 15%; }
+                    .table td:nth-child(2), .table th:nth-child(2) { width: 10%; }
+                    .table td:nth-child(3), .table th:nth-child(3), .table td:nth-child(4), .table th:nth-child(4), .table td:nth-child(5), .table th:nth-child(5) { width: 15%; }
+                    .negative-value { color: #dc3545; font-weight: 600; }
+                    .positive-value { color: #28a745; font-weight: 600; }
+                </style>
+            </head>
+            <body>
+                ${printContent}
+            </body>
+            </html>
+        `);
+        printWindow.document.close();
+        printWindow.focus();
+        printWindow.print();
+    }
+</script>
 </body>
 </html>
