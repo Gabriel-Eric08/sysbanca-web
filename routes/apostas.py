@@ -14,25 +14,26 @@ def apostas_apk():
 
     nome_vendedor = None
     nome_area = None
-    # Tenta obter o nome do vendedor do cookie 'username'
     try:
         nome_vendedor = request.cookies.get('username')
         vendedor = Vendedor.query.filter_by(username=nome_vendedor).first()
         nome_area = vendedor.area if vendedor else None
     except Exception as e:
-        # Imprime um erro se houver problema ao acessar o cookie
         print(f"Erro ao obter o cookie 'username': {e}")
-        # O nome_vendedor será None se o cookie não existir ou houver erro
 
-    # Consulta todos os registros das tabelas
     modalidades = Modalidade.query.all()
-    extracoes = Extracao.query.all()
+    todas_extracoes = Extracao.query.all()
+    extracoes = []
+
+    agora = datetime.now().time()
+    for m in todas_extracoes:
+        if m.ativo and m.fechamento is not None and agora < m.fechamento:
+            extracoes.append(m)
 
     try:
         max_id_aposta = db.session.query(func.max(Aposta.id)).scalar()
         max_id_excluida = db.session.query(func.max(ApostaExcluida.aposta_id_original)).scalar()
 
-        # Determina o maior ID entre as apostas e as apostas excluídas
         ultimo_id = 0
         if max_id_aposta is not None and max_id_excluida is not None:
             ultimo_id = max(max_id_aposta, max_id_excluida)
@@ -41,16 +42,13 @@ def apostas_apk():
         elif max_id_excluida is not None:
             ultimo_id = max_id_excluida
 
-        # Calcula o próximo ID e formata com zeros à esquerda
         proximo_id = ultimo_id + 1
         poule_formatada = str(proximo_id).zfill(8)
 
     except Exception as e:
-        # Em caso de erro, define um valor padrão para a poule
         print(f"Erro ao buscar último ID da aposta: {e}")
         poule_formatada = "00000001"
 
-    # Renderiza o template e passa as variáveis, incluindo a poule
     return render_template(
         'apostas_apk.html',
         modalidades=modalidades,
