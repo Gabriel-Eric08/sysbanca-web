@@ -1,6 +1,19 @@
 from db_config import db
 from datetime import datetime
 
+class VendedorOnline(db.Model):
+    __tablename__ = 'tb_vendedores_online'
+
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    user = db.Column(db.String(100), unique=True, nullable=False)
+    password = db.Column(db.String(255), nullable=False)
+    telefone = db.Column(db.String(20), nullable=True)
+    chave = db.Column(db.Text, nullable=True)
+    chave_pix = db.Column(db.Text, nullable=True)
+    link_afiliado = db.Column(db.Text, nullable=True)
+    comissao_online = db.Column(db.Float, nullable=True)
+    supervisor = db.Column(db.Integer, nullable=True)
+
 class ComissaoArea(db.Model):
     __tablename__ = 'tb_comissaoArea'
 
