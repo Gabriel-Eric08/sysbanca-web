@@ -1,10 +1,81 @@
 from flask import Blueprint, render_template, request, redirect, url_for, jsonify
-from models.models import Vendedor, Area, Regiao, Relatorio, CotacaoDefinida
+from models.models import Vendedor, Area, Regiao, Relatorio, CotacaoDefinida, VendedorOnline
 from db_config import db
 from util.checkCreds import checkCreds
 from datetime import datetime
 
 vendedor_route = Blueprint('Vendedores', __name__)
+
+@vendedor_route.route('/cadastrar-online', methods=['POST'])
+def cadastrar_vendedor_online():
+    # 1. Obter dados do JSON
+    try:
+        data = request.get_json()
+        if not data:
+            return jsonify({"success": False, "message": "Dados JSON inválidos ou ausentes."}), 400
+    except Exception:
+        return jsonify({"success": False, "message": "Formato de dados inválido (esperado JSON)."}), 400
+
+    # Extrair os campos do JSON
+    user = data.get('user')
+    password = data.get('password')
+    telefone = data.get('telefone')
+    chave = data.get('chave')
+    chave_pix = data.get('chave_pix')
+    link_afiliado = data.get('link_afiliado')
+    comissao_online = data.get('comissao_online')
+    supervisor = data.get('supervisor')
+
+    # 2. Validação básica de campos obrigatórios
+    if not all([user, password]):
+        return jsonify({"success": False, "message": "Campos 'user' e 'password' são obrigatórios."}), 400
+
+    # 3. Verificar se o usuário já existe
+    existente = VendedorOnline.query.filter_by(user=user).first()
+    if existente:
+        return jsonify({"success": False, "message": "Vendedor online com este 'user' já existe."}), 409
+
+    # 4. Criar a instância do modelo
+    try:
+        novo_vendedor_online = VendedorOnline(
+            user=user,
+            password=password,
+            telefone=telefone,
+            chave=chave,
+            chave_pix=chave_pix,
+            link_afiliado=link_afiliado,
+            # Converte a comissão para float, garantindo que None ou string vazia resultem em None
+            comissao_online=float(comissao_online) if comissao_online is not None and comissao_online != '' else None,
+            # Converte o supervisor para int, garantindo que None ou string vazia resultem em None
+            supervisor=int(supervisor) if supervisor is not None and supervisor != '' else None
+        )
+    except (ValueError, TypeError) as e:
+        return jsonify({"success": False, "message": f"Erro de conversão de tipo: verifique 'comissao_online' (esperado número) e 'supervisor' (esperado número inteiro). Detalhe: {e}"}), 400
+
+    # 5. Adicionar ao banco e gerar relatório
+    db.session.add(novo_vendedor_online)
+    db.session.flush() # Obtém o ID para o relatório
+
+    usuario = request.cookies.get('username', 'Sistema Online API')
+    relatorio = Relatorio(
+        usuario=usuario,
+        tabela="tb_vendedores_online",
+        acao="Inserção (Online API)",
+        id_linha=novo_vendedor_online.id,
+        linha=str(novo_vendedor_online.__dict__),
+        data=datetime.now().date(),
+        horario=datetime.now().time()
+    )
+    db.session.add(relatorio)
+
+    # 6. Commit e resposta
+    db.session.commit()
+
+    return jsonify({
+        "success": True,
+        "message": "Vendedor online cadastrado com sucesso!",
+        "id": novo_vendedor_online.id
+    }), 201
 
 @vendedor_route.route('/', methods=['GET'])
 def vendedores_page():
