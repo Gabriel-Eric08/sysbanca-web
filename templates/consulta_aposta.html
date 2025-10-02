@@ -41,7 +41,7 @@
     </form>
 
     {% if aposta %}
-    <div id="bilhete-pdf" class="card shadow-sm mb-3">
+    <div id="bilhete-visual" class="card shadow-sm mb-3">
         <div class="card-header">
             <h5 class="mb-0">Bilhete #{{ aposta.id }}</h5>
         </div>
@@ -104,6 +104,9 @@
         </div>
     </div>
     
+    <div id="bilhete-maquineta" style="white-space: pre; font-family: 'Courier New', monospace; font-size: 10px; padding: 10px; width: 300px; display: none;">
+    </div>
+    
     {% elif consulta_feita %}
     <div class="alert alert-danger" role="alert">
         Aposta não encontrada.
@@ -113,8 +116,14 @@
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 <script>
+    // Função auxiliar para parsear JSON (se o Jinja não o fizer diretamente na sua view)
     function fromJson(value) {
-        return JSON.parse(value);
+        try {
+            return JSON.parse(value);
+        } catch (e) {
+            console.error("Erro ao fazer parse do JSON:", e);
+            return []; // Retorna array vazio em caso de erro
+        }
     }
 </script>
 <script>
@@ -122,20 +131,108 @@
         event.preventDefault();
         const id = document.getElementById('aposta_id').value;
         if (id) {
+            // Assumo que esta é a rota correta para a consulta
             window.location.href = `/aposta/consulta/${id}`;
         }
     }
 
     function imprimirBilhete() {
-        const elemento = document.getElementById('bilhete-pdf');
+        // Dados do Jinja2/Flask
+        // Usamos tags Jinja para injetar os dados do backend no JavaScript
+        const aposta = {{ aposta | tojson }}; // Assumindo que você pode usar | tojson para passar o objeto/dict
+        const apostasDetalhadas = {{ apostas_detalhadas | tojson }};
+        const apostaPremiada = {{ aposta_premiada | tojson }};
+        
+        const extracao = aposta.extracao || 'N/A';
+        // Ajuste estes campos conforme a estrutura real do seu objeto 'aposta'.
+        const numeroPoule = aposta.id; // Usando o ID da aposta como Poule
+        const nsu = aposta.nsu || '00000000'; // Se você tiver um campo NSU
+        const vendedor = aposta.vendedor || 'Vendedor N/A';
+        const area = aposta.area || 'Área N/A';
+        const dataAtual = aposta.data_atual_str || '{{ aposta.data_atual.strftime('%d/%m/%Y') if aposta.data_atual else 'N/A' }}';
+        const horaAtual = aposta.hora_atual_str || '{{ aposta.hora_atual.strftime('%H:%M') if aposta.hora_atual else 'N/A' }}';
+        const valorTotalBilhete = aposta.valor_total || 0;
+        const preDatada = aposta.pre_datar;
+        const dataAgendada = aposta.data_agendada_str || '{{ aposta.data_agendada.strftime('%d/%m/%Y') if aposta.data_agendada else '' }}';
+
+
+        const dataHoraTexto = `Data/Hora: ${dataAtual} ${horaAtual}`;
+        const dataPredatadaTexto = preDatada ? `Pré-datada para: ${dataAgendada}` : '';
+        const separador = "-------------------------------------------------";
+        const separadorTotal = "-----------------------------------------------------------";
+        const separadorFinal = "--------------------------------------------------";
+
+        let bilheteCompleto = `
+                      *
+                    CL ESPERANCA
+        ${separador}
+        EXT: ${extracao}
+        Poule: ${String(numeroPoule).padStart(8, '0')}
+        NSU: ${nsu}
+        Vendedor: ${vendedor}
+        Área: ${area}
+        ${dataHoraTexto}${dataPredatadaTexto ? '\n' + dataPredatadaTexto : ''}
+        ${separador}`;
+
+        // Itera sobre os detalhes da aposta para adicionar ao bilhete
+        for (const detalhe of apostasDetalhadas) {
+            const nomeAposta = detalhe[0];
+            const numeros = detalhe[1].join(', ');
+            const modalidade = detalhe[2];
+            const tipoAposta = detalhe[3];
+            const valorTotalApostado = detalhe[4];
+            
+            const apostaAtualTexto = 
+                `APOSTA: ${nomeAposta} (${modalidade})
+        Números: ${numeros}
+        Tipo: ${tipoAposta}
+        Valor Apostado: R$ ${valorTotalApostado.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+            
+            bilheteCompleto += `\n${apostaAtualTexto}`;
+            bilheteCompleto += `\n${separador}`;
+        }
+        
+        // Se houver premiação, adiciona os detalhes
+        if (apostaPremiada && apostaPremiada.valor_premio > 0) {
+            const statusPagamento = apostaPremiada.pago == 1 ? 'Pago' : 'Não Pago';
+            bilheteCompleto += `
+        ${separador}
+        *** BILHETE PREMIADO ***
+        Valor do Prêmio: R$ ${apostaPremiada.valor_premio.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+        Status: ${statusPagamento}
+        `;
+        }
+
+
+        // Finaliza o bilhete
+        bilheteCompleto += `
+        ${separadorTotal}
+        TOTAL DO BILHETE: R$ ${valorTotalBilhete.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+        ${separadorFinal}
+        VÁLIDO POR 15 DIAS.
+        ${separadorFinal}
+        BOA SORTE!
+        ${separadorFinal}`;
+
+        // 1. Pega o elemento oculto
+        const bilheteElement = document.getElementById('bilhete-maquineta');
+        // 2. Coloca o texto formatado nele
+        bilheteElement.textContent = bilheteCompleto;
+        
+        // 3. Configura a impressão com html2pdf
         const opt = {
-            margin:       0.3,
-            filename:     `bilhete_{{ aposta.id }}.pdf`,
-            image:        { type: 'jpeg', quality: 0.98 },
-            html2canvas:  { scale: 2 },
-            jsPDF:        { unit: 'in', format: 'a4', orientation: 'portrait' }
+            margin: 0.1, // Margem menor para simular o bilhete
+            filename: `bilhete_${aposta.id}_maquineta.pdf`,
+            image: { type: 'jpeg', quality: 0.98 },
+            html2canvas: { scale: 2 },
+            // Formato customizado para ser estreito (simulando papel de maquineta)
+            jsPDF: { unit: 'mm', format: [58, 200], orientation: 'portrait' } 
+            // 58mm é uma largura comum para papel de recibo
+            // 200mm (20cm) é um bom chute para o comprimento inicial, que se ajustará ao conteúdo
         };
-        html2pdf().set(opt).from(elemento).save();
+
+        // Usa o elemento com o texto formatado para gerar o PDF
+        html2pdf().set(opt).from(bilheteElement).save();
     }
 </script>
 
