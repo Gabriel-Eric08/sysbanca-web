@@ -127,7 +127,8 @@ def get_aposta(aposta_id):
             "extracao": aposta.extracao,  # Já é string no formato "LOTEP 10:40"
             "pre_datar": aposta.pre_datar,
             "data_agendada": aposta.data_agendada.strftime("%d/%m/%Y") if aposta.data_agendada else None,
-            "apostas": json.loads(aposta.apostas) if aposta.apostas else []
+            "apostas": json.loads(aposta.apostas) if aposta.apostas else [],
+            "nsu": aposta.nsu
         }
 
         return jsonify(response_data), 200
