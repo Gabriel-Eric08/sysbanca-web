@@ -130,10 +130,15 @@
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 <script>
-    // Função auxiliar fromJson necessária para o bloco de premiação
+    // Função auxiliar para parsear JSON (se o Jinja não o fizer diretamente na sua view)
+    // Essa função é necessária porque o Jinja injeta a string JSON na variável JavaScript.
     function fromJson(value) {
         try {
-            return JSON.parse(value);
+            // Verifica se o valor é uma string JSON válida antes de tentar parsear
+            if (typeof value === 'string') {
+                return JSON.parse(value);
+            }
+            return value; // Se já for um objeto/array, retorna ele mesmo
         } catch (e) {
             console.error("Erro ao fazer parse do JSON:", e);
             return []; // Retorna array vazio em caso de erro
@@ -145,33 +150,39 @@
         event.preventDefault();
         const id = document.getElementById('aposta_id').value;
         if (id) {
+            // Redireciona para a rota Flask que executa a consulta
             window.location.href = `/aposta/consulta/${id}`;
         }
     }
 
     function imprimirBilhete() {
-        // Bloco de injeção de dados do Jinja2/Flask
-        // Assumimos que o tojson está disponível e que os objetos/dicts estão sendo passados corretamente
-        const aposta = {{ aposta | tojson }};
-        // O Flask/Jinja converte o JSON do Python (lista de listas) em uma string JSON para o JS.
-        const apostasDetalhadas = {{ apostas_detalhadas | tojson | safe }}; 
-        const apostaPremiada = {{ aposta_premiada | tojson }};
+        // ----------------------------------------------------------------------------------
+        // ATENÇÃO CRÍTICA: Uso de | default(none) e | safe para evitar erros de serialização
+        // ----------------------------------------------------------------------------------
+        const aposta = {{ aposta | tojson | default(none) }};
+        const apostasDetalhadas = {{ apostas_detalhadas | tojson | safe | default(none) }};
+        const apostaPremiada = {{ aposta_premiada | tojson | default(none) }};
         
-        // Formatação de Datas/Horas (Garante que a formatação seja feita no Python antes, se necessário)
+        // Verifica se os dados da aposta principal existem antes de continuar
+        if (!aposta) {
+            alert('Não é possível imprimir. Dados da aposta não encontrados.');
+            return;
+        }
+        
+        // Extração de dados
         const extracao = aposta.extracao || 'N/A';
         const numeroPoule = aposta.id; 
         const nsu = aposta.nsu || '00000000';
         const vendedor = aposta.vendedor || 'Vendedor N/A';
         const area = aposta.area || 'Área N/A';
         
-        // Uso direto da formatação de string do Python no JS para datas
+        // Datas e Horas injetadas diretamente pelo Jinja2/Python (mais seguro)
         const dataAtual = '{{ aposta.data_atual.strftime('%d/%m/%Y') if aposta.data_atual else 'N/A' }}';
         const horaAtual = '{{ aposta.hora_atual.strftime('%H:%M') if aposta.hora_atual else 'N/A' }}';
         const dataAgendada = '{{ aposta.data_agendada.strftime('%d/%m/%Y') if aposta.data_agendada else '' }}';
         
         const valorTotalBilhete = aposta.valor_total || 0;
         const preDatada = aposta.pre_datar;
-
 
         const dataHoraTexto = `Data/Hora: ${dataAtual} ${horaAtual}`;
         const dataPredatadaTexto = preDatada && dataAgendada ? `Pré-datada para: ${dataAgendada}` : '';
@@ -191,7 +202,8 @@
         ${dataHoraTexto}${dataPredatadaTexto ? '\n' + dataPredatadaTexto : ''}
         ${separador}`;
 
-        // Itera sobre os detalhes da aposta para adicionar ao bilhete
+        // Itera sobre os detalhes da aposta
+        // Nota: apostaDetalhadas é uma lista de listas (Python), então o JS itera sobre o array
         for (const detalhe of apostasDetalhadas) {
             const nomeAposta = detalhe[0];
             const numeros = detalhe[1].join(', ');
@@ -210,16 +222,18 @@
         }
         
         // Se houver premiação, adiciona os detalhes
-        if (apostaPremiada && apostaPremiada.valor_premio > 0) {
+        if (apostaPremiada && apostaPremiada.valor_premio) {
+            // Converte o valor do prêmio para float para garantir a formatação
+            const valorPremio = parseFloat(apostaPremiada.valor_premio);
             const statusPagamento = apostaPremiada.pago == 1 ? 'Pago' : 'Não Pago';
+
             bilheteCompleto += `
         ${separador}
         *** BILHETE PREMIADO ***
-        Valor do Prêmio: R$ ${parseFloat(apostaPremiada.valor_premio).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+        Valor do Prêmio: R$ ${valorPremio.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
         Status: ${statusPagamento}
         `;
         }
-
 
         // Finaliza o bilhete
         bilheteCompleto += `
@@ -231,18 +245,22 @@
         BOA SORTE!
         ${separadorFinal}`;
 
-        // Geração do PDF
+        // 1. Pega o elemento oculto
         const bilheteElement = document.getElementById('bilhete-maquineta');
+        // 2. Coloca o texto formatado nele
         bilheteElement.textContent = bilheteCompleto;
         
+        // 3. Configura e inicia a impressão com html2pdf
         const opt = {
             margin: 0.1, 
             filename: `bilhete_${aposta.id}_maquineta.pdf`,
             image: { type: 'jpeg', quality: 0.98 },
             html2canvas: { scale: 2 },
+            // Formato customizado para ser estreito (simulando papel de maquineta)
             jsPDF: { unit: 'mm', format: [58, 200], orientation: 'portrait' } 
         };
 
+        // Usa o elemento com o texto formatado para gerar o PDF
         html2pdf().set(opt).from(bilheteElement).save();
     }
 </script>
