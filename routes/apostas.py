@@ -560,54 +560,113 @@ def excluir_aposta_temporariamente(aposta_id):
         db.session.rollback()
         return jsonify({"success": False, "message": f"Erro ao excluir aposta: {str(e)}"}), 500
     
+def serialize_aposta(aposta):
+    """Converte um objeto Aposta em um dicionário seguro para serialização JSON."""
+    if not aposta:
+        return None
+    
+    return {
+        'id': aposta.id,
+        'vendedor': aposta.vendedor,
+        'data_atual': aposta.data_atual.strftime('%Y-%m-%d') if aposta.data_atual else None,
+        'hora_atual': aposta.hora_atual.strftime('%H:%M:%S') if aposta.hora_atual else None,
+        'valor_total': aposta.valor_total,
+        'extracao': aposta.extracao,
+        'apostas': aposta.apostas, # Deixamos como JSON string aqui
+        'pre_datar': aposta.pre_datar,
+        'data_agendada': aposta.data_agendada.strftime('%Y-%m-%d') if aposta.data_agendada else None,
+        'area': aposta.area,
+        'nsu': aposta.nsu
+    }
+
+def serialize_aposta_premiada(aposta_premiada):
+    """Converte um objeto ApostaPremiada em um dicionário seguro."""
+    if not aposta_premiada:
+        return None
+        
+    return {
+        'id': aposta_premiada.id,
+        'valor_premio': float(aposta_premiada.valor_premio) if aposta_premiada.valor_premio else 0.0,
+        'apostas': aposta_premiada.apostas, # Deixamos como JSON string aqui
+        'pago': aposta_premiada.pago,
+        'numero_bilhete': aposta_premiada.numero_bilhete,
+        # Adicione outros campos necessários aqui
+    }
+
+# --- Rota Principal ---
+
 @aposta_route.route('/consulta/<int:aposta_id>', methods=['GET'])
 def consultar_aposta(aposta_id):
     try:
+        # 1. Busca a Aposta original
         aposta = Aposta.query.get(aposta_id)
-        aposta_premiada = None
-        apostas_detalhadas = []
         consulta_feita = True
-        
-        # Variável booleana clara para o status de premiação
-        is_premiada = False
 
-        if aposta:
-            apostas_detalhadas = json.loads(aposta.apostas) if aposta.apostas else []
-            aposta_premiada = ApostaPremiada.query.filter_by(numero_bilhete=aposta.id).first()
+        if not aposta:
+            return render_template('consulta_aposta.html', aposta=None, consulta_feita=consulta_feita)
+
+        # 2. Busca o status de Premiação
+        aposta_premiada_obj = ApostaPremiada.query.filter_by(numero_bilhete=aposta.id).first()
+        
+        # 3. Inicializa as variáveis de retorno
+        aposta_premiada_dict = None
+        apostas_detalhadas = []
+        
+        # 4. Define se o retorno deve usar os dados da Aposta original ou da Premiada
+        
+        if aposta_premiada_obj:
+            # A) Aposta está premiada: Serializa e usa os detalhes premiados
+            aposta_premiada_dict = serialize_aposta_premiada(aposta_premiada_obj)
             
-            # --- Lógica de Sobrescrita de Dados ---
-            if aposta_premiada:
-                is_premiada = True # A aposta está, de fato, na tabela de premiadas
-                detalhes_premiados = json.loads(aposta_premiada.apostas)
-                apostas_detalhadas = [] # Zera para usar os dados premiados
+            # Os detalhes da aposta (Números, Modalidade, etc.) devem vir da ApostaPremiada
+            detalhes_premiados = json.loads(aposta_premiada_obj.apostas)
+
+            # Reformatando detalhes_premiados para o formato de lista esperado pelo HTML
+            for item in detalhes_premiados:
+                detalhe_formatado = [
+                    item.get('nomeAposta', 'N/A'),
+                    item.get('numeros', []),
+                    item.get('modalidade', 'N/A'),
+                    item.get('premio', 'N/A'), 
+                    item.get('valorTotalAposta', 0.0),
+                    item.get('unidadeAposta', 0.0)
+                ]
+                apostas_detalhadas.append(detalhe_formatado)
+        
+        else:
+            # B) Aposta NÃO está premiada: Serializa e usa os detalhes da Aposta original
+            
+            # Os detalhes da aposta (Números, Modalidade, etc.) devem vir da Aposta original
+            if aposta.apostas:
+                detalhes_originais = json.loads(aposta.apostas)
                 
-                # Reformatando detalhes_premiados
-                for item in detalhes_premiados:
-                    # Reformata o dicionário em uma lista para compatibilidade com o HTML
+                # Reformatando detalhes_originais
+                for item in detalhes_originais:
                     detalhe_formatado = [
                         item.get('nomeAposta', 'N/A'),
                         item.get('numeros', []),
                         item.get('modalidade', 'N/A'),
-                        item.get('premio', 'N/A'),
+                        item.get('tipoAposta', 'N/A'), # Usamos 'tipoAposta' do JSON original, se disponível
                         item.get('valorTotalAposta', 0.0),
                         item.get('unidadeAposta', 0.0)
                     ]
                     apostas_detalhadas.append(detalhe_formatado)
-            
-            # Se aposta_premiada for None, apostas_detalhadas mantém os dados originais (aposta.apostas)
-            # e is_premiada permanece False.
 
+        # 5. Serializa a Aposta principal para evitar o erro JSON
+        aposta_dict = serialize_aposta(aposta)
+
+        # 6. Renderiza o template
         return render_template(
             'consulta_aposta.html',
-            aposta=aposta,
+            aposta=aposta_dict,  # OBJETO AGORA É UM DICTIONARY!
             consulta_feita=consulta_feita,
             apostas_detalhadas=apostas_detalhadas,
-            aposta_premiada=aposta_premiada,
-            is_premiada=is_premiada  # Variável clara e confiável
+            aposta_premiada=aposta_premiada_dict # É DICTIONARY ou None!
         )
 
     except Exception as e:
         print(f"Erro ao buscar aposta: {e}")
+        # Retorna o template com erro em caso de exceção no servidor
         return render_template('consulta_aposta.html', aposta=None, consulta_feita=True)
     
 @aposta_route.route('/consulta_excluida/<int:aposta_excluida_id>', methods=['GET'])
