@@ -567,35 +567,43 @@ def consultar_aposta(aposta_id):
         aposta_premiada = None
         apostas_detalhadas = []
         consulta_feita = True
+        
+        # Variável booleana clara para o status de premiação
+        is_premiada = False
 
         if aposta:
             apostas_detalhadas = json.loads(aposta.apostas) if aposta.apostas else []
             aposta_premiada = ApostaPremiada.query.filter_by(numero_bilhete=aposta.id).first()
             
-            # --- Adição de Lógica ---
-            # Se a aposta premiada existir, vamos reformatar 'apostas_detalhadas'
-            # para o template renderizar corretamente, usando os dados da aposta premiada
+            # --- Lógica de Sobrescrita de Dados ---
             if aposta_premiada:
+                is_premiada = True # A aposta está, de fato, na tabela de premiadas
                 detalhes_premiados = json.loads(aposta_premiada.apostas)
-                apostas_detalhadas = []
+                apostas_detalhadas = [] # Zera para usar os dados premiados
+                
+                # Reformatando detalhes_premiados
                 for item in detalhes_premiados:
                     # Reformata o dicionário em uma lista para compatibilidade com o HTML
                     detalhe_formatado = [
-                        item.get('nomeAposta', 'N/A'), # Supondo que 'nomeAposta' exista no JSON
+                        item.get('nomeAposta', 'N/A'),
                         item.get('numeros', []),
                         item.get('modalidade', 'N/A'),
-                        item.get('premio', 'N/A'), # Usado 'premio' em vez de 'tipo de aposta'
+                        item.get('premio', 'N/A'),
                         item.get('valorTotalAposta', 0.0),
                         item.get('unidadeAposta', 0.0)
                     ]
                     apostas_detalhadas.append(detalhe_formatado)
+            
+            # Se aposta_premiada for None, apostas_detalhadas mantém os dados originais (aposta.apostas)
+            # e is_premiada permanece False.
 
         return render_template(
             'consulta_aposta.html',
             aposta=aposta,
             consulta_feita=consulta_feita,
             apostas_detalhadas=apostas_detalhadas,
-            aposta_premiada=aposta_premiada
+            aposta_premiada=aposta_premiada,
+            is_premiada=is_premiada  # Variável clara e confiável
         )
 
     except Exception as e:
