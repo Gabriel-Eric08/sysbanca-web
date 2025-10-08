@@ -5,6 +5,18 @@
     <title>Consulta de Aposta</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <style>
+        /* Estilo para destaque de premiação */
+        .alerta-premiada {
+            background-color: #28a745; /* Cor de sucesso */
+            color: white;
+            padding: 15px;
+            border-radius: 8px;
+            font-weight: bold;
+            text-align: center;
+            margin-top: 15px;
+            font-size: 1.1em;
+        }
+
         @media print {
             .nao-imprimir {
                 display: none !important;
@@ -74,8 +86,10 @@
             </div>
             
             {% if aposta_premiada %}
-            <p class="mt-4"><strong>Premiada:</strong> Sim</p>
-            <p><strong>Detalhes da Premiação:</strong></p>
+            <div class="alerta-premiada mt-4">
+                *** ESTA APOSTA FOI PREMIADA! ***
+            </div>
+            <p class="mt-4"><strong>Detalhes da Premiação:</strong></p>
             <div class="bg-success text-white p-3 rounded">
                 <p class="mb-0"><strong>Valor do Prêmio:</strong> R$ {{ '{:.2f}'.format(aposta_premiada.valor_premio | float) }}</p>
                 {% if aposta_premiada.pago == 1 %}
@@ -92,9 +106,9 @@
                         {% endif %}
                     {% endfor %}
                 </ul>
-                </div>
+            </div>
             {% else %}
-            <p class="mt-4"><strong>Premiada:</strong> Não</p>
+            <p class="mt-4"><strong>Status:</strong> Não Premiada / Aguardando Resultado</p>
             {% endif %}
         </div>
         <div class="card-footer text-end nao-imprimir">
@@ -116,7 +130,7 @@
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 <script>
-    // Função auxiliar para parsear JSON (se o Jinja não o fizer diretamente na sua view)
+    // Função auxiliar fromJson necessária para o bloco de premiação
     function fromJson(value) {
         try {
             return JSON.parse(value);
@@ -131,40 +145,43 @@
         event.preventDefault();
         const id = document.getElementById('aposta_id').value;
         if (id) {
-            // Assumo que esta é a rota correta para a consulta
             window.location.href = `/aposta/consulta/${id}`;
         }
     }
 
     function imprimirBilhete() {
-        // Dados do Jinja2/Flask
-        // Usamos tags Jinja para injetar os dados do backend no JavaScript
-        const aposta = {{ aposta | tojson }}; // Assumindo que você pode usar | tojson para passar o objeto/dict
-        const apostasDetalhadas = {{ apostas_detalhadas | tojson }};
+        // Bloco de injeção de dados do Jinja2/Flask
+        // Assumimos que o tojson está disponível e que os objetos/dicts estão sendo passados corretamente
+        const aposta = {{ aposta | tojson }};
+        // O Flask/Jinja converte o JSON do Python (lista de listas) em uma string JSON para o JS.
+        const apostasDetalhadas = {{ apostas_detalhadas | tojson | safe }}; 
         const apostaPremiada = {{ aposta_premiada | tojson }};
         
+        // Formatação de Datas/Horas (Garante que a formatação seja feita no Python antes, se necessário)
         const extracao = aposta.extracao || 'N/A';
-        // Ajuste estes campos conforme a estrutura real do seu objeto 'aposta'.
-        const numeroPoule = aposta.id; // Usando o ID da aposta como Poule
-        const nsu = aposta.nsu || '00000000'; // Se você tiver um campo NSU
+        const numeroPoule = aposta.id; 
+        const nsu = aposta.nsu || '00000000';
         const vendedor = aposta.vendedor || 'Vendedor N/A';
         const area = aposta.area || 'Área N/A';
-        const dataAtual = aposta.data_atual_str || '{{ aposta.data_atual.strftime('%d/%m/%Y') if aposta.data_atual else 'N/A' }}';
-        const horaAtual = aposta.hora_atual_str || '{{ aposta.hora_atual.strftime('%H:%M') if aposta.hora_atual else 'N/A' }}';
+        
+        // Uso direto da formatação de string do Python no JS para datas
+        const dataAtual = '{{ aposta.data_atual.strftime('%d/%m/%Y') if aposta.data_atual else 'N/A' }}';
+        const horaAtual = '{{ aposta.hora_atual.strftime('%H:%M') if aposta.hora_atual else 'N/A' }}';
+        const dataAgendada = '{{ aposta.data_agendada.strftime('%d/%m/%Y') if aposta.data_agendada else '' }}';
+        
         const valorTotalBilhete = aposta.valor_total || 0;
         const preDatada = aposta.pre_datar;
-        const dataAgendada = aposta.data_agendada_str || '{{ aposta.data_agendada.strftime('%d/%m/%Y') if aposta.data_agendada else '' }}';
 
 
         const dataHoraTexto = `Data/Hora: ${dataAtual} ${horaAtual}`;
-        const dataPredatadaTexto = preDatada ? `Pré-datada para: ${dataAgendada}` : '';
+        const dataPredatadaTexto = preDatada && dataAgendada ? `Pré-datada para: ${dataAgendada}` : '';
         const separador = "-------------------------------------------------";
         const separadorTotal = "-----------------------------------------------------------";
         const separadorFinal = "--------------------------------------------------";
 
         let bilheteCompleto = `
-                      *
-                    CL ESPERANCA
+                    *
+                   CL ESPERANCA
         ${separador}
         EXT: ${extracao}
         Poule: ${String(numeroPoule).padStart(8, '0')}
@@ -198,7 +215,7 @@
             bilheteCompleto += `
         ${separador}
         *** BILHETE PREMIADO ***
-        Valor do Prêmio: R$ ${apostaPremiada.valor_premio.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+        Valor do Prêmio: R$ ${parseFloat(apostaPremiada.valor_premio).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
         Status: ${statusPagamento}
         `;
         }
@@ -214,24 +231,18 @@
         BOA SORTE!
         ${separadorFinal}`;
 
-        // 1. Pega o elemento oculto
+        // Geração do PDF
         const bilheteElement = document.getElementById('bilhete-maquineta');
-        // 2. Coloca o texto formatado nele
         bilheteElement.textContent = bilheteCompleto;
         
-        // 3. Configura a impressão com html2pdf
         const opt = {
-            margin: 0.1, // Margem menor para simular o bilhete
+            margin: 0.1, 
             filename: `bilhete_${aposta.id}_maquineta.pdf`,
             image: { type: 'jpeg', quality: 0.98 },
             html2canvas: { scale: 2 },
-            // Formato customizado para ser estreito (simulando papel de maquineta)
             jsPDF: { unit: 'mm', format: [58, 200], orientation: 'portrait' } 
-            // 58mm é uma largura comum para papel de recibo
-            // 200mm (20cm) é um bom chute para o comprimento inicial, que se ajustará ao conteúdo
         };
 
-        // Usa o elemento com o texto formatado para gerar o PDF
         html2pdf().set(opt).from(bilheteElement).save();
     }
 </script>
