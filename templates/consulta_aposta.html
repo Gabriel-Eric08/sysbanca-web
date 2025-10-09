@@ -160,7 +160,7 @@
         // ATENÇÃO CRÍTICA: Uso de | default(none) e | safe para evitar erros de serialização
         // ----------------------------------------------------------------------------------
         const aposta = {{ aposta | tojson | default(none) }};
-        const apostasDetalhadas = {{ apostas_detalhadas | tojson | safe | default(none) }};
+        const apostasDetalhadas = {{ apostas_detalhadas | default([]) | tojson | safe }};
         const apostaPremiada = {{ aposta_premiada | tojson | default(none) }};
         
         // Verifica se os dados da aposta principal existem antes de continuar
