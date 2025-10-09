@@ -597,22 +597,23 @@ def serialize_aposta_premiada(aposta_premiada):
 
 @aposta_route.route('/consulta/<int:aposta_id>', methods=['GET'])
 def consultar_aposta(aposta_id):
+    # Inicializa todas as variáveis que serão usadas no template fora do 'try'
+    aposta_dict = None
+    aposta_premiada_dict = None
+    apostas_detalhadas = []
+    consulta_feita = True
+
     try:
         # 1. Busca a Aposta original
         aposta = Aposta.query.get(aposta_id)
-        consulta_feita = True
-
+        
         if not aposta:
             return render_template('consulta_aposta.html', aposta=None, consulta_feita=consulta_feita)
 
         # 2. Busca o status de Premiação
         aposta_premiada_obj = ApostaPremiada.query.filter_by(numero_bilhete=aposta.id).first()
         
-        # 3. Inicializa as variáveis de retorno
-        aposta_premiada_dict = None
-        apostas_detalhadas = []
-        
-        # 4. Define se o retorno deve usar os dados da Aposta original ou da Premiada
+        # 3. Define se o retorno deve usar os dados da Aposta original ou da Premiada
         
         if aposta_premiada_obj:
             # A) Aposta está premiada: Serializa e usa os detalhes premiados
@@ -621,15 +622,16 @@ def consultar_aposta(aposta_id):
             # Os detalhes da aposta (Números, Modalidade, etc.) devem vir da ApostaPremiada
             detalhes_premiados = json.loads(aposta_premiada_obj.apostas)
 
-            # Reformatando detalhes_premiados para o formato de lista esperado pelo HTML
+            # Reformatando detalhes_premiados usando índices, pois é uma lista de listas
             for item in detalhes_premiados:
+                # CORREÇÃO DO AttributeError: 'list' object has no attribute 'get'
                 detalhe_formatado = [
-                    item.get('nomeAposta', 'N/A'),
-                    item.get('numeros', []),
-                    item.get('modalidade', 'N/A'),
-                    item.get('premio', 'N/A'), 
-                    item.get('valorTotalAposta', 0.0),
-                    item.get('unidadeAposta', 0.0)
+                    item[0],  # nomeAposta
+                    item[1],  # numeros
+                    item[2],  # modalidade
+                    item[3],  # premio (No JSON premiado, o índice 3 é o prêmio)
+                    item[4],  # valorTotalAposta
+                    item[5]   # unidadeAposta
                 ]
                 apostas_detalhadas.append(detalhe_formatado)
         
@@ -640,34 +642,42 @@ def consultar_aposta(aposta_id):
             if aposta.apostas:
                 detalhes_originais = json.loads(aposta.apostas)
                 
-                # Reformatando detalhes_originais
+                # Reformatando detalhes_originais usando índices, pois é uma lista de listas
                 for item in detalhes_originais:
+                    # CORREÇÃO DO AttributeError: 'list' object has no attribute 'get'
                     detalhe_formatado = [
-                        item.get('nomeAposta', 'N/A'),
-                        item.get('numeros', []),
-                        item.get('modalidade', 'N/A'),
-                        item.get('tipoAposta', 'N/A'), # Usamos 'tipoAposta' do JSON original, se disponível
-                        item.get('valorTotalAposta', 0.0),
-                        item.get('unidadeAposta', 0.0)
+                        item[0],  # nomeAposta
+                        item[1],  # numeros
+                        item[2],  # modalidade
+                        item[3],  # tipoAposta (No JSON original, o índice 3 é o tipoAposta)
+                        item[4],  # valorTotalAposta
+                        item[5]   # unidadeAposta
                     ]
                     apostas_detalhadas.append(detalhe_formatado)
 
-        # 5. Serializa a Aposta principal para evitar o erro JSON
+        # 4. Serializa a Aposta principal para evitar o erro JSON
         aposta_dict = serialize_aposta(aposta)
 
-        # 6. Renderiza o template
+        # 5. Renderiza o template
         return render_template(
             'consulta_aposta.html',
-            aposta=aposta_dict,  # OBJETO AGORA É UM DICTIONARY!
+            aposta=aposta_dict,
             consulta_feita=consulta_feita,
             apostas_detalhadas=apostas_detalhadas,
-            aposta_premiada=aposta_premiada_dict # É DICTIONARY ou None!
+            aposta_premiada=aposta_premiada_dict
         )
 
     except Exception as e:
         print(f"Erro ao buscar aposta: {e}")
-        # Retorna o template com erro em caso de exceção no servidor
-        return render_template('consulta_aposta.html', aposta=None, consulta_feita=True)
+        # Retorna o template com erro em caso de exceção no servidor.
+        # Passa todas as variáveis para evitar o TypeError no Jinja2.
+        return render_template(
+            'consulta_aposta.html',
+            aposta=aposta_dict,
+            consulta_feita=True,
+            apostas_detalhadas=apostas_detalhadas,
+            aposta_premiada=aposta_premiada_dict
+        )
     
 @aposta_route.route('/consulta_excluida/<int:aposta_excluida_id>', methods=['GET'])
 def consultar_aposta_excluida(aposta_excluida_id):
