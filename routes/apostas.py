@@ -602,81 +602,98 @@ def consultar_aposta(aposta_id):
     aposta_premiada_dict = None
     apostas_detalhadas = []
     consulta_feita = True
+    
+    # NOVAS VARIÁVEIS PARA AS DATAS/HORAS JÁ FORMATADAS (strings)
+    data_atual_formatada = None
+    hora_atual_formatada = None
+    data_agendada_formatada = None
 
     try:
         # 1. Busca a Aposta original
         aposta = Aposta.query.get(aposta_id)
         
         if not aposta:
-            return render_template('consulta_aposta.html', aposta=None, consulta_feita=consulta_feita)
+            return render_template(
+                'consulta_aposta.html', 
+                aposta=None, 
+                consulta_feita=consulta_feita,
+                apostas_detalhadas=apostas_detalhadas,
+                aposta_premiada=aposta_premiada_dict,
+                data_atual_formatada=data_atual_formatada, # Passa as novas variáveis
+                hora_atual_formatada=hora_atual_formatada,
+                data_agendada_formatada=data_agendada_formatada
+            )
 
-        # 2. Busca o status de Premiação
+        # 2. Formata as datas/horas do objeto Aposta original (datetime objects) para strings
+        # O objeto 'aposta' aqui ainda é o objeto do modelo ORM, onde .strftime() funciona.
+        if aposta.data_atual:
+            data_atual_formatada = aposta.data_atual.strftime('%d/%m/%Y')
+        if aposta.hora_atual:
+            hora_atual_formatada = aposta.hora_atual.strftime('%H:%M')
+        
+        if aposta.pre_datar and aposta.data_agendada:
+            data_agendada_formatada = aposta.data_agendada.strftime('%d/%m/%Y')
+
+        # 3. Busca o status de Premiação e detalhes
         aposta_premiada_obj = ApostaPremiada.query.filter_by(numero_bilhete=aposta.id).first()
         
-        # 3. Define se o retorno deve usar os dados da Aposta original ou da Premiada
+        # 4. Define se o retorno deve usar os dados da Aposta original ou da Premiada
         
         if aposta_premiada_obj:
             # A) Aposta está premiada: Serializa e usa os detalhes premiados
             aposta_premiada_dict = serialize_aposta_premiada(aposta_premiada_obj)
             
-            # Os detalhes da aposta (Números, Modalidade, etc.) devem vir da ApostaPremiada
             detalhes_premiados = json.loads(aposta_premiada_obj.apostas)
 
-            # Reformatando detalhes_premiados usando índices, pois é uma lista de listas
             for item in detalhes_premiados:
-                # CORREÇÃO DO AttributeError: 'list' object has no attribute 'get'
                 detalhe_formatado = [
-                    item[0],  # nomeAposta
-                    item[1],  # numeros
-                    item[2],  # modalidade
-                    item[3],  # premio (No JSON premiado, o índice 3 é o prêmio)
-                    item[4],  # valorTotalAposta
-                    item[5]   # unidadeAposta
+                    item[0],
+                    item[1],
+                    item[2],
+                    item[3],
+                    item[4],
+                    item[5]
                 ]
                 apostas_detalhadas.append(detalhe_formatado)
         
         else:
             # B) Aposta NÃO está premiada: Serializa e usa os detalhes da Aposta original
-            
-            # Os detalhes da aposta (Números, Modalidade, etc.) devem vir da Aposta original
             if aposta.apostas:
                 detalhes_originais = json.loads(aposta.apostas)
                 
-                # Reformatando detalhes_originais usando índices, pois é uma lista de listas
                 for item in detalhes_originais:
-                    # CORREÇÃO DO AttributeError: 'list' object has no attribute 'get'
-                    detalhe_formatado = [
-                        item[0],  # nomeAposta
-                        item[1],  # numeros
-                        item[2],  # modalidade
-                        item[3],  # tipoAposta (No JSON original, o índice 3 é o tipoAposta)
-                        item[4],  # valorTotalAposta
-                        item[5]   # unidadeAposta
-                    ]
+                    detalhe_formatado = list(item[:6])
                     apostas_detalhadas.append(detalhe_formatado)
 
-        # 4. Serializa a Aposta principal para evitar o erro JSON
+        # 5. Serializa a Aposta principal (mantido como no código original)
         aposta_dict = serialize_aposta(aposta)
 
-        # 5. Renderiza o template
+        # 6. Renderiza o template
         return render_template(
             'consulta_aposta.html',
             aposta=aposta_dict,
             consulta_feita=consulta_feita,
             apostas_detalhadas=apostas_detalhadas,
-            aposta_premiada=aposta_premiada_dict
+            aposta_premiada=aposta_premiada_dict,
+            # NOVOS CAMPOS PARA O TEMPLATE
+            data_atual_formatada=data_atual_formatada,
+            hora_atual_formatada=hora_atual_formatada,
+            data_agendada_formatada=data_agendada_formatada
         )
 
     except Exception as e:
         print(f"Erro ao buscar aposta: {e}")
-        # Retorna o template com erro em caso de exceção no servidor.
         # Passa todas as variáveis para evitar o TypeError no Jinja2.
         return render_template(
             'consulta_aposta.html',
             aposta=aposta_dict,
             consulta_feita=True,
             apostas_detalhadas=apostas_detalhadas,
-            aposta_premiada=aposta_premiada_dict
+            aposta_premiada=aposta_premiada_dict,
+            # NOVOS CAMPOS PARA O TEMPLATE
+            data_atual_formatada=data_atual_formatada,
+            hora_atual_formatada=hora_atual_formatada,
+            data_agendada_formatada=data_agendada_formatada
         )
     
 @aposta_route.route('/consulta_excluida/<int:aposta_excluida_id>', methods=['GET'])

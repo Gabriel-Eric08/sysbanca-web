@@ -60,14 +60,16 @@
         <div class="card-body">
             <p><strong>Vendedor:</strong> {{ aposta.vendedor }}</p>
             <p><strong>Área:</strong> {{ aposta.area }}</p>
-            <p><strong>Data:</strong> {{ aposta.data_atual.strftime('%d/%m/%Y') }}</p>
-            <p><strong>Hora:</strong> {{ aposta.hora_atual.strftime('%H:%M') }}</p>
+            
+            <p><strong>Data:</strong> {{ data_atual_formatada }}</p>
+            <p><strong>Hora:</strong> {{ hora_atual_formatada }}</p>
+            
             <p><strong>Extração:</strong> {{ aposta.extracao }}</p>
             <p><strong>Valor Total:</strong> R$ {{ '{:.2f}'.format(aposta.valor_total) }}</p>
             <p><strong>Pré-datada?</strong> {{ 'Sim' if aposta.pre_datar else 'Não' }}</p>
 
             {% if aposta.pre_datar and aposta.data_agendada %}
-            <p><strong>Data Agendada:</strong> {{ aposta.data_agendada.strftime('%d/%m/%Y') }}</p>
+            <p><strong>Data Agendada:</strong> {{ data_agendada_formatada }}</p>
             {% endif %}
 
             <p><strong>Detalhes das Apostas:</strong></p>
@@ -131,10 +133,8 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 <script>
     // Função auxiliar para parsear JSON (se o Jinja não o fizer diretamente na sua view)
-    // Essa função é necessária porque o Jinja injeta a string JSON na variável JavaScript.
     function fromJson(value) {
         try {
-            // Verifica se o valor é uma string JSON válida antes de tentar parsear
             if (typeof value === 'string') {
                 return JSON.parse(value);
             }
@@ -176,10 +176,10 @@
         const vendedor = aposta.vendedor || 'Vendedor N/A';
         const area = aposta.area || 'Área N/A';
         
-        // Datas e Horas injetadas diretamente pelo Jinja2/Python (mais seguro)
-        const dataAtual = '{{ aposta.data_atual.strftime('%d/%m/%Y') if aposta.data_atual else 'N/A' }}';
-        const horaAtual = '{{ aposta.hora_atual.strftime('%H:%M') if aposta.hora_atual else 'N/A' }}';
-        const dataAgendada = '{{ aposta.data_agendada.strftime('%d/%m/%Y') if aposta.data_agendada else '' }}';
+        // CORREÇÃO AQUI: Usa as variáveis de string já formatadas passadas pela rota.
+        const dataAtual = '{{ data_atual_formatada if data_atual_formatada else 'N/A' }}';
+        const horaAtual = '{{ hora_atual_formatada if hora_atual_formatada else 'N/A' }}';
+        const dataAgendada = '{{ data_agendada_formatada if data_agendada_formatada else '' }}';
         
         const valorTotalBilhete = aposta.valor_total || 0;
         const preDatada = aposta.pre_datar;
@@ -192,7 +192,7 @@
 
         let bilheteCompleto = `
                     *
-                   CL ESPERANCA
+                    CL ESPERANCA
         ${separador}
         EXT: ${extracao}
         Poule: ${String(numeroPoule).padStart(8, '0')}
@@ -203,7 +203,6 @@
         ${separador}`;
 
         // Itera sobre os detalhes da aposta
-        // Nota: apostaDetalhadas é uma lista de listas (Python), então o JS itera sobre o array
         for (const detalhe of apostasDetalhadas) {
             const nomeAposta = detalhe[0];
             const numeros = detalhe[1].join(', ');
