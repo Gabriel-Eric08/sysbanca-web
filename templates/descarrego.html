@@ -24,6 +24,7 @@
             align-items: center;
             gap: 6px;
         }
+        /* Classe CSS para esconder colunas */
         .coluna-oculta { display: none; }
         .botao-consultar { background-color: #072749; }
         .botao-consultar:hover { background-color: #0056b3; }
@@ -69,21 +70,21 @@
         <table class="table table-bordered table-striped mt-3">
             <thead class="table-primary">
                 <tr>
-                    <th>Bilhete</th>
-                    <th class="coluna-oculta" >Extração</th>
+                    <th class="coluna-oculta">Bilhete</th>
+                    <th class="coluna-oculta">Extração</th>
                     <th>Modalidade</th>
-                    <th class="coluna-oculta" >Valor Apostado</th>
+                    <th class="coluna-oculta">Valor Apostado</th>
                     <th>Excedente</th>
                     <th>Números</th>
                     <th>Tipo Prêmio</th>
-                    <th class="coluna-oculta" >Data</th>
+                    <th class="coluna-oculta">Data</th>
                     <th>Ações</th>
                 </tr>
             </thead>
             <tbody id="tabelaExcedentes">
                 {% for d in descarregos %}
                     <tr>
-                        <td>{{ d.bilhete }}</td>
+                        <td class="coluna-oculta">{{ d.bilhete }}</td>
                         <td class="coluna-oculta">{{ d.extracao }}</td>
                         <td>{{ d.modalidade }}</td>
                         <td class="coluna-oculta">R$ {{ '{:,.2f}'.format(d.valor_apostado).replace(',', 'X').replace('.', ',').replace('X', '.') }}</td>
@@ -119,10 +120,10 @@
             valorStr = valorStr.replace(/\./g, "");
             valorStr = valorStr.replace(",", ".");
         } else if (valorStr.includes(".")) {
-             const partes = valorStr.split('.');
-             if (partes.length > 2) {
-                 valorStr = valorStr.replace(/\./g, '');
-             }
+            const partes = valorStr.split('.');
+            if (partes.length > 2) {
+                valorStr = valorStr.replace(/\./g, '');
+            }
         }
         return parseFloat(valorStr) || 0;
     }
@@ -130,7 +131,7 @@
     function consultarTabela() {
         const inicio = document.getElementById("dataInicio").value;
         const fim = document.getElementById("dataFim").value;
-        const extracaoFiltro = document.getElementById("extracaoFiltro").value; // Novo filtro
+        const extracaoFiltro = document.getElementById("extracaoFiltro").value;
         const tabelaExcedentes = document.getElementById("tabelaExcedentes");
         const linhas = tabelaExcedentes.querySelectorAll("tr");
 
@@ -143,8 +144,11 @@
         let linhasVisiveis = 0;
 
         linhas.forEach(tr => {
+            // O Bilhete está agora no índice 0
+            // A Extração está no índice 1
+            // A Data está no índice 7 (não visível, mas usada para filtro)
             const dataStr = tr.cells[7]?.textContent;
-            const extracaoStr = tr.cells[1]?.textContent; // Pega o valor da extração da tabela
+            const extracaoStr = tr.cells[1]?.textContent;
 
             if (tr.cells.length <= 1) {
                 tr.style.display = "";
@@ -167,10 +171,11 @@
                 (!dataInicio || dataObj >= dataInicio) &&
                 (!dataFim || dataObj <= dataFim);
             
-            const extraindo = (!extracaoFiltro || extracaoStr === extracaoFiltro); // Verifica o filtro de extração
+            const extraindo = (!extracaoFiltro || extracaoStr === extracaoFiltro);
 
             if (dentroDoPeriodo && extraindo) {
                 tr.style.display = "";
+                // O Excedente está no índice 4
                 const valorExcedente = parseValorReal(tr.cells[4].textContent);
                 totalExcedente += valorExcedente;
                 linhasVisiveis++;
@@ -207,18 +212,27 @@
 
         const totalExcedenteTexto = document.getElementById("totalExcedenteTexto").textContent;
 
+        /* Índices da tabela HTML:
+        0: Bilhete (Ocultar no PDF)
+        1: Extração (Ocultar no PDF)
+        2: Modalidade (Manter no PDF)
+        3: Valor Apostado (Ocultar no PDF)
+        4: Excedente (Manter no PDF)
+        5: Números (Manter no PDF)
+        6: Tipo Prêmio (Manter no PDF)
+        7: Data (Manter no PDF)
+        8: Ações (Ocultar/Ignorar no PDF)
+        */
+        const colunasParaManter = [2, 4, 5, 6, 7]; 
+
         const dadosPDF = linhasFiltradas.map(tr => {
-            return [
-                tr.cells[0].textContent,
-                tr.cells[1].textContent,
-                tr.cells[2].textContent,
-                tr.cells[3].textContent,
-                tr.cells[4].textContent,
-                tr.cells[5].textContent,
-                tr.cells[6].textContent,
-                tr.cells[7].textContent
-            ];
+            // Mapeia e retorna apenas o conteúdo das colunas que queremos no PDF
+            return colunasParaManter.map(index => tr.cells[index].textContent);
         });
+        
+        // Define os cabeçalhos do PDF, que correspondem às colunas restantes
+        const headPDF = [["Modalidade", "Excedente", "Números", "Tipo Prêmio", "Data"]];
+
 
         doc.setFontSize(16);
         doc.text("Relatório de Descarrego", 14, 20);
@@ -249,8 +263,8 @@
         doc.text(extracaoTexto, 14, 40);
 
         doc.autoTable({
-            head: [["Bilhete", "Extração", "Modalidade", "Valor Apostado", "Excedente", "Números", "Tipo Prêmio", "Data"]],
-            body: dadosPDF,
+            head: headPDF, // Usa o novo cabeçalho
+            body: dadosPDF, // Usa os dados filtrados
             startY: 48, // Ajusta o Y inicial para acomodar o novo texto
             styles: {
                 fillColor: [240, 240, 240]
