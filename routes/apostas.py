@@ -9,6 +9,49 @@ import uuid
 
 aposta_route = Blueprint('Aposta', __name__)
 
+@aposta_route.route('/nsu/<string:nsu_number>', methods=['GET'])
+def get_aposta_by_nsu(nsu_number):
+    try:
+        # Busca a aposta pelo campo nsu.
+        # Usa .first() pois o campo nsu é único (unique=True no modelo)
+        aposta = Aposta.query.filter_by(nsu=nsu_number).first()
+
+        if not aposta:
+            return jsonify({"success": False, "message": "Aposta não encontrada"}), 404
+
+        # Formatação dos dados para resposta (igual à rota get_aposta)
+        response_data = {
+            "id": aposta.id,
+            "area": aposta.area,
+            "vendedor": aposta.vendedor,
+            # Formata as datas e horas
+            "data_atual": aposta.data_atual.strftime("%d/%m/%Y"),
+            "hora_atual": aposta.hora_atual.strftime("%H:%M"),
+            "valor_total": float(aposta.valor_total),
+            "extracao": aposta.extracao,
+            "pre_datar": aposta.pre_datar,
+            # Condicional para data_agendada (pode ser None)
+            "data_agendada": aposta.data_agendada.strftime("%d/%m/%Y") if aposta.data_agendada else None,
+            # Decodifica a string JSON de apostas para uma lista/dict
+            "apostas": json.loads(aposta.apostas) if aposta.apostas else [],
+            "nsu": aposta.nsu
+        }
+
+        return jsonify(response_data), 200
+
+    except json.JSONDecodeError as e:
+        # Captura erro se o campo 'apostas' não for um JSON válido
+        return jsonify({
+            "success": False,
+            "message": f"Erro ao decodificar apostas: {str(e)}"
+        }), 400
+    except Exception as e:
+        # Captura qualquer outro erro inesperado
+        return jsonify({
+            "success": False,
+            "message": f"Erro ao recuperar aposta por NSU: {str(e)}"
+        }), 500
+
 @aposta_route.route('/homeapk2')
 def apostas_apk():
 
